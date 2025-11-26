@@ -1,1 +1,170 @@
-.vscode
+# ===================================
+# IDE and Editor Settings
+# ===================================
+.vscode/
+.idea/
+*.user
+*.user.*
+*.pro.user
+*.pro.user.*
+*.suo
+*.sln
+*.vcproj
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# ===================================
+# Qt Build Files
+# ===================================
+# qmake generated files
+Makefile
+Makefile.*
+*.Debug
+*.Release
+.qmake.stash
+*.qmake.stash
+
+# Qt Creator project files (auto-generated)
+*.autosave
+
+# MOC/UI/RCC generated files
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+
+# ===================================
+# Build Directories
+# ===================================
+build/
+build-*/
+debug/
+release/
+Debug/
+Release/
+x64/
+Win32/
+.obj/
+*.build/
+
+# CMake build files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+
+# ===================================
+# Compiled Object Files
+# ===================================
+*.o
+*.obj
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lib
+*.a
+*.la
+*.lo
+*.slo
+
+# ===================================
+# Executables
+# ===================================
+*.exe
+*.app
+*.out
+*.com
+
+# ===================================
+# Temporary Files
+# ===================================
+*~
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+
+# ===================================
+# Qt Translation Files
+# ===================================
+*.qm
+
+# ===================================
+# Documentation (generated)
+# ===================================
+html/
+latex/
+doc/html/
+doc/latex/
+
+# ===================================
+# Package Files
+# ===================================
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ===================================
+# Log Files
+# ===================================
+*.log
+tilemap_debug.log
+
+# ===================================
+# Application Specific
+# ===================================
+# Tile cache directory - 瓦片缓存目录
+# 注意: tilemap/ 目录会被提交到仓库，这样其他用户可以直接使用已下载的地图
+# 如果您不想跟踪瓦片缓存（减小仓库体积），请取消下面这行的注释：
+# tilemap/
+
+# Manifest files - 下载任务清单 (optional)
+# manifest.json
+
+# Settings files - 设置文件 (optional)
+# settings.ini
+
+# ===================================
+# OS Specific
+# ===================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.directory
+.fuse_hidden*
+
+# ===================================
+# Version Control
+# ===================================
+.git/
+.gitattributes
+*.orig
+
+# ===================================
+# Backup Files
+# ===================================
+*.backup
+*_backup
+*.old
