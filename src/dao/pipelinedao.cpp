@@ -107,12 +107,22 @@ QVector<Pipeline> PipelineDAO::findByType(const QString &type, int limit)
     params[":type"] = type;
     params[":limit"] = limit;
 
+    qDebug() << "[PipelineDAO] findByType called:";
+    qDebug() << "  Type:" << type << "Limit:" << limit;
+
     QVector<Pipeline> results;
     QSqlQuery query = DatabaseManager::instance().executeQuery(sql, params);
+    
+    if (query.lastError().isValid()) {
+        qDebug() << "[PipelineDAO] Query error:" << query.lastError().text();
+        LOG_ERROR(QString("Pipeline query failed: %1").arg(query.lastError().text()));
+    }
+    
     while (query.next()) {
         results.append(fromQuery(query));
     }
 
+    qDebug() << "[PipelineDAO] Found" << results.size() << "pipelines of type" << type;
     LOG_INFO(QString("Found %1 pipelines of type: %2").arg(results.size()).arg(type));
     return results;
 }
@@ -134,12 +144,26 @@ QVector<Pipeline> PipelineDAO::findByBounds(const QRectF &bounds, int limit)
     params[":maxY"] = bounds.top();
     params[":limit"] = limit;
 
+    // 调试输出
+    qDebug() << "[PipelineDAO] findByBounds called:";
+    qDebug() << "  Input bounds:" << bounds;
+    qDebug() << "  minX:" << bounds.left() << "minY:" << bounds.bottom();
+    qDebug() << "  maxX:" << bounds.right() << "maxY:" << bounds.top();
+    qDebug() << "  SQL:" << sql;
+
     QVector<Pipeline> results;
     QSqlQuery query = DatabaseManager::instance().executeQuery(sql, params);
+    
+    if (query.lastError().isValid()) {
+        qDebug() << "[PipelineDAO] Query error:" << query.lastError().text();
+        LOG_ERROR(QString("Pipeline query failed: %1").arg(query.lastError().text()));
+    }
+    
     while (query.next()) {
         results.append(fromQuery(query));
     }
 
+    qDebug() << "[PipelineDAO] Found" << results.size() << "pipelines in bounds";
     LOG_INFO(QString("Found %1 pipelines in bounds").arg(results.size()));
     return results;
 }

@@ -37,23 +37,24 @@ void PipelineRenderer::renderPipelines(QGraphicsScene *scene,
     }
     
     LOG_INFO(QString("Rendering pipelines of type: %1").arg(pipelineType));
+    qDebug() << "[PipelineRenderer] Type:" << pipelineType;
+    qDebug() << "[PipelineRenderer] Bounds:" << bounds;
+    qDebug() << "[PipelineRenderer] TileMapManager:" << (m_tileMapManager ? "SET" : "NULL");
+    qDebug() << "[PipelineRenderer] Current zoom:" << m_zoom;
     
     // 1. 从数据库加载管线数据
     QVector<Pipeline> pipelines;
     
-    if (bounds.isValid() && !bounds.isEmpty()) {
-        // 按边界框查询
-        pipelines = m_pipelineDao->findByBounds(bounds);
-        LOG_INFO(QString("Loaded %1 pipelines in bounds").arg(pipelines.size()));
-    } else {
-        // 查询所有指定类型的管线
-        pipelines = m_pipelineDao->findByType(pipelineType, 1000);
-        LOG_INFO(QString("Loaded %1 pipelines of type %2")
-                     .arg(pipelines.size()).arg(pipelineType));
-    }
+    // 临时：先不使用 bounds 查询，直接查询所有类型的管线来测试
+    qDebug() << "[PipelineRenderer] Querying by type (ignore bounds for now)...";
+    pipelines = m_pipelineDao->findByType(pipelineType, 1000);
+    LOG_INFO(QString("Loaded %1 pipelines of type %2")
+                 .arg(pipelines.size()).arg(pipelineType));
+    qDebug() << "[PipelineRenderer] Found" << pipelines.size() << "pipelines of type" << pipelineType;
     
     if (pipelines.isEmpty()) {
         LOG_WARNING(QString("No pipelines found for type: %1").arg(pipelineType));
+        qDebug() << "[PipelineRenderer] ⚠️  No data found in database!";
         return;
     }
     
@@ -105,6 +106,14 @@ QGraphicsPathItem* PipelineRenderer::renderPipeline(QGraphicsScene *scene,
     QPainterPath path;
     QPointF firstPoint = geoToScene(coords[0]);
     path.moveTo(firstPoint);
+    
+    // 调试：输出第一个坐标的转换结果（只输出第一条管线）
+    static bool firstPipeline = true;
+    if (firstPipeline) {
+        qDebug() << "[PipelineRenderer] Pipeline" << pipeline.pipelineId() 
+                 << "geo:" << coords[0] << "-> scene:" << firstPoint;
+        firstPipeline = false;
+    }
     
     for (int i = 1; i < coords.size(); i++) {
         QPointF scenePoint = geoToScene(coords[i]);

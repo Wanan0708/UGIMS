@@ -133,6 +133,7 @@ private:
     
     // 管网可视化初始化
     void initializePipelineVisualization();
+    void checkPipelineRenderResult();
     
     // 添加公共方法来触发区域下载
 public:

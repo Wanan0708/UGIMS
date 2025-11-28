@@ -1524,6 +1524,7 @@ void MyForm::loadPipelineData()
     
     LOG_INFO("Loading pipeline data from database");
     updateStatus("正在加载管网数据...");
+    qDebug() << "[Pipeline] ========== Starting pipeline data load ==========";
     
     // 使用测试数据的坐标范围（北京天安门区域）
     // 测试数据范围: 经度 116.39-116.42, 纬度 39.90-39.92
@@ -1534,31 +1535,90 @@ void MyForm::loadPipelineData()
         0.020     // 高度（纬度跨度）
     );
     
-    // 设置可视范围
-    m_layerManager->setVisibleBounds(geoBounds);
+    // 将地图中心移动到测试数据区域（北京天安门）
+    if (tileMapManager) {
+        qDebug() << "[Pipeline] Moving map to Beijing (test data area)...";
+        tileMapManager->setCenter(39.91, 116.40);
+        
+        // 如果当前缩放级别太小，放大到合适级别
+        if (currentZoomLevel < 13) {
+            qDebug() << "[Pipeline] Zoom level too low (" << currentZoomLevel << "), setting to 15";
+            currentZoomLevel = 15;
+            tileMapManager->setZoom(currentZoomLevel);
+            
+            // 同步到管网渲染器
+            if (m_layerManager) {
+                m_layerManager->setZoom(currentZoomLevel);
+            }
+        }
+        
+        // 等待地图加载完成
+        QTimer::singleShot(200, this, [this, geoBounds]() {
+            qDebug() << "[Pipeline] Map repositioned, now loading pipeline data...";
+            
+            // 设置可视范围
+            m_layerManager->setVisibleBounds(geoBounds);
+            qDebug() << "[Pipeline] Visible bounds set to:" << geoBounds;
+            
+            // 刷新所有可见图层
+            m_layerManager->refreshAllLayers();
+            qDebug() << "[Pipeline] refreshAllLayers() called";
+            
+            checkPipelineRenderResult();
+        });
+        return;
+    }
     
-    // 刷新所有可见图层
+    // 如果没有 tileMapManager，直接加载
+    m_layerManager->setVisibleBounds(geoBounds);
     m_layerManager->refreshAllLayers();
     
     LOG_INFO("Pipeline layers refreshed");
-    
-    // 管网数据加载完成后不调整视图
-    // 保持原有的地图缩放级别和视图位置，让管网自然叠加在地图上
+    checkPipelineRenderResult();
+}
+
+void MyForm::checkPipelineRenderResult()
+{
+    // 延迟检查渲染结果，让渲染器有时间完成
     QTimer::singleShot(500, this, [this]() {
-        if (mapScene && ui->graphicsView) {
-            QRectF sceneBounds = mapScene->itemsBoundingRect();
-            if (!sceneBounds.isEmpty()) {
-                LOG_INFO(QString("Pipeline items rendered, scene bounds: [%1, %2, %3, %4]")
-                             .arg(sceneBounds.left()).arg(sceneBounds.top())
-                             .arg(sceneBounds.width()).arg(sceneBounds.height()));
-                updateStatus("管网数据加载完成");
-            } else {
-                LOG_WARNING("Scene bounds is empty, no items rendered");
-                updateStatus("未找到管网数据");
-            }
-        } else {
-            updateStatus("管网数据加载完成");
+        if (!mapScene || !ui->graphicsView) {
+            updateStatus("场景未初始化");
+            return;
         }
+        
+        // 统计场景中的项目
+        QList<QGraphicsItem*> allItems = mapScene->items();
+        int totalItems = allItems.size();
+        int pipelineItems = 0;
+        int facilityItems = 0;
+        
+        for (QGraphicsItem *item : allItems) {
+            QString type = item->data(0).toString();
+            if (type == "pipeline") {
+                pipelineItems++;
+            } else if (type == "facility") {
+                facilityItems++;
+            }
+        }
+        
+        qDebug() << "[Pipeline] ========== Render Result ==========";
+        qDebug() << "[Pipeline] Total scene items:" << totalItems;
+        qDebug() << "[Pipeline] Pipeline items:" << pipelineItems;
+        qDebug() << "[Pipeline] Facility items:" << facilityItems;
+        
+        if (pipelineItems > 0 || facilityItems > 0) {
+            QRectF sceneBounds = mapScene->itemsBoundingRect();
+            qDebug() << "[Pipeline] Scene bounds:" << sceneBounds;
+            LOG_INFO(QString("Pipeline rendered: %1 pipelines, %2 facilities")
+                         .arg(pipelineItems).arg(facilityItems));
+            updateStatus(QString("管网数据加载完成 (%1个管线, %2个设施)")
+                             .arg(pipelineItems).arg(facilityItems));
+        } else {
+            qDebug() << "[Pipeline] ⚠️  No pipeline/facility items found in scene!";
+            LOG_WARNING("No pipeline items rendered - check database data");
+            updateStatus("未找到管网数据（请检查数据库）");
+        }
+        qDebug() << "[Pipeline] ==========================================";
     });
 }
 

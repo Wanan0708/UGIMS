@@ -18,6 +18,9 @@ public:
     Facility fromQuery(QSqlQuery &query) override;
     QVariantMap toVariantMap(const Facility &facility) override;
 
+    // 查找所有设施
+    QVector<Facility> findAll(int limit = 1000);
+    
     // 根据类型查找设施
     QVector<Facility> findByType(const QString &type, int limit = 1000);
 

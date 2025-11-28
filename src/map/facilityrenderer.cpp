@@ -35,19 +35,17 @@ void FacilityRenderer::renderFacilities(QGraphicsScene *scene, const QRectF &bou
     }
     
     LOG_INFO("Rendering facilities");
+    qDebug() << "[FacilityRenderer] renderFacilities called";
+    qDebug() << "[FacilityRenderer] Bounds:" << bounds;
     
     // 1. 从数据库加载设施数据
     QVector<Facility> facilities;
     
-    if (bounds.isValid() && !bounds.isEmpty()) {
-        // 按边界框查询
-        facilities = m_facilityDao->findByBounds(bounds);
-        LOG_INFO(QString("Loaded %1 facilities in bounds").arg(facilities.size()));
-    } else {
-        // 查询所有设施
-        facilities = m_facilityDao->findAll(1000);
-        LOG_INFO(QString("Loaded %1 facilities").arg(facilities.size()));
-    }
+    // 临时：先不使用 bounds 查询，直接查询所有设施来测试
+    qDebug() << "[FacilityRenderer] Querying all facilities (ignore bounds for now)...";
+    facilities = m_facilityDao->findAll(1000);
+    LOG_INFO(QString("Loaded %1 facilities").arg(facilities.size()));
+    qDebug() << "[FacilityRenderer] Found" << facilities.size() << "facilities";
     
     if (facilities.isEmpty()) {
         LOG_WARNING("No facilities found");

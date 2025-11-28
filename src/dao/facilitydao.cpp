@@ -103,6 +103,34 @@ QVariantMap FacilityDAO::toVariantMap(const Facility &facility)
     return map;
 }
 
+QVector<Facility> FacilityDAO::findAll(int limit)
+{
+    QString sql = QString("SELECT *, ST_AsText(geom) as geom_text "
+                          "FROM %1 LIMIT :limit")
+                      .arg(m_tableName);
+
+    QVariantMap params;
+    params[":limit"] = limit;
+
+    qDebug() << "[FacilityDAO] findAll called, limit:" << limit;
+
+    QVector<Facility> results;
+    QSqlQuery query = DatabaseManager::instance().executeQuery(sql, params);
+    
+    if (query.lastError().isValid()) {
+        qDebug() << "[FacilityDAO] Query error:" << query.lastError().text();
+        LOG_ERROR(QString("Facility query failed: %1").arg(query.lastError().text()));
+    }
+    
+    while (query.next()) {
+        results.append(fromQuery(query));
+    }
+
+    qDebug() << "[FacilityDAO] Found" << results.size() << "facilities";
+    LOG_INFO(QString("Found %1 facilities").arg(results.size()));
+    return results;
+}
+
 QVector<Facility> FacilityDAO::findByType(const QString &type, int limit)
 {
     QString sql = QString("SELECT *, ST_AsText(geom) as geom_text "
