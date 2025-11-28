@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../../MyGis/downloadscheduler.h"
+#include "../../../src/tilemap/downloadscheduler.h"
 #include <QtCore/qmetatype.h>
 
 #include <QtCore/qtmochelpers.h>

@@ -1078,3 +1078,525 @@
 2025-11-05 21:28:05.449 - Total tiles: 33386
 2025-11-05 21:28:05.449 - Available zoom levels: 10
 2025-11-05 21:28:05.450 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-26 23:22:53.594 - Checking for local tiles...
+2025-11-26 23:22:53.595 - Found local tiles, using zoom level: 10
+2025-11-26 23:22:53.596 - Loading local tiles for zoom: 10
+2025-11-26 23:22:53.621 - Local tiles loaded successfully, count: 25
+2025-11-26 23:22:53.622 - === Local Tiles Information ===
+2025-11-26 23:22:53.624 - Zoom level 1: 4 tiles
+2025-11-26 23:22:56.410 - Zoom level 10: 23864 tiles
+2025-11-26 23:22:56.417 - Zoom level 2: 16 tiles
+2025-11-26 23:22:56.419 - Zoom level 3: 64 tiles
+2025-11-26 23:22:56.427 - Zoom level 4: 232 tiles
+2025-11-26 23:22:56.446 - Zoom level 5: 843 tiles
+2025-11-26 23:22:56.470 - Zoom level 6: 699 tiles
+2025-11-26 23:22:56.496 - Zoom level 7: 805 tiles
+2025-11-26 23:22:56.544 - Zoom level 8: 1733 tiles
+2025-11-26 23:22:56.677 - Zoom level 9: 6212 tiles
+2025-11-26 23:22:56.677 - Total tiles: 34472
+2025-11-26 23:22:56.688 - Available zoom levels: 10
+2025-11-26 23:22:56.688 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-26 23:42:45.219 - Checking for local tiles...
+2025-11-26 23:42:45.219 - Found local tiles, using zoom level: 10
+2025-11-26 23:42:45.220 - Loading local tiles for zoom: 10
+2025-11-26 23:42:45.248 - Local tiles loaded successfully, count: 25
+2025-11-26 23:42:45.249 - === Local Tiles Information ===
+2025-11-26 23:42:45.250 - Zoom level 1: 4 tiles
+2025-11-26 23:42:50.522 - Zoom level 10: 23864 tiles
+2025-11-26 23:42:50.525 - Zoom level 2: 16 tiles
+2025-11-26 23:42:50.608 - Zoom level 3: 64 tiles
+2025-11-26 23:42:50.748 - Zoom level 4: 232 tiles
+2025-11-26 23:42:51.141 - Zoom level 5: 843 tiles
+2025-11-26 23:42:51.515 - Zoom level 6: 699 tiles
+2025-11-26 23:42:51.906 - Zoom level 7: 805 tiles
+2025-11-26 23:42:52.250 - Zoom level 8: 1733 tiles
+2025-11-26 23:42:53.674 - Zoom level 9: 6212 tiles
+2025-11-26 23:42:53.674 - Total tiles: 34472
+2025-11-26 23:42:53.674 - Available zoom levels: 10
+2025-11-26 23:42:53.674 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-26 23:47:41.902 - Checking for local tiles...
+2025-11-26 23:47:41.903 - Found local tiles, using zoom level: 10
+2025-11-26 23:47:41.903 - Loading local tiles for zoom: 10
+2025-11-26 23:47:41.934 - Local tiles loaded successfully, count: 25
+2025-11-26 23:47:41.935 - === Local Tiles Information ===
+2025-11-26 23:47:41.936 - Zoom level 1: 4 tiles
+2025-11-26 23:47:44.735 - Zoom level 10: 23864 tiles
+2025-11-26 23:47:44.736 - Zoom level 2: 16 tiles
+2025-11-26 23:47:44.739 - Zoom level 3: 64 tiles
+2025-11-26 23:47:44.773 - Zoom level 4: 232 tiles
+2025-11-26 23:47:44.797 - Zoom level 5: 843 tiles
+2025-11-26 23:47:44.806 - Zoom level 6: 699 tiles
+2025-11-26 23:47:44.840 - Zoom level 7: 805 tiles
+2025-11-26 23:47:44.890 - Zoom level 8: 1733 tiles
+2025-11-26 23:47:45.026 - Zoom level 9: 6212 tiles
+2025-11-26 23:47:45.026 - Total tiles: 34472
+2025-11-26 23:47:45.026 - Available zoom levels: 10
+2025-11-26 23:47:45.026 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 00:04:16.406 - Checking for local tiles...
+2025-11-27 00:04:16.407 - Found local tiles, using zoom level: 10
+2025-11-27 00:04:16.407 - Loading local tiles for zoom: 10
+2025-11-27 00:04:16.430 - Local tiles loaded successfully, count: 25
+2025-11-27 00:04:16.438 - === Local Tiles Information ===
+2025-11-27 00:04:16.439 - Zoom level 1: 4 tiles
+2025-11-27 00:04:21.892 - Zoom level 10: 23864 tiles
+2025-11-27 00:04:21.898 - Zoom level 2: 16 tiles
+2025-11-27 00:04:21.990 - Zoom level 3: 64 tiles
+2025-11-27 00:04:22.132 - Zoom level 4: 232 tiles
+2025-11-27 00:04:22.445 - Zoom level 5: 843 tiles
+2025-11-27 00:04:23.299 - Zoom level 6: 699 tiles
+2025-11-27 00:04:24.711 - Zoom level 7: 805 tiles
+2025-11-27 00:04:25.026 - Zoom level 8: 1733 tiles
+2025-11-27 00:04:26.666 - Zoom level 9: 6212 tiles
+2025-11-27 00:04:26.666 - Total tiles: 34472
+2025-11-27 00:04:26.667 - Available zoom levels: 10
+2025-11-27 00:04:26.667 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 00:05:34.335 - Checking for local tiles...
+2025-11-27 00:05:34.336 - Found local tiles, using zoom level: 10
+2025-11-27 00:05:34.336 - Loading local tiles for zoom: 10
+2025-11-27 00:05:34.370 - Local tiles loaded successfully, count: 25
+2025-11-27 00:05:34.372 - === Local Tiles Information ===
+2025-11-27 00:05:34.373 - Zoom level 1: 4 tiles
+2025-11-27 00:05:34.910 - Zoom level 10: 23864 tiles
+2025-11-27 00:05:34.911 - Zoom level 2: 16 tiles
+2025-11-27 00:05:34.914 - Zoom level 3: 64 tiles
+2025-11-27 00:05:34.923 - Zoom level 4: 232 tiles
+2025-11-27 00:05:34.947 - Zoom level 5: 843 tiles
+2025-11-27 00:05:34.971 - Zoom level 6: 699 tiles
+2025-11-27 00:05:34.987 - Zoom level 7: 805 tiles
+2025-11-27 00:05:35.047 - Zoom level 8: 1733 tiles
+2025-11-27 00:05:35.195 - Zoom level 9: 6212 tiles
+2025-11-27 00:05:35.195 - Total tiles: 34472
+2025-11-27 00:05:35.195 - Available zoom levels: 10
+2025-11-27 00:05:35.195 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 00:09:53.234 - Checking for local tiles...
+2025-11-27 00:09:53.235 - Found local tiles, using zoom level: 10
+2025-11-27 00:09:53.236 - Loading local tiles for zoom: 10
+2025-11-27 00:09:53.265 - Local tiles loaded successfully, count: 25
+2025-11-27 00:09:53.271 - === Local Tiles Information ===
+2025-11-27 00:09:53.272 - Zoom level 1: 4 tiles
+2025-11-27 00:09:53.927 - Zoom level 10: 23864 tiles
+2025-11-27 00:09:53.930 - Zoom level 2: 16 tiles
+2025-11-27 00:09:53.936 - Zoom level 3: 64 tiles
+2025-11-27 00:09:53.942 - Zoom level 4: 232 tiles
+2025-11-27 00:09:53.965 - Zoom level 5: 843 tiles
+2025-11-27 00:09:53.998 - Zoom level 6: 699 tiles
+2025-11-27 00:09:54.025 - Zoom level 7: 805 tiles
+2025-11-27 00:09:54.086 - Zoom level 8: 1733 tiles
+2025-11-27 00:09:54.255 - Zoom level 9: 6212 tiles
+2025-11-27 00:09:54.256 - Total tiles: 34472
+2025-11-27 00:09:54.256 - Available zoom levels: 10
+2025-11-27 00:09:54.256 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 00:56:34.620 - Checking for local tiles...
+2025-11-27 00:56:34.632 - Found local tiles, using zoom level: 10
+2025-11-27 00:56:34.632 - Loading local tiles for zoom: 10
+2025-11-27 00:56:34.661 - Local tiles loaded successfully, count: 25
+2025-11-27 00:56:34.662 - === Local Tiles Information ===
+2025-11-27 00:56:34.663 - Zoom level 1: 4 tiles
+2025-11-27 00:56:43.982 - Zoom level 10: 23864 tiles
+2025-11-27 00:56:44.004 - Zoom level 2: 16 tiles
+2025-11-27 00:56:44.150 - Zoom level 3: 64 tiles
+2025-11-27 00:56:44.235 - Zoom level 4: 232 tiles
+2025-11-27 00:56:44.251 - Zoom level 5: 843 tiles
+2025-11-27 00:56:44.483 - Zoom level 6: 699 tiles
+2025-11-27 00:56:45.000 - Zoom level 7: 805 tiles
+2025-11-27 00:56:45.783 - Zoom level 8: 1733 tiles
+2025-11-27 00:56:46.865 - Zoom level 9: 6212 tiles
+2025-11-27 00:56:46.865 - Total tiles: 34472
+2025-11-27 00:56:46.870 - Available zoom levels: 10
+2025-11-27 00:56:46.870 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 01:14:41.923 - Checking for local tiles...
+2025-11-27 01:14:41.941 - Found local tiles, using zoom level: 10
+2025-11-27 01:14:41.941 - Loading local tiles for zoom: 10
+2025-11-27 01:14:41.982 - Local tiles loaded successfully, count: 25
+2025-11-27 01:14:41.996 - === Local Tiles Information ===
+2025-11-27 01:14:41.998 - Zoom level 1: 4 tiles
+2025-11-27 01:14:48.159 - Zoom level 10: 23864 tiles
+2025-11-27 01:14:48.160 - Zoom level 2: 16 tiles
+2025-11-27 01:14:48.164 - Zoom level 3: 64 tiles
+2025-11-27 01:14:48.208 - Zoom level 4: 232 tiles
+2025-11-27 01:14:48.642 - Zoom level 5: 843 tiles
+2025-11-27 01:14:49.251 - Zoom level 6: 699 tiles
+2025-11-27 01:14:50.143 - Zoom level 7: 805 tiles
+2025-11-27 01:14:50.545 - Zoom level 8: 1733 tiles
+2025-11-27 01:14:52.941 - Zoom level 9: 6212 tiles
+2025-11-27 01:14:52.941 - Total tiles: 34472
+2025-11-27 01:14:52.942 - Available zoom levels: 10
+2025-11-27 01:14:52.942 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 01:15:36.371 - Checking for local tiles...
+2025-11-27 01:15:36.372 - Found local tiles, using zoom level: 10
+2025-11-27 01:15:36.372 - Loading local tiles for zoom: 10
+2025-11-27 01:15:36.401 - Local tiles loaded successfully, count: 25
+2025-11-27 01:15:36.402 - === Local Tiles Information ===
+2025-11-27 01:15:36.403 - Zoom level 1: 4 tiles
+2025-11-27 01:15:36.918 - Zoom level 10: 23864 tiles
+2025-11-27 01:15:36.919 - Zoom level 2: 16 tiles
+2025-11-27 01:15:36.921 - Zoom level 3: 64 tiles
+2025-11-27 01:15:36.928 - Zoom level 4: 232 tiles
+2025-11-27 01:15:36.951 - Zoom level 5: 843 tiles
+2025-11-27 01:15:36.964 - Zoom level 6: 699 tiles
+2025-11-27 01:15:36.993 - Zoom level 7: 805 tiles
+2025-11-27 01:15:37.030 - Zoom level 8: 1733 tiles
+2025-11-27 01:15:37.163 - Zoom level 9: 6212 tiles
+2025-11-27 01:15:37.163 - Total tiles: 34472
+2025-11-27 01:15:37.177 - Available zoom levels: 10
+2025-11-27 01:15:37.177 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 01:15:51.126 - Checking for local tiles...
+2025-11-27 01:15:51.127 - Found local tiles, using zoom level: 10
+2025-11-27 01:15:51.127 - Loading local tiles for zoom: 10
+2025-11-27 01:15:51.154 - Local tiles loaded successfully, count: 25
+2025-11-27 01:15:51.154 - === Local Tiles Information ===
+2025-11-27 01:15:51.156 - Zoom level 1: 4 tiles
+2025-11-27 01:15:51.658 - Zoom level 10: 23864 tiles
+2025-11-27 01:15:51.662 - Zoom level 2: 16 tiles
+2025-11-27 01:15:51.665 - Zoom level 3: 64 tiles
+2025-11-27 01:15:51.671 - Zoom level 4: 232 tiles
+2025-11-27 01:15:51.692 - Zoom level 5: 843 tiles
+2025-11-27 01:15:51.714 - Zoom level 6: 699 tiles
+2025-11-27 01:15:51.729 - Zoom level 7: 805 tiles
+2025-11-27 01:15:51.785 - Zoom level 8: 1733 tiles
+2025-11-27 01:15:51.925 - Zoom level 9: 6212 tiles
+2025-11-27 01:15:51.925 - Total tiles: 34472
+2025-11-27 01:15:51.929 - Available zoom levels: 10
+2025-11-27 01:15:51.929 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 01:16:18.432 - Checking for local tiles...
+2025-11-27 01:16:18.432 - Found local tiles, using zoom level: 10
+2025-11-27 01:16:18.433 - Loading local tiles for zoom: 10
+2025-11-27 01:16:18.464 - Local tiles loaded successfully, count: 25
+2025-11-27 01:16:18.465 - === Local Tiles Information ===
+2025-11-27 01:16:18.467 - Zoom level 1: 4 tiles
+2025-11-27 01:16:19.109 - Zoom level 10: 23864 tiles
+2025-11-27 01:16:19.111 - Zoom level 2: 16 tiles
+2025-11-27 01:16:19.114 - Zoom level 3: 64 tiles
+2025-11-27 01:16:19.122 - Zoom level 4: 232 tiles
+2025-11-27 01:16:19.149 - Zoom level 5: 843 tiles
+2025-11-27 01:16:19.174 - Zoom level 6: 699 tiles
+2025-11-27 01:16:19.203 - Zoom level 7: 805 tiles
+2025-11-27 01:16:19.249 - Zoom level 8: 1733 tiles
+2025-11-27 01:16:19.434 - Zoom level 9: 6212 tiles
+2025-11-27 01:16:19.434 - Total tiles: 34472
+2025-11-27 01:16:19.434 - Available zoom levels: 10
+2025-11-27 01:16:19.434 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 01:16:38.018 - Checking for local tiles...
+2025-11-27 01:16:38.019 - Found local tiles, using zoom level: 10
+2025-11-27 01:16:38.019 - Loading local tiles for zoom: 10
+2025-11-27 01:16:38.046 - Local tiles loaded successfully, count: 25
+2025-11-27 01:16:38.047 - === Local Tiles Information ===
+2025-11-27 01:16:38.048 - Zoom level 1: 4 tiles
+2025-11-27 01:16:38.592 - Zoom level 10: 23864 tiles
+2025-11-27 01:16:38.606 - Zoom level 2: 16 tiles
+2025-11-27 01:16:38.609 - Zoom level 3: 64 tiles
+2025-11-27 01:16:38.618 - Zoom level 4: 232 tiles
+2025-11-27 01:16:38.642 - Zoom level 5: 843 tiles
+2025-11-27 01:16:38.659 - Zoom level 6: 699 tiles
+2025-11-27 01:16:38.692 - Zoom level 7: 805 tiles
+2025-11-27 01:16:38.745 - Zoom level 8: 1733 tiles
+2025-11-27 01:16:38.912 - Zoom level 9: 6212 tiles
+2025-11-27 01:16:38.912 - Total tiles: 34472
+2025-11-27 01:16:38.913 - Available zoom levels: 10
+2025-11-27 01:16:38.913 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 20:50:27.863 - Checking for local tiles...
+2025-11-27 20:50:27.874 - Found local tiles, using zoom level: 10
+2025-11-27 20:50:27.874 - Loading local tiles for zoom: 10
+2025-11-27 20:50:28.111 - Local tiles loaded successfully, count: 25
+2025-11-27 20:50:28.113 - === Local Tiles Information ===
+2025-11-27 20:50:28.173 - Zoom level 1: 4 tiles
+2025-11-27 20:50:32.809 - Zoom level 10: 23864 tiles
+2025-11-27 20:50:32.813 - Zoom level 2: 16 tiles
+2025-11-27 20:50:32.816 - Zoom level 3: 64 tiles
+2025-11-27 20:50:32.819 - Zoom level 4: 232 tiles
+2025-11-27 20:50:32.843 - Zoom level 5: 843 tiles
+2025-11-27 20:50:32.866 - Zoom level 6: 699 tiles
+2025-11-27 20:50:32.879 - Zoom level 7: 805 tiles
+2025-11-27 20:50:32.936 - Zoom level 8: 1733 tiles
+2025-11-27 20:50:33.076 - Zoom level 9: 6212 tiles
+2025-11-27 20:50:33.076 - Total tiles: 34472
+2025-11-27 20:50:33.080 - Available zoom levels: 10
+2025-11-27 20:50:33.080 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 20:51:12.933 - Checking for local tiles...
+2025-11-27 20:51:12.933 - Found local tiles, using zoom level: 10
+2025-11-27 20:51:12.933 - Loading local tiles for zoom: 10
+2025-11-27 20:51:12.958 - Local tiles loaded successfully, count: 25
+2025-11-27 20:51:12.959 - === Local Tiles Information ===
+2025-11-27 20:51:12.961 - Zoom level 1: 4 tiles
+2025-11-27 20:51:13.486 - Zoom level 10: 23864 tiles
+2025-11-27 20:51:13.487 - Zoom level 2: 16 tiles
+2025-11-27 20:51:13.490 - Zoom level 3: 64 tiles
+2025-11-27 20:51:13.498 - Zoom level 4: 232 tiles
+2025-11-27 20:51:13.520 - Zoom level 5: 843 tiles
+2025-11-27 20:51:13.538 - Zoom level 6: 699 tiles
+2025-11-27 20:51:13.563 - Zoom level 7: 805 tiles
+2025-11-27 20:51:13.617 - Zoom level 8: 1733 tiles
+2025-11-27 20:51:13.759 - Zoom level 9: 6212 tiles
+2025-11-27 20:51:13.759 - Total tiles: 34472
+2025-11-27 20:51:13.760 - Available zoom levels: 10
+2025-11-27 20:51:13.760 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 20:59:18.338 - Checking for local tiles...
+2025-11-27 20:59:18.348 - Found local tiles, using zoom level: 10
+2025-11-27 20:59:18.349 - Loading local tiles for zoom: 10
+2025-11-27 20:59:18.378 - Local tiles loaded successfully, count: 25
+2025-11-27 20:59:18.379 - === Local Tiles Information ===
+2025-11-27 20:59:18.382 - Zoom level 1: 4 tiles
+2025-11-27 20:59:18.914 - Zoom level 10: 23864 tiles
+2025-11-27 20:59:18.925 - Zoom level 2: 16 tiles
+2025-11-27 20:59:18.928 - Zoom level 3: 64 tiles
+2025-11-27 20:59:18.935 - Zoom level 4: 232 tiles
+2025-11-27 20:59:18.950 - Zoom level 5: 843 tiles
+2025-11-27 20:59:18.978 - Zoom level 6: 699 tiles
+2025-11-27 20:59:19.004 - Zoom level 7: 805 tiles
+2025-11-27 20:59:19.048 - Zoom level 8: 1733 tiles
+2025-11-27 20:59:19.181 - Zoom level 9: 6212 tiles
+2025-11-27 20:59:19.181 - Total tiles: 34472
+2025-11-27 20:59:19.193 - Available zoom levels: 10
+2025-11-27 20:59:19.193 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 21:07:58.085 - Checking for local tiles...
+2025-11-27 21:07:58.099 - Found local tiles, using zoom level: 10
+2025-11-27 21:07:58.100 - Loading local tiles for zoom: 10
+2025-11-27 21:07:58.130 - Local tiles loaded successfully, count: 25
+2025-11-27 21:07:58.131 - === Local Tiles Information ===
+2025-11-27 21:07:58.132 - Zoom level 1: 4 tiles
+2025-11-27 21:07:58.640 - Zoom level 10: 23864 tiles
+2025-11-27 21:07:58.641 - Zoom level 2: 16 tiles
+2025-11-27 21:07:58.643 - Zoom level 3: 64 tiles
+2025-11-27 21:07:58.650 - Zoom level 4: 232 tiles
+2025-11-27 21:07:58.670 - Zoom level 5: 843 tiles
+2025-11-27 21:07:58.693 - Zoom level 6: 699 tiles
+2025-11-27 21:07:58.716 - Zoom level 7: 805 tiles
+2025-11-27 21:07:58.760 - Zoom level 8: 1733 tiles
+2025-11-27 21:07:58.901 - Zoom level 9: 6212 tiles
+2025-11-27 21:07:58.901 - Total tiles: 34472
+2025-11-27 21:07:58.901 - Available zoom levels: 10
+2025-11-27 21:07:58.901 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 21:10:14.016 - Checking for local tiles...
+2025-11-27 21:10:14.016 - Found local tiles, using zoom level: 10
+2025-11-27 21:10:14.017 - Loading local tiles for zoom: 10
+2025-11-27 21:10:14.047 - Local tiles loaded successfully, count: 25
+2025-11-27 21:10:14.048 - === Local Tiles Information ===
+2025-11-27 21:10:14.049 - Zoom level 1: 4 tiles
+2025-11-27 21:10:14.559 - Zoom level 10: 23864 tiles
+2025-11-27 21:10:14.568 - Zoom level 2: 16 tiles
+2025-11-27 21:10:14.571 - Zoom level 3: 64 tiles
+2025-11-27 21:10:14.578 - Zoom level 4: 232 tiles
+2025-11-27 21:10:14.597 - Zoom level 5: 843 tiles
+2025-11-27 21:10:14.621 - Zoom level 6: 699 tiles
+2025-11-27 21:10:14.648 - Zoom level 7: 805 tiles
+2025-11-27 21:10:14.692 - Zoom level 8: 1733 tiles
+2025-11-27 21:10:14.843 - Zoom level 9: 6212 tiles
+2025-11-27 21:10:14.843 - Total tiles: 34472
+2025-11-27 21:10:14.844 - Available zoom levels: 10
+2025-11-27 21:10:14.844 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 21:24:08.632 - Checking for local tiles...
+2025-11-27 21:24:08.642 - Found local tiles, using zoom level: 10
+2025-11-27 21:24:08.642 - Loading local tiles for zoom: 10
+2025-11-27 21:24:08.670 - Local tiles loaded successfully, count: 25
+2025-11-27 21:24:08.671 - === Local Tiles Information ===
+2025-11-27 21:24:08.672 - Zoom level 1: 4 tiles
+2025-11-27 21:24:10.798 - Zoom level 10: 23864 tiles
+2025-11-27 21:24:10.799 - Zoom level 2: 16 tiles
+2025-11-27 21:24:10.801 - Zoom level 3: 64 tiles
+2025-11-27 21:24:10.809 - Zoom level 4: 232 tiles
+2025-11-27 21:24:10.842 - Zoom level 5: 843 tiles
+2025-11-27 21:24:10.865 - Zoom level 6: 699 tiles
+2025-11-27 21:24:10.883 - Zoom level 7: 805 tiles
+2025-11-27 21:24:10.935 - Zoom level 8: 1733 tiles
+2025-11-27 21:24:11.363 - Zoom level 9: 6212 tiles
+2025-11-27 21:24:11.364 - Total tiles: 34472
+2025-11-27 21:24:11.364 - Available zoom levels: 10
+2025-11-27 21:24:11.364 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-27 21:26:55.270 - Checking for local tiles...
+2025-11-27 21:26:55.270 - Found local tiles, using zoom level: 10
+2025-11-27 21:26:55.271 - Loading local tiles for zoom: 10
+2025-11-27 21:26:55.301 - Local tiles loaded successfully, count: 25
+2025-11-27 21:26:55.302 - === Local Tiles Information ===
+2025-11-27 21:26:55.305 - Zoom level 1: 4 tiles
+2025-11-27 21:26:55.820 - Zoom level 10: 23864 tiles
+2025-11-27 21:26:55.829 - Zoom level 2: 16 tiles
+2025-11-27 21:26:55.832 - Zoom level 3: 64 tiles
+2025-11-27 21:26:55.839 - Zoom level 4: 232 tiles
+2025-11-27 21:26:55.857 - Zoom level 5: 843 tiles
+2025-11-27 21:26:55.883 - Zoom level 6: 699 tiles
+2025-11-27 21:26:55.909 - Zoom level 7: 805 tiles
+2025-11-27 21:26:55.953 - Zoom level 8: 1733 tiles
+2025-11-27 21:26:56.086 - Zoom level 9: 6212 tiles
+2025-11-27 21:26:56.086 - Total tiles: 34472
+2025-11-27 21:26:56.101 - Available zoom levels: 10
+2025-11-27 21:26:56.101 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:11:53.747 - Checking for local tiles...
+2025-11-28 19:11:53.783 - Found local tiles, using zoom level: 10
+2025-11-28 19:11:53.783 - Loading local tiles for zoom: 10
+2025-11-28 19:11:54.012 - Local tiles loaded successfully, count: 25
+2025-11-28 19:11:54.013 - === Local Tiles Information ===
+2025-11-28 19:11:54.015 - Zoom level 1: 4 tiles
+2025-11-28 19:11:54.523 - Zoom level 10: 23864 tiles
+2025-11-28 19:11:54.524 - Zoom level 2: 16 tiles
+2025-11-28 19:11:54.526 - Zoom level 3: 64 tiles
+2025-11-28 19:11:54.534 - Zoom level 4: 232 tiles
+2025-11-28 19:11:54.558 - Zoom level 5: 843 tiles
+2025-11-28 19:11:54.579 - Zoom level 6: 699 tiles
+2025-11-28 19:11:54.603 - Zoom level 7: 805 tiles
+2025-11-28 19:11:54.648 - Zoom level 8: 1733 tiles
+2025-11-28 19:11:54.786 - Zoom level 9: 6212 tiles
+2025-11-28 19:11:54.786 - Total tiles: 34472
+2025-11-28 19:11:54.786 - Available zoom levels: 10
+2025-11-28 19:11:54.786 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:12:36.994 - Checking for local tiles...
+2025-11-28 19:12:36.995 - Found local tiles, using zoom level: 10
+2025-11-28 19:12:36.995 - Loading local tiles for zoom: 10
+2025-11-28 19:12:37.033 - Local tiles loaded successfully, count: 25
+2025-11-28 19:12:37.034 - === Local Tiles Information ===
+2025-11-28 19:12:37.035 - Zoom level 1: 4 tiles
+2025-11-28 19:12:37.540 - Zoom level 10: 23864 tiles
+2025-11-28 19:12:37.541 - Zoom level 2: 16 tiles
+2025-11-28 19:12:37.544 - Zoom level 3: 64 tiles
+2025-11-28 19:12:37.552 - Zoom level 4: 232 tiles
+2025-11-28 19:12:37.575 - Zoom level 5: 843 tiles
+2025-11-28 19:12:37.594 - Zoom level 6: 699 tiles
+2025-11-28 19:12:37.617 - Zoom level 7: 805 tiles
+2025-11-28 19:12:37.660 - Zoom level 8: 1733 tiles
+2025-11-28 19:12:37.795 - Zoom level 9: 6212 tiles
+2025-11-28 19:12:37.795 - Total tiles: 34472
+2025-11-28 19:12:37.796 - Available zoom levels: 10
+2025-11-28 19:12:37.796 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:21:44.560 - Checking for local tiles...
+2025-11-28 19:21:44.561 - Found local tiles, using zoom level: 10
+2025-11-28 19:21:44.562 - Loading local tiles for zoom: 10
+2025-11-28 19:21:44.603 - Local tiles loaded successfully, count: 25
+2025-11-28 19:21:44.605 - === Local Tiles Information ===
+2025-11-28 19:21:44.607 - Zoom level 1: 4 tiles
+2025-11-28 19:21:45.975 - Zoom level 10: 23864 tiles
+2025-11-28 19:21:45.979 - Zoom level 2: 16 tiles
+2025-11-28 19:21:45.985 - Zoom level 3: 64 tiles
+2025-11-28 19:21:46.000 - Zoom level 4: 232 tiles
+2025-11-28 19:21:46.048 - Zoom level 5: 843 tiles
+2025-11-28 19:21:46.089 - Zoom level 6: 699 tiles
+2025-11-28 19:21:46.136 - Zoom level 7: 805 tiles
+2025-11-28 19:21:46.252 - Zoom level 8: 1733 tiles
+2025-11-28 19:21:46.622 - Zoom level 9: 6212 tiles
+2025-11-28 19:21:46.622 - Total tiles: 34472
+2025-11-28 19:21:46.623 - Available zoom levels: 10
+2025-11-28 19:21:46.623 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:23:54.150 - Checking for local tiles...
+2025-11-28 19:23:54.153 - Found local tiles, using zoom level: 10
+2025-11-28 19:23:54.154 - Loading local tiles for zoom: 10
+2025-11-28 19:23:54.193 - Local tiles loaded successfully, count: 25
+2025-11-28 19:23:54.195 - === Local Tiles Information ===
+2025-11-28 19:23:54.197 - Zoom level 1: 4 tiles
+2025-11-28 19:23:55.384 - Zoom level 10: 23864 tiles
+2025-11-28 19:23:55.387 - Zoom level 2: 16 tiles
+2025-11-28 19:23:55.392 - Zoom level 3: 64 tiles
+2025-11-28 19:23:55.405 - Zoom level 4: 232 tiles
+2025-11-28 19:23:55.441 - Zoom level 5: 843 tiles
+2025-11-28 19:23:55.475 - Zoom level 6: 699 tiles
+2025-11-28 19:23:55.512 - Zoom level 7: 805 tiles
+2025-11-28 19:23:55.582 - Zoom level 8: 1733 tiles
+2025-11-28 19:23:55.836 - Zoom level 9: 6212 tiles
+2025-11-28 19:23:55.837 - Total tiles: 34472
+2025-11-28 19:23:55.838 - Available zoom levels: 10
+2025-11-28 19:23:55.838 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:34:36.361 - Checking for local tiles...
+2025-11-28 19:34:36.426 - Found local tiles, using zoom level: 10
+2025-11-28 19:34:36.426 - Loading local tiles for zoom: 10
+2025-11-28 19:34:36.460 - Local tiles loaded successfully, count: 25
+2025-11-28 19:34:36.462 - === Local Tiles Information ===
+2025-11-28 19:34:36.464 - Zoom level 1: 4 tiles
+2025-11-28 19:34:40.224 - Zoom level 10: 23864 tiles
+2025-11-28 19:34:40.227 - Zoom level 2: 16 tiles
+2025-11-28 19:34:40.234 - Zoom level 3: 64 tiles
+2025-11-28 19:34:40.271 - Zoom level 4: 232 tiles
+2025-11-28 19:34:40.319 - Zoom level 5: 843 tiles
+2025-11-28 19:34:40.373 - Zoom level 6: 699 tiles
+2025-11-28 19:34:40.423 - Zoom level 7: 805 tiles
+2025-11-28 19:34:40.591 - Zoom level 8: 1733 tiles
+2025-11-28 19:34:41.177 - Zoom level 9: 6212 tiles
+2025-11-28 19:34:41.179 - Total tiles: 34472
+2025-11-28 19:34:41.181 - Available zoom levels: 10
+2025-11-28 19:34:41.182 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:48:48.876 - Checking for local tiles...
+2025-11-28 19:48:48.879 - Found local tiles, using zoom level: 10
+2025-11-28 19:48:48.881 - Loading local tiles for zoom: 10
+2025-11-28 19:48:48.917 - Local tiles loaded successfully, count: 25
+2025-11-28 19:48:48.919 - === Local Tiles Information ===
+2025-11-28 19:48:48.921 - Zoom level 1: 4 tiles
+2025-11-28 19:48:50.362 - Zoom level 10: 23864 tiles
+2025-11-28 19:48:50.366 - Zoom level 2: 16 tiles
+2025-11-28 19:48:50.371 - Zoom level 3: 64 tiles
+2025-11-28 19:48:50.387 - Zoom level 4: 232 tiles
+2025-11-28 19:48:50.435 - Zoom level 5: 843 tiles
+2025-11-28 19:48:50.479 - Zoom level 6: 699 tiles
+2025-11-28 19:48:50.531 - Zoom level 7: 805 tiles
+2025-11-28 19:48:50.628 - Zoom level 8: 1733 tiles
+2025-11-28 19:48:50.969 - Zoom level 9: 6212 tiles
+2025-11-28 19:48:50.970 - Total tiles: 34472
+2025-11-28 19:48:50.970 - Available zoom levels: 10
+2025-11-28 19:48:50.971 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:49:24.435 - Checking for local tiles...
+2025-11-28 19:49:24.437 - Found local tiles, using zoom level: 10
+2025-11-28 19:49:24.437 - Loading local tiles for zoom: 10
+2025-11-28 19:49:24.473 - Local tiles loaded successfully, count: 25
+2025-11-28 19:49:24.474 - === Local Tiles Information ===
+2025-11-28 19:49:24.476 - Zoom level 1: 4 tiles
+2025-11-28 19:49:25.643 - Zoom level 10: 23864 tiles
+2025-11-28 19:49:25.646 - Zoom level 2: 16 tiles
+2025-11-28 19:49:25.652 - Zoom level 3: 64 tiles
+2025-11-28 19:49:25.663 - Zoom level 4: 232 tiles
+2025-11-28 19:49:25.701 - Zoom level 5: 843 tiles
+2025-11-28 19:49:25.732 - Zoom level 6: 699 tiles
+2025-11-28 19:49:25.769 - Zoom level 7: 805 tiles
+2025-11-28 19:49:25.846 - Zoom level 8: 1733 tiles
+2025-11-28 19:49:26.096 - Zoom level 9: 6212 tiles
+2025-11-28 19:49:26.097 - Total tiles: 34472
+2025-11-28 19:49:26.098 - Available zoom levels: 10
+2025-11-28 19:49:26.099 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 19:53:10.533 - Checking for local tiles...
+2025-11-28 19:53:10.534 - Found local tiles, using zoom level: 10
+2025-11-28 19:53:10.535 - Loading local tiles for zoom: 10
+2025-11-28 19:53:10.569 - Local tiles loaded successfully, count: 25
+2025-11-28 19:53:10.571 - === Local Tiles Information ===
+2025-11-28 19:53:10.574 - Zoom level 1: 4 tiles
+2025-11-28 19:53:11.930 - Zoom level 10: 23864 tiles
+2025-11-28 19:53:11.933 - Zoom level 2: 16 tiles
+2025-11-28 19:53:11.940 - Zoom level 3: 64 tiles
+2025-11-28 19:53:11.954 - Zoom level 4: 232 tiles
+2025-11-28 19:53:11.997 - Zoom level 5: 843 tiles
+2025-11-28 19:53:12.036 - Zoom level 6: 699 tiles
+2025-11-28 19:53:12.082 - Zoom level 7: 805 tiles
+2025-11-28 19:53:12.173 - Zoom level 8: 1733 tiles
+2025-11-28 19:53:12.475 - Zoom level 9: 6212 tiles
+2025-11-28 19:53:12.476 - Total tiles: 34472
+2025-11-28 19:53:12.477 - Available zoom levels: 10
+2025-11-28 19:53:12.477 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 20:04:16.608 - Checking for local tiles...
+2025-11-28 20:04:16.609 - Found local tiles, using zoom level: 10
+2025-11-28 20:04:16.609 - Loading local tiles for zoom: 10
+2025-11-28 20:04:16.648 - Local tiles loaded successfully, count: 25
+2025-11-28 20:04:16.650 - === Local Tiles Information ===
+2025-11-28 20:04:16.652 - Zoom level 1: 4 tiles
+2025-11-28 20:04:17.977 - Zoom level 10: 23864 tiles
+2025-11-28 20:04:17.982 - Zoom level 2: 16 tiles
+2025-11-28 20:04:17.988 - Zoom level 3: 64 tiles
+2025-11-28 20:04:18.003 - Zoom level 4: 232 tiles
+2025-11-28 20:04:18.051 - Zoom level 5: 843 tiles
+2025-11-28 20:04:18.090 - Zoom level 6: 699 tiles
+2025-11-28 20:04:18.139 - Zoom level 7: 805 tiles
+2025-11-28 20:04:18.231 - Zoom level 8: 1733 tiles
+2025-11-28 20:04:18.549 - Zoom level 9: 6212 tiles
+2025-11-28 20:04:18.550 - Total tiles: 34472
+2025-11-28 20:04:18.551 - Available zoom levels: 10
+2025-11-28 20:04:18.551 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9
+2025-11-28 20:12:55.009 - Checking for local tiles...
+2025-11-28 20:12:55.010 - Found local tiles, using zoom level: 10
+2025-11-28 20:12:55.011 - Loading local tiles for zoom: 10
+2025-11-28 20:12:55.047 - Local tiles loaded successfully, count: 25
+2025-11-28 20:12:55.049 - === Local Tiles Information ===
+2025-11-28 20:12:55.050 - Zoom level 1: 4 tiles
+2025-11-28 20:12:56.041 - Zoom level 10: 23864 tiles
+2025-11-28 20:12:56.044 - Zoom level 2: 16 tiles
+2025-11-28 20:12:56.048 - Zoom level 3: 64 tiles
+2025-11-28 20:12:56.060 - Zoom level 4: 232 tiles
+2025-11-28 20:12:56.096 - Zoom level 5: 843 tiles
+2025-11-28 20:12:56.125 - Zoom level 6: 699 tiles
+2025-11-28 20:12:56.162 - Zoom level 7: 805 tiles
+2025-11-28 20:12:56.229 - Zoom level 8: 1733 tiles
+2025-11-28 20:12:56.451 - Zoom level 9: 6212 tiles
+2025-11-28 20:12:56.452 - Total tiles: 34472
+2025-11-28 20:12:56.452 - Available zoom levels: 10
+2025-11-28 20:12:56.453 - Zoom levels: 1, 10, 2, 3, 4, 5, 6, 7, 8, 9

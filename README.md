@@ -309,6 +309,8 @@ UGIMS (Underground Utility Information Management System - 城市地下管网智
 
 ## 🛠️ 技术架构
 
+> 📁 **项目结构**: 详细的目录组织和模块说明请参考 [PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
 ### 技术栈
 | 层次 | 技术 | 说明 |
 |------|------|------|

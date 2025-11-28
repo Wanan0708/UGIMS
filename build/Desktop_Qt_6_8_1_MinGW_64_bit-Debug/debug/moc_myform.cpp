@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../../MyGis/myform.h"
+#include "../../../src/ui/myform.h"
 #include <QtGui/qtextcursor.h>
 #include <QtCore/qmetatype.h>
 
@@ -59,7 +59,9 @@ static constexpr auto qt_meta_stringdata_ZN6MyFormE = QtMocHelpers::stringData(
     "onRegionDownloadProgress",
     "zoom",
     "onOverlayPanToggled",
-    "checked"
+    "checked",
+    "loadPipelineData",
+    "onViewTransformChanged"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -71,7 +73,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      16,   14, // methods
+      18,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -79,22 +81,24 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,  110,    2, 0x08,    1 /* Private */,
-       3,    0,  111,    2, 0x08,    2 /* Private */,
-       4,    0,  112,    2, 0x08,    3 /* Private */,
-       5,    0,  113,    2, 0x08,    4 /* Private */,
-       6,    0,  114,    2, 0x08,    5 /* Private */,
-       7,    0,  115,    2, 0x08,    6 /* Private */,
-       8,    0,  116,    2, 0x08,    7 /* Private */,
-       9,    0,  117,    2, 0x08,    8 /* Private */,
-      10,    0,  118,    2, 0x08,    9 /* Private */,
-      11,    0,  119,    2, 0x08,   10 /* Private */,
-      12,    0,  120,    2, 0x08,   11 /* Private */,
-      13,    0,  121,    2, 0x08,   12 /* Private */,
-      14,    0,  122,    2, 0x08,   13 /* Private */,
-      15,    2,  123,    2, 0x08,   14 /* Private */,
-      18,    3,  128,    2, 0x08,   17 /* Private */,
-      20,    1,  135,    2, 0x08,   21 /* Private */,
+       1,    0,  122,    2, 0x08,    1 /* Private */,
+       3,    0,  123,    2, 0x08,    2 /* Private */,
+       4,    0,  124,    2, 0x08,    3 /* Private */,
+       5,    0,  125,    2, 0x08,    4 /* Private */,
+       6,    0,  126,    2, 0x08,    5 /* Private */,
+       7,    0,  127,    2, 0x08,    6 /* Private */,
+       8,    0,  128,    2, 0x08,    7 /* Private */,
+       9,    0,  129,    2, 0x08,    8 /* Private */,
+      10,    0,  130,    2, 0x08,    9 /* Private */,
+      11,    0,  131,    2, 0x08,   10 /* Private */,
+      12,    0,  132,    2, 0x08,   11 /* Private */,
+      13,    0,  133,    2, 0x08,   12 /* Private */,
+      14,    0,  134,    2, 0x08,   13 /* Private */,
+      15,    2,  135,    2, 0x08,   14 /* Private */,
+      18,    3,  140,    2, 0x08,   17 /* Private */,
+      20,    1,  147,    2, 0x08,   21 /* Private */,
+      22,    0,  150,    2, 0x08,   23 /* Private */,
+      23,    0,  151,    2, 0x08,   24 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -113,6 +117,8 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
     QMetaType::Void, QMetaType::Int, QMetaType::Int,   16,   17,
     QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int,   16,   17,   19,
     QMetaType::Void, QMetaType::Bool,   21,
+    QMetaType::Void,
+    QMetaType::Void,
 
        0        // eod
 };
@@ -163,7 +169,11 @@ Q_CONSTINIT const QMetaObject MyForm::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
         // method 'onOverlayPanToggled'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<bool, std::false_type>
+        QtPrivate::TypeAndForceComplete<bool, std::false_type>,
+        // method 'loadPipelineData'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onViewTransformChanged'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
 } };
@@ -189,6 +199,8 @@ void MyForm::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 13: _t->onTileDownloadProgress((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
         case 14: _t->onRegionDownloadProgress((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3]))); break;
         case 15: _t->onOverlayPanToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+        case 16: _t->loadPipelineData(); break;
+        case 17: _t->onViewTransformChanged(); break;
         default: ;
         }
     }
@@ -213,14 +225,14 @@ int MyForm::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 16)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 16;
+        _id -= 18;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 16)
+        if (_id < 18)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 16;
+        _id -= 18;
     }
     return _id;
 }

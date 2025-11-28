@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../../MyGis/tileworker.h"
+#include "../../../src/tilemap/tileworker.h"
 #include <QtCore/qmetatype.h>
 
 #include <QtCore/qtmochelpers.h>
@@ -48,20 +48,12 @@ static constexpr auto qt_meta_stringdata_ZN10TileWorkerE = QtMocHelpers::stringD
     "errorString",
     "tileLoaded",
     "pixmap",
-    "tileLoadedBytes",
     "downloadAndSaveTile",
     "url",
     "filePath",
     "loadTileFromFile",
-    "downloadAsync",
-    "configureNetworkRetries",
-    "retryMax",
-    "backoffInitialMs",
     "onDownloadFinished",
-    "onDownloadTimeout",
-    "onReplyFinished",
-    "onReplyReadyRead",
-    "onReplyError"
+    "onDownloadTimeout"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -73,42 +65,30 @@ Q_CONSTINIT static const uint qt_meta_data_ZN10TileWorkerE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+       6,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       3,       // signalCount
+       2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    6,   86,    2, 0x06,    1 /* Public */,
-       9,    6,   99,    2, 0x06,    8 /* Public */,
-      11,    6,  112,    2, 0x06,   15 /* Public */,
+       1,    6,   50,    2, 0x06,    1 /* Public */,
+       9,    6,   63,    2, 0x06,    8 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-      12,    5,  125,    2, 0x0a,   22 /* Public */,
-      15,    4,  136,    2, 0x0a,   28 /* Public */,
-      16,    5,  145,    2, 0x0a,   33 /* Public */,
-      17,    2,  156,    2, 0x0a,   39 /* Public */,
-      20,    0,  161,    2, 0x08,   42 /* Private */,
-      21,    0,  162,    2, 0x08,   43 /* Private */,
-      22,    0,  163,    2, 0x08,   44 /* Private */,
-      23,    0,  164,    2, 0x08,   45 /* Private */,
-      24,    0,  165,    2, 0x08,   46 /* Private */,
+      11,    5,   76,    2, 0x0a,   15 /* Public */,
+      14,    4,   87,    2, 0x0a,   21 /* Public */,
+      15,    0,   96,    2, 0x08,   26 /* Private */,
+      16,    0,   97,    2, 0x08,   27 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QByteArray, QMetaType::Bool, QMetaType::QString,    3,    4,    5,    6,    7,    8,
     QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QPixmap, QMetaType::Bool, QMetaType::QString,    3,    4,    5,   10,    7,    8,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QByteArray, QMetaType::Bool, QMetaType::QString,    3,    4,    5,    6,    7,    8,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString,    3,    4,    5,   13,   14,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QString,    3,    4,    5,   14,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString,    3,    4,    5,   13,   14,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int,   18,   19,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString,    3,    4,    5,   12,   13,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int, QMetaType::QString,    3,    4,    5,   13,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -140,14 +120,6 @@ Q_CONSTINIT const QMetaObject TileWorker::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<const QPixmap &, std::false_type>,
         QtPrivate::TypeAndForceComplete<bool, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
-        // method 'tileLoadedBytes'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QByteArray &, std::false_type>,
-        QtPrivate::TypeAndForceComplete<bool, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
         // method 'downloadAndSaveTile'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
@@ -161,26 +133,9 @@ Q_CONSTINIT const QMetaObject TileWorker::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
-        // method 'downloadAsync'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
-        // method 'configureNetworkRetries'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>,
         // method 'onDownloadFinished'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onDownloadTimeout'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onReplyFinished'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onReplyReadyRead'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onReplyError'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -193,16 +148,10 @@ void TileWorker::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         switch (_id) {
         case 0: _t->tileDownloaded((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QByteArray>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<bool>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[6]))); break;
         case 1: _t->tileLoaded((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QPixmap>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<bool>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[6]))); break;
-        case 2: _t->tileLoadedBytes((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QByteArray>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<bool>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[6]))); break;
-        case 3: _t->downloadAndSaveTile((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[5]))); break;
-        case 4: _t->loadTileFromFile((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[4]))); break;
-        case 5: _t->downloadAsync((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[5]))); break;
-        case 6: _t->configureNetworkRetries((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
-        case 7: _t->onDownloadFinished(); break;
-        case 8: _t->onDownloadTimeout(); break;
-        case 9: _t->onReplyFinished(); break;
-        case 10: _t->onReplyReadyRead(); break;
-        case 11: _t->onReplyError(); break;
+        case 2: _t->downloadAndSaveTile((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[5]))); break;
+        case 3: _t->loadTileFromFile((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[4]))); break;
+        case 4: _t->onDownloadFinished(); break;
+        case 5: _t->onDownloadTimeout(); break;
         default: ;
         }
     }
@@ -219,13 +168,6 @@ void TileWorker::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
             using _q_method_type = void (TileWorker::*)(int , int , int , const QPixmap & , bool , const QString & );
             if (_q_method_type _q_method = &TileWorker::tileLoaded; *reinterpret_cast<_q_method_type *>(_a[1]) == _q_method) {
                 *result = 1;
-                return;
-            }
-        }
-        {
-            using _q_method_type = void (TileWorker::*)(int , int , int , const QByteArray & , bool , const QString & );
-            if (_q_method_type _q_method = &TileWorker::tileLoadedBytes; *reinterpret_cast<_q_method_type *>(_a[1]) == _q_method) {
-                *result = 2;
                 return;
             }
         }
@@ -251,14 +193,14 @@ int TileWorker::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 6;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 6)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 12;
+        _id -= 6;
     }
     return _id;
 }
@@ -275,12 +217,5 @@ void TileWorker::tileLoaded(int _t1, int _t2, int _t3, const QPixmap & _t4, bool
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t5))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t6))) };
     QMetaObject::activate(this, &staticMetaObject, 1, _a);
-}
-
-// SIGNAL 2
-void TileWorker::tileLoadedBytes(int _t1, int _t2, int _t3, const QByteArray & _t4, bool _t5, const QString & _t6)
-{
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t5))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t6))) };
-    QMetaObject::activate(this, &staticMetaObject, 2, _a);
 }
 QT_WARNING_POP

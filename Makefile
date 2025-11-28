@@ -421,11 +421,12 @@ Makefile: CustomTitleBarApp.pro ../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/win3
 		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Widgets.prl \
 		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Gui.prl \
 		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Network.prl \
+		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Sql.prl \
 		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Core.prl \
 		../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6EntryPoint.prl \
 		../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/features/build_pass.prf \
-		image.qrc \
-		style.qrc
+		resources/image.qrc \
+		resources/style.qrc
 	$(QMAKE) -o Makefile CustomTitleBarApp.pro
 ../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/features/spec_pre.prf:
 ../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/features/device_config.prf:
@@ -778,11 +779,12 @@ CustomTitleBarApp.pro:
 ../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Widgets.prl:
 ../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Gui.prl:
 ../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Network.prl:
+../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Sql.prl:
 ../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6Core.prl:
 ../../../Softwore/Qt/6.8.1/mingw_64/lib/Qt6EntryPoint.prl:
 ../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/features/build_pass.prf:
-image.qrc:
-style.qrc:
+resources/image.qrc:
+resources/style.qrc:
 qmake: FORCE
 	@$(QMAKE) -o Makefile CustomTitleBarApp.pro
 

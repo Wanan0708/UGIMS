@@ -48,6 +48,11 @@ Win32/
 .obj/
 *.build/
 
+# Third-party dependencies (collected by windeployqt)
+third_party/
+*.dll
+!src/**/*.dll
+
 # CMake build files
 CMakeFiles/
 CMakeCache.txt

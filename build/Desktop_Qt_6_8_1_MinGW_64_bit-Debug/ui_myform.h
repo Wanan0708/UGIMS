@@ -28,6 +28,7 @@ public:
     QGridLayout *gridLayout;
     QVBoxLayout *verticalLayout_2;
     QWidget *functionalArea;
+    QLabel *statusLabel;
     QProgressBar *progressBar;
     QLabel *headerLabel;
     QSplitter *splitter;
@@ -55,6 +56,9 @@ public:
         functionalArea->setSizePolicy(sizePolicy);
         functionalArea->setMinimumSize(QSize(0, 150));
         functionalArea->setMaximumSize(QSize(16777215, 150));
+        statusLabel = new QLabel(functionalArea);
+        statusLabel->setObjectName("statusLabel");
+        statusLabel->setGeometry(QRect(10, 40, 500, 20));
         progressBar = new QProgressBar(functionalArea);
         progressBar->setObjectName("progressBar");
         progressBar->setGeometry(QRect(10, 65, 500, 20));
@@ -104,6 +108,7 @@ public:
     void retranslateUi(QWidget *MyForm)
     {
         MyForm->setWindowTitle(QCoreApplication::translate("MyForm", "Form", nullptr));
+        statusLabel->setText(QCoreApplication::translate("MyForm", "Ready", nullptr));
         headerLabel->setText(QCoreApplication::translate("MyForm", "Map Controls:", nullptr));
     } // retranslateUi
 
