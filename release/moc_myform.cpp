@@ -61,7 +61,22 @@ static constexpr auto qt_meta_stringdata_ZN6MyFormE = QtMocHelpers::stringData(
     "onOverlayPanToggled",
     "checked",
     "loadPipelineData",
-    "onViewTransformChanged"
+    "onViewTransformChanged",
+    "onLoadDataButtonClicked",
+    "onDownloadMapButtonClicked",
+    "onBurstAnalysisButtonClicked",
+    "onConnectivityAnalysisButtonClicked",
+    "onWorkOrderButtonClicked",
+    "onAssetManagementButtonClicked",
+    "onSettingsButtonClicked",
+    "onHelpButtonClicked",
+    "onDeviceTreeItemClicked",
+    "QModelIndex",
+    "index",
+    "onDeviceTreeItemDoubleClicked",
+    "onDeviceSearchTextChanged",
+    "text",
+    "onAboutButtonClicked"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -73,7 +88,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      18,   14, // methods
+      30,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -81,24 +96,36 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,  122,    2, 0x08,    1 /* Private */,
-       3,    0,  123,    2, 0x08,    2 /* Private */,
-       4,    0,  124,    2, 0x08,    3 /* Private */,
-       5,    0,  125,    2, 0x08,    4 /* Private */,
-       6,    0,  126,    2, 0x08,    5 /* Private */,
-       7,    0,  127,    2, 0x08,    6 /* Private */,
-       8,    0,  128,    2, 0x08,    7 /* Private */,
-       9,    0,  129,    2, 0x08,    8 /* Private */,
-      10,    0,  130,    2, 0x08,    9 /* Private */,
-      11,    0,  131,    2, 0x08,   10 /* Private */,
-      12,    0,  132,    2, 0x08,   11 /* Private */,
-      13,    0,  133,    2, 0x08,   12 /* Private */,
-      14,    0,  134,    2, 0x08,   13 /* Private */,
-      15,    2,  135,    2, 0x08,   14 /* Private */,
-      18,    3,  140,    2, 0x08,   17 /* Private */,
-      20,    1,  147,    2, 0x08,   21 /* Private */,
-      22,    0,  150,    2, 0x08,   23 /* Private */,
-      23,    0,  151,    2, 0x08,   24 /* Private */,
+       1,    0,  194,    2, 0x08,    1 /* Private */,
+       3,    0,  195,    2, 0x08,    2 /* Private */,
+       4,    0,  196,    2, 0x08,    3 /* Private */,
+       5,    0,  197,    2, 0x08,    4 /* Private */,
+       6,    0,  198,    2, 0x08,    5 /* Private */,
+       7,    0,  199,    2, 0x08,    6 /* Private */,
+       8,    0,  200,    2, 0x08,    7 /* Private */,
+       9,    0,  201,    2, 0x08,    8 /* Private */,
+      10,    0,  202,    2, 0x08,    9 /* Private */,
+      11,    0,  203,    2, 0x08,   10 /* Private */,
+      12,    0,  204,    2, 0x08,   11 /* Private */,
+      13,    0,  205,    2, 0x08,   12 /* Private */,
+      14,    0,  206,    2, 0x08,   13 /* Private */,
+      15,    2,  207,    2, 0x08,   14 /* Private */,
+      18,    3,  212,    2, 0x08,   17 /* Private */,
+      20,    1,  219,    2, 0x08,   21 /* Private */,
+      22,    0,  222,    2, 0x08,   23 /* Private */,
+      23,    0,  223,    2, 0x08,   24 /* Private */,
+      24,    0,  224,    2, 0x08,   25 /* Private */,
+      25,    0,  225,    2, 0x08,   26 /* Private */,
+      26,    0,  226,    2, 0x08,   27 /* Private */,
+      27,    0,  227,    2, 0x08,   28 /* Private */,
+      28,    0,  228,    2, 0x08,   29 /* Private */,
+      29,    0,  229,    2, 0x08,   30 /* Private */,
+      30,    0,  230,    2, 0x08,   31 /* Private */,
+      31,    0,  231,    2, 0x08,   32 /* Private */,
+      32,    1,  232,    2, 0x08,   33 /* Private */,
+      35,    1,  235,    2, 0x08,   35 /* Private */,
+      36,    1,  238,    2, 0x08,   37 /* Private */,
+      38,    0,  241,    2, 0x08,   39 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -118,6 +145,18 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
     QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int,   16,   17,   19,
     QMetaType::Void, QMetaType::Bool,   21,
     QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, 0x80000000 | 33,   34,
+    QMetaType::Void, 0x80000000 | 33,   34,
+    QMetaType::Void, QMetaType::QString,   37,
     QMetaType::Void,
 
        0        // eod
@@ -173,6 +212,33 @@ Q_CONSTINIT const QMetaObject MyForm::staticMetaObject = { {
         // method 'loadPipelineData'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onViewTransformChanged'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onLoadDataButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onDownloadMapButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onBurstAnalysisButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onConnectivityAnalysisButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onWorkOrderButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onAssetManagementButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onSettingsButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onHelpButtonClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onDeviceTreeItemClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QModelIndex &, std::false_type>,
+        // method 'onDeviceTreeItemDoubleClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QModelIndex &, std::false_type>,
+        // method 'onDeviceSearchTextChanged'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
+        // method 'onAboutButtonClicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -201,6 +267,18 @@ void MyForm::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 15: _t->onOverlayPanToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 16: _t->loadPipelineData(); break;
         case 17: _t->onViewTransformChanged(); break;
+        case 18: _t->onLoadDataButtonClicked(); break;
+        case 19: _t->onDownloadMapButtonClicked(); break;
+        case 20: _t->onBurstAnalysisButtonClicked(); break;
+        case 21: _t->onConnectivityAnalysisButtonClicked(); break;
+        case 22: _t->onWorkOrderButtonClicked(); break;
+        case 23: _t->onAssetManagementButtonClicked(); break;
+        case 24: _t->onSettingsButtonClicked(); break;
+        case 25: _t->onHelpButtonClicked(); break;
+        case 26: _t->onDeviceTreeItemClicked((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
+        case 27: _t->onDeviceTreeItemDoubleClicked((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
+        case 28: _t->onDeviceSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 29: _t->onAboutButtonClicked(); break;
         default: ;
         }
     }
@@ -225,14 +303,14 @@ int MyForm::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 18)
+        if (_id < 30)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 18;
+        _id -= 30;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 18)
+        if (_id < 30)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 18;
+        _id -= 30;
     }
     return _id;
 }

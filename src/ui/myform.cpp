@@ -1,5 +1,6 @@
 #include "myform.h"
 #include "ui_myform.h"
+#include "core/common/version.h"  // 添加版本信息头文件
 #include "tilemap/tilemapmanager.h"  // 添加瓦片地图管理器头文件
 #include <QDebug>
 #include <QFileDialog>
@@ -28,6 +29,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
+#include <QGridLayout>  // 添加网格布局头文件
 #include <QFontMetrics>
 #include <QVBoxLayout>
 #include <QPainter>
@@ -58,6 +60,7 @@ MyForm::MyForm(QWidget *parent)
     , progressBar(nullptr)  // 初始化进度条
     , isDownloading(false)  // 初始化下载状态
     , viewUpdateTimer(nullptr)  // 初始化更新定时器
+    , deviceTreeModel(nullptr)  // 初始化设备树模型
 {
     logMessage("=== MyForm constructor started ===");
     ui->setupUi(this);
@@ -65,10 +68,16 @@ MyForm::MyForm(QWidget *parent)
     // 设置功能区
     setupFunctionalArea();
     
+    // 设置设备树
+    setupDeviceTree();
+    
+    // 连接搜索框信号
+    connect(ui->deviceSearchBox, &QLineEdit::textChanged, this, &MyForm::onDeviceSearchTextChanged);
+    
     logMessage("=== MyForm constructor finished (UI setup only) ===");
     
     // 异步初始化地图区域（延迟100ms，让窗口先显示）
-    QTimer::singleShot(100, this, [this]() {
+    QTimer::singleShot(10, this, [this]() {
         qDebug() << "=== Starting async map area initialization ===";
         try {
             setupMapArea();
@@ -83,7 +92,7 @@ MyForm::MyForm(QWidget *parent)
     });
     
     // 异步初始化管网可视化（延迟800ms执行，确保地图先初始化）
-    QTimer::singleShot(800, this, [this]() {
+    QTimer::singleShot(300, this, [this]() {
         qDebug() << "=== Starting async pipeline visualization initialization ===";
         updateStatus("正在初始化管网可视化...");
         
@@ -148,6 +157,8 @@ void MyForm::resizeEvent(QResizeEvent *event)
     }
     // 重新定位右上角浮动工具条
     positionGraphicsOverlay();
+    // 重新定位浮动状态栏
+    positionFloatingStatusBar();
 }
 
 void MyForm::setupSplitter()
@@ -169,220 +180,115 @@ void MyForm::setupFunctionalArea() {
     // 为功能区设置对象名称，以便应用样式
     ui->functionalArea->setObjectName("functionalArea");
     
-    // 地图控制按钮已移除：Zoom In/Out 与 Pan 改由 graphics 浮层提供
-    
-    // 初始化进度条
-    progressBar = ui->progressBar;
-    progressBar->setVisible(false);  // 初始时隐藏进度条
-    progressBar->setRange(0, 100);
-    progressBar->setValue(0);
-    
-    // 连接区域下载进度信号（在tileMapManager创建后再连接）
     // 初始化状态
     updateStatus("Ready");
 
-    // 添加菜单栏，将常用按钮动作放入菜单
-    QMenuBar *menuBar = new QMenuBar(ui->functionalArea);
-    menuBar->setNativeMenuBar(false);
-    menuBar->setObjectName("mainMenuBar");
-    QMenu *menu = new QMenu(tr("文件"), menuBar);
-    menu->setObjectName("fileMenu");
+    // 设置工具栏按钮的图标
+    ui->newButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
+    ui->openButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogOpenButton));
+    ui->saveButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
+    ui->saveAsButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
+    ui->undoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
+    ui->redoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
 
-    QAction *actNew = new QAction(tr("新建"), menu);
-    QAction *actOpen = new QAction(tr("打开"), menu);
-    QAction *actSave = new QAction(tr("保存"), menu);
-    QAction *actSaveAs = new QAction(tr("另存为"), menu);
-    QAction *actUndo = new QAction(tr("撤销"), menu);
-    QAction *actRedo = new QAction(tr("重做"), menu);
-    QAction *actMapMgr = new QAction(tr("地图管理"), menu);
-
-    actNew->setShortcut(QKeySequence::New);
-    actOpen->setShortcut(QKeySequence::Open);
-    actSave->setShortcut(QKeySequence::Save);
-    actSaveAs->setShortcut(QKeySequence::SaveAs);
-    actUndo->setShortcut(QKeySequence::Undo);
-    actRedo->setShortcut(QKeySequence::Redo);
-
-    // 预估列宽：图标列固定，文本列和快捷键列取最大值，确保完整显示
-    QVector<QAction*> allActs{actNew, actOpen, actSave, actSaveAs, actUndo, actRedo};
-    QFontMetrics fm(menu->font());
-    int maxTextW = 0;
-    int maxScW = 0;
-    for (QAction *a : allActs) {
-        // 使用 boundingRect 宽度，避免 advance 低估字形外沿
-        maxTextW = qMax(maxTextW, fm.boundingRect(a->text()).width());
-        maxScW = qMax(maxScW, fm.boundingRect(a->shortcut().toString(QKeySequence::NativeText)).width());
-    }
-    const int iconColW = 20;        // 图标列宽（更紧凑）
-    const int gap = 6;              // 列间距（更紧凑）
-    const int paddingLR = 8;        // 行内左右内边距（视感留白）
-    int panel = menu->style()->pixelMetric(QStyle::PM_MenuPanelWidth, nullptr, menu);
-    int hmargin = menu->style()->pixelMetric(QStyle::PM_MenuHMargin, nullptr, menu);
-    QMargins cm = menu->contentsMargins();
-    // 额外边距：样式面板+左右边距+控件自身内容边距+样式表边框(2px) + 额外保护像素
-    int extra = 2 * (panel + hmargin) + cm.left() + cm.right() + 2 + 2;
-    int computedMenuW = iconColW + gap + maxTextW + gap + maxScW + (2 * paddingLR) + extra; // 内容+内边距+系统边距
-    menu->setMinimumWidth(computedMenuW);
-
-    // 自定义 QWidgetAction 项（图标左、文本中左对齐、快捷键右）
-    auto addMenuItem = [&](QAction *act, const std::function<void()> &onClick) {
-        QWidgetAction *wa = new QWidgetAction(menu);
-        QPushButton *btn = new QPushButton; // 使用按钮承载，便于 hover/press 效果和点击信号
-        btn->setFlat(true);
-        btn->setMouseTracking(true);
-        btn->setAttribute(Qt::WA_Hover, true);
-        btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    // 设置工具栏按钮的样式
+    auto setToolButtonStyle = [](QToolButton *btn) {
+        btn->setIconSize(QSize(20, 20));
+        btn->setFixedSize(32, 32);
         btn->setStyleSheet(
-            QString("QPushButton{background:#ffffff; border:0; padding:10px %1; color:#222; font-weight:500; text-align:left;}")
-                .arg(paddingLR) +
-            // 更明显的悬浮/按下效果（不更改鼠标样式）
-            "QPushButton:hover{background:#eef2ff;}"
-            "QPushButton:pressed{background:#dde7ff;}"
+            "QToolButton{background:transparent; border:none; padding:4px;}"
+            "QToolButton:hover{background:rgba(255,122,24,0.15); border-radius:4px;}"
+            "QToolButton:pressed{background:rgba(255,122,24,0.30); border-radius:4px;}"
         );
-        btn->setMinimumWidth(computedMenuW);
-
-        QWidget *inner = new QWidget(btn);
-        inner->setAttribute(Qt::WA_TransparentForMouseEvents, true); // 让 hover 事件作用于按钮本体
-        QHBoxLayout *h = new QHBoxLayout(inner);
-        h->setContentsMargins(0, 0, 0, 0);
-        h->setSpacing(gap);
-
-        QLabel *iconLabel = new QLabel(inner);
-        QIcon ico = act->icon();
-        if (ico.isNull()) {
-            // 兜底使用文件图标，避免为空不显示
-            ico = QApplication::style()->standardIcon(QStyle::SP_FileIcon);
-        }
-        iconLabel->setPixmap(ico.pixmap(18, 18));
-        iconLabel->setFixedWidth(iconColW);
-        iconLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-        h->addWidget(iconLabel);
-
-        QLabel *textLabel = new QLabel(act->text(), inner);
-        textLabel->setStyleSheet("color:#222; font-weight:500;");
-        textLabel->setFixedWidth(maxTextW); // 文本列固定宽度，保证后续列左对齐起点一致
-        textLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-        textLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-        h->addWidget(textLabel);
-
-        QString sc = act->shortcut().toString(QKeySequence::NativeText);
-        QLabel *shortcutLabel = new QLabel(sc, inner);
-        shortcutLabel->setStyleSheet("color:#666;");
-        shortcutLabel->setFixedWidth(maxScW); // 快捷键列起点固定，左对齐展示
-        shortcutLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-        shortcutLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-        h->addWidget(shortcutLabel);
-
-        QHBoxLayout *btnLayout = new QHBoxLayout(btn);
-        btnLayout->setContentsMargins(0, 0, 0, 0);
-        btnLayout->addWidget(inner);
-
-        connect(btn, &QPushButton::clicked, this, [this, menu, onClick]() {
-            if (menu) menu->hide();
-            onClick();
-        });
-
-        wa->setDefaultWidget(btn);
-        menu->addAction(wa);
     };
+    setToolButtonStyle(ui->newButton);
+    setToolButtonStyle(ui->openButton);
+    setToolButtonStyle(ui->saveButton);
+    setToolButtonStyle(ui->saveAsButton);
+    setToolButtonStyle(ui->undoButton);
+    setToolButtonStyle(ui->redoButton);
 
-    // 为各动作设置标准图标（提前设置，确保自定义项能取到 icon）
-    // 设置一级菜单图标为“文件系统/目录”图标
-    QIcon menuIcon = QApplication::style()->standardIcon(QStyle::SP_DirIcon);
-    menu->setIcon(menuIcon);
+    // 连接工具栏按钮
+    connect(ui->newButton, &QToolButton::clicked, this, &MyForm::handleNewButtonClicked);
+    connect(ui->openButton, &QToolButton::clicked, this, &MyForm::handleOpenButtonClicked);
+    connect(ui->saveButton, &QToolButton::clicked, this, &MyForm::handleSaveButtonClicked);
+    connect(ui->saveAsButton, &QToolButton::clicked, this, &MyForm::handleSaveAsButtonClicked);
+    connect(ui->undoButton, &QToolButton::clicked, this, &MyForm::handleUndoButtonClicked);
+    connect(ui->redoButton, &QToolButton::clicked, this, &MyForm::handleRedoButtonClicked);
 
-    // 为各动作设置标准图标
-    actNew->setIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
-    actOpen->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogOpenButton));
-    actSave->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
-    actSaveAs->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
-    actUndo->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
-    actRedo->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
+    // 设置快捷键
+    ui->newButton->setShortcut(QKeySequence::New);
+    ui->openButton->setShortcut(QKeySequence::Open);
+    ui->saveButton->setShortcut(QKeySequence::Save);
+    ui->saveAsButton->setShortcut(QKeySequence::SaveAs);
+    ui->undoButton->setShortcut(QKeySequence::Undo);
+    ui->redoButton->setShortcut(QKeySequence::Redo);
 
-    // 确保快捷键生效：把动作注册到窗口
-    this->addAction(actNew);
-    this->addAction(actOpen);
-    this->addAction(actSave);
-    this->addAction(actSaveAs);
-    this->addAction(actUndo);
-    this->addAction(actRedo);
 
-    addMenuItem(actNew, [this]() { handleNewButtonClicked(); });
-    addMenuItem(actOpen, [this]() { handleOpenButtonClicked(); });
-    // 分隔符用空白项模拟
-    menu->addSeparator();
-    addMenuItem(actSave, [this]() { handleSaveButtonClicked(); });
-    addMenuItem(actSaveAs, [this]() { handleSaveAsButtonClicked(); });
-    menu->addSeparator();
-    addMenuItem(actUndo, [this]() { handleUndoButtonClicked(); });
-    addMenuItem(actRedo, [this]() { handleRedoButtonClicked(); });
-    menu->addSeparator();
-    // 地图管理入口采用普通 QAction（非 QWidgetAction），直接触发对话框
-    menu->addAction(actMapMgr);
-
-    menuBar->addMenu(menu);
-
-    // 基本样式优化（可迁移到全局 qss）
-    // 样式：顶部菜单栏透明；二级菜单白底，悬浮浅灰；文本居中由 QPushButton 样式控制
-    QString menuStyle =
-        "QMenuBar{background-color: transparent; border:0;}"
-        "QMenuBar::item{padding:8px 14px; margin:0 6px; color:#ffffff; font-weight:600;}"
-        "QMenuBar::item:selected{background-color: rgba(255,122,24,0.20); border-radius:6px;}"
-        "QMenuBar::item:pressed{background-color: rgba(255,122,24,0.30);}" 
-        "QMenu{background-color:#ffffff; border:1px solid #dddddd; color:#222222; padding:0px; margin:0px;}"
-        "QMenu::separator{height:1px; background:#e6e6e6; margin:6px 10px;}";
-    menuBar->setStyleSheet(menuStyle);
-    connect(actMapMgr, &QAction::triggered, this, [this]() {
-        auto dlg = new MapManagerDialog(this);
-        dlg->setAttribute(Qt::WA_DeleteOnClose, true);
-        static ManifestStore store("manifest.json");
-        store.load();
-        static MapManagerSettings settings = MapManagerSettings::load("settings.json");
-        dlg->setSettings(settings);
-        auto *sched = new DownloadScheduler(dlg);
-        sched->configure(settings);
-        sched->setManifest(&store);
-        sched->setTileManager(tileMapManager);
-        connect(sched, &DownloadScheduler::taskProgress, dlg, &MapManagerDialog::onTaskProgress);
-        connect(dlg, &MapManagerDialog::requestPause, sched, &DownloadScheduler::pause);
-        connect(dlg, &MapManagerDialog::requestResume, sched, &DownloadScheduler::resume);
-        connect(dlg, &MapManagerDialog::requestStartDownload, this, [sched, &store, dlg]() mutable {
-            // 读取对话框设置（当前区域使用默认中国范围；后续可改为表单读取）
-            auto s = dlg->getSettings();
-            DownloadTask t; t.minLat = 18; t.maxLat = 54; t.minLon = 73; t.maxLon = 135;
-            t.minZoom = s.minZoom; t.maxZoom = s.maxZoom; t.status = "pending";
-            store.upsertTask(t); store.save();
-            sched->start();
-        });
-        connect(dlg, &MapManagerDialog::requestSaveSettings, this, [dlg, &settings]() mutable {
-            settings = dlg->getSettings();
-            settings.save("settings.json");
-        });
-        dlg->show();
-    });
-
-    // 放入功能区布局顶部
-    if (auto layout = ui->functionalArea->layout()) {
-        // 若是 QVBoxLayout，可使用 setMenuBar；否则插入到顶部
-        if (auto vbl = qobject_cast<QVBoxLayout*>(layout)) {
-            vbl->setMenuBar(menuBar);
-        } else {
-            layout->setMenuBar(menuBar);
-        }
-    } else {
-        auto vbl = new QVBoxLayout(ui->functionalArea);
-        vbl->setContentsMargins(0, 0, 0, 0);
-        vbl->setSpacing(0);
-        vbl->setMenuBar(menuBar);
+    // 新功能区按钮的信号槽连接
+    // 数据与地图模块
+    if (auto loadDataBtn = ui->functionalArea->findChild<QPushButton*>("loadDataButton")) {
+        connect(loadDataBtn, &QPushButton::clicked, this, &MyForm::onLoadDataButtonClicked);
     }
-
-    // 将菜单动作连接到已有按钮的槽函数，行为保持一致
-    connect(actNew, &QAction::triggered, this, &MyForm::handleNewButtonClicked);
-    connect(actOpen, &QAction::triggered, this, &MyForm::handleOpenButtonClicked);
-    connect(actSave, &QAction::triggered, this, &MyForm::handleSaveButtonClicked);
-    connect(actSaveAs, &QAction::triggered, this, &MyForm::handleSaveAsButtonClicked);
-    connect(actUndo, &QAction::triggered, this, &MyForm::handleUndoButtonClicked);
-    connect(actRedo, &QAction::triggered, this, &MyForm::handleRedoButtonClicked);
+    if (auto downloadMapBtn = ui->functionalArea->findChild<QPushButton*>("downloadMapButton")) {
+        connect(downloadMapBtn, &QPushButton::clicked, this, &MyForm::onDownloadMapButtonClicked);
+    }
+    if (auto mapMgrBtn = ui->functionalArea->findChild<QPushButton*>("mapManagerButton")) {
+        connect(mapMgrBtn, &QPushButton::clicked, this, [this]() {
+            auto dlg = new MapManagerDialog(this);
+            dlg->setAttribute(Qt::WA_DeleteOnClose, true);
+            static ManifestStore store("manifest.json");
+            store.load();
+            static MapManagerSettings settings = MapManagerSettings::load("settings.json");
+            dlg->setSettings(settings);
+            auto *sched = new DownloadScheduler(dlg);
+            sched->configure(settings);
+            sched->setManifest(&store);
+            sched->setTileManager(tileMapManager);
+            connect(sched, &DownloadScheduler::taskProgress, dlg, &MapManagerDialog::onTaskProgress);
+            connect(dlg, &MapManagerDialog::requestPause, sched, &DownloadScheduler::pause);
+            connect(dlg, &MapManagerDialog::requestResume, sched, &DownloadScheduler::resume);
+            connect(dlg, &MapManagerDialog::requestStartDownload, this, [sched, &store, dlg]() mutable {
+                auto s = dlg->getSettings();
+                DownloadTask t; t.minLat = 18; t.maxLat = 54; t.minLon = 73; t.maxLon = 135;
+                t.minZoom = s.minZoom; t.maxZoom = s.maxZoom; t.status = "pending";
+                store.upsertTask(t); store.save();
+                sched->start();
+            });
+            connect(dlg, &MapManagerDialog::requestSaveSettings, this, [dlg, &settings]() mutable {
+                settings = dlg->getSettings();
+                settings.save("settings.json");
+            });
+            dlg->show();
+        });
+    }
+    
+    // 空间分析模块
+    if (auto burstAnalysisBtn = ui->functionalArea->findChild<QPushButton*>("burstAnalysisButton")) {
+        connect(burstAnalysisBtn, &QPushButton::clicked, this, &MyForm::onBurstAnalysisButtonClicked);
+    }
+    if (auto connectivityBtn = ui->functionalArea->findChild<QPushButton*>("connectivityAnalysisButton")) {
+        connect(connectivityBtn, &QPushButton::clicked, this, &MyForm::onConnectivityAnalysisButtonClicked);
+    }
+    
+    // 工单与资产模块
+    if (auto workOrderBtn = ui->functionalArea->findChild<QPushButton*>("workOrderButton")) {
+        connect(workOrderBtn, &QPushButton::clicked, this, &MyForm::onWorkOrderButtonClicked);
+    }
+    if (auto assetMgmtBtn = ui->functionalArea->findChild<QPushButton*>("assetManagementButton")) {
+        connect(assetMgmtBtn, &QPushButton::clicked, this, &MyForm::onAssetManagementButtonClicked);
+    }
+    
+    // 工具模块
+    if (auto settingsBtn = ui->functionalArea->findChild<QPushButton*>("settingsButton")) {
+        connect(settingsBtn, &QPushButton::clicked, this, &MyForm::onSettingsButtonClicked);
+    }
+    if (auto helpBtn = ui->functionalArea->findChild<QPushButton*>("helpButton")) {
+        connect(helpBtn, &QPushButton::clicked, this, &MyForm::onHelpButtonClicked);
+    }
+    if (auto aboutBtn = ui->functionalArea->findChild<QPushButton*>("aboutButton")) {
+        connect(aboutBtn, &QPushButton::clicked, this, &MyForm::onAboutButtonClicked);
+    }
 }
 
 void MyForm::setupMapArea() {
@@ -482,10 +388,12 @@ void MyForm::setupMapArea() {
     connect(tileMapManager, &TileMapManager::regionDownloadProgress, this, &MyForm::onRegionDownloadProgress);
     connect(tileMapManager, &TileMapManager::downloadFinished, this, [this]() {
         updateStatus("Tile map download completed");
-        // 隐藏进度条
+        // 隐藏浮动进度条
+        if (floatingProgressBar) {
+            floatingProgressBar->setVisible(false);
+        }
+        // 停止下载标记
         isDownloading = false;
-        progressBar->setVisible(false);
-        progressBar->setValue(0);
     });
     connect(tileMapManager, &TileMapManager::localTilesFound, this, [this](int zoomLevel, int tileCount) {
         updateStatus(QString("Found %1 local tiles at zoom level %2").arg(tileCount).arg(zoomLevel));
@@ -546,6 +454,12 @@ void MyForm::setupMapArea() {
     });
     // 创建右上角浮动工具条（避免重复）
     if (!gvOverlay) createGraphicsOverlay();
+    
+    // 创建浮动状态栏（位于地图左下角）
+    createFloatingStatusBar();
+    
+    // 显示初始状态信息
+    updateStatus("Ready");
 }
 
 void MyForm::createGraphicsOverlay()
@@ -906,8 +820,142 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
 }
 
 void MyForm::updateStatus(const QString &message) {
-    ui->statusLabel->setText(message);
+    // 更新浮动状态栏
+    if (floatingStatusLabel) {
+        floatingStatusLabel->setText(message);
+        // 显示浮动状态栏
+        if (floatingStatusBar) {
+            floatingStatusBar->show();
+            floatingStatusBar->raise();
+            // 重置透明度
+            floatingStatusBar->setWindowOpacity(1.0);
+            // 重启3秒倒计时
+            if (statusBarFadeTimer) {
+                statusBarFadeTimer->stop();
+                statusBarFadeTimer->start(3000); // 3秒后开始消失
+            }
+        }
+    }
     qDebug() << "Status:" << message;
+}
+
+void MyForm::createFloatingStatusBar()
+{
+    if (!ui->graphicsView) return;
+    
+    // 创建浮动状态栏容器（添加到 graphicsView 而不是 viewport，使其位置不随地图移动）
+    floatingStatusBar = new QWidget(ui->graphicsView);
+    floatingStatusBar->setAttribute(Qt::WA_TransparentForMouseEvents, true); // 鼠标事件穿透
+    floatingStatusBar->setObjectName("floatingStatusBar");
+    // 使用透明背景和亮色文字（带阴影效果确保可读性）
+    floatingStatusBar->setStyleSheet(
+        "#floatingStatusBar{"
+        "  background: transparent;"
+        "  padding: 8px 12px;"
+        "}"
+        "QLabel{"
+        "  color: #ffffff;"
+        "  font-size: 14px;"
+        "  font-weight: bold;"
+        "  background: transparent;"
+        "  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);"
+        "}"
+        "QProgressBar{"
+        "  background: rgba(0, 0, 0, 0.5);"
+        "  border: 1px solid rgba(255, 255, 255, 0.3);"
+        "  border-radius: 3px;"
+        "  text-align: center;"
+        "  color: #ffffff;"
+        "  font-weight: bold;"
+        "}"
+        "QProgressBar::chunk{"
+        "  background: #ff7a18;"
+        "  border-radius: 2px;"
+        "}"
+    );
+    
+    QVBoxLayout *layout = new QVBoxLayout(floatingStatusBar);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(4);
+    
+    // 创建状态标签
+    floatingStatusLabel = new QLabel("Ready");
+    layout->addWidget(floatingStatusLabel);
+    
+    // 创建进度条
+    floatingProgressBar = new QProgressBar();
+    floatingProgressBar->setRange(0, 100);
+    floatingProgressBar->setValue(0);
+    floatingProgressBar->setTextVisible(true);
+    floatingProgressBar->setMaximumHeight(20);
+    floatingProgressBar->setVisible(false); // 初始隐藏
+    layout->addWidget(floatingProgressBar);
+    
+    // 设置最小宽度和最大宽度，确保文本能完整显示
+    floatingStatusBar->setMinimumWidth(500);   // 增加最小宽度
+    floatingStatusBar->setMaximumWidth(1500);  // 增加最大宽度到1500以显示完整文本
+    floatingStatusBar->adjustSize();
+    
+    // 创建3秒消失定时器
+    statusBarFadeTimer = new QTimer(this);
+    statusBarFadeTimer->setSingleShot(true);
+    connect(statusBarFadeTimer, &QTimer::timeout, this, [this]() {
+        // 创建淡出动画
+        if (!statusBarOpacityAnim) {
+            statusBarOpacityAnim = new QPropertyAnimation(floatingStatusBar, "windowOpacity");
+            statusBarOpacityAnim->setDuration(1000); // 1秒淡出
+            statusBarOpacityAnim->setStartValue(1.0);
+            statusBarOpacityAnim->setEndValue(0.0);
+            connect(statusBarOpacityAnim, &QPropertyAnimation::finished, this, [this]() {
+                floatingStatusBar->hide();
+                floatingStatusBar->setWindowOpacity(1.0); // 恢复透明度以备下次使用
+            });
+        } else {
+            statusBarOpacityAnim->setStartValue(floatingStatusBar->windowOpacity());
+            statusBarOpacityAnim->setEndValue(0.0);
+        }
+        statusBarOpacityAnim->start();
+    });
+    
+    // 初始化时不隐藏，让它显示初始状态
+    // floatingStatusBar->hide();
+    positionFloatingStatusBar();
+    floatingStatusBar->show();  // 显示浮动状态栏
+}
+
+void MyForm::positionFloatingStatusBar()
+{
+    if (!floatingStatusBar || !ui->graphicsView) return;
+    
+    const int margin = 10;
+    QSize vp = ui->graphicsView->size();  // 使用 graphicsView 的大小，而不是 viewport
+    QSize sz = floatingStatusBar->sizeHint();
+    if (sz.isEmpty()) sz = floatingStatusBar->size();
+    
+    // 位于地图左下角
+    int x = margin;
+    int y = vp.height() - sz.height() - margin;
+    floatingStatusBar->setGeometry(x, y, sz.width(), sz.height());
+}
+
+void MyForm::updateFloatingProgressBar(int current, int total)
+{
+    if (!floatingProgressBar) return;
+    
+    floatingProgressBar->setMaximum(total > 0 ? total : 100);
+    floatingProgressBar->setValue(current);
+    
+    // 显示进度条
+    if (floatingStatusBar) {
+        floatingStatusBar->show();
+        floatingStatusBar->raise();
+        floatingStatusBar->setWindowOpacity(1.0);
+        floatingProgressBar->setVisible(true);
+        // 下载中不自动消失，停止定时器
+        if (statusBarFadeTimer) {
+            statusBarFadeTimer->stop();
+        }
+    }
 }
 
 void MyForm::loadMap(const QString &mapPath) {
@@ -1218,21 +1266,19 @@ void MyForm::onRegionDownloadProgress(int current, int total, int zoom)
 {
     qDebug() << "MyForm::onRegionDownloadProgress received:" << current << "/" << total << "zoom:" << zoom;
     
-    // 显示进度条
-    if (!isDownloading) {
-        isDownloading = true;
-        progressBar->setVisible(true);
-    }
-    
     if (total > 0) {
         int progress = (current * 100) / total;
         qDebug() << "Download progress:" << current << "/" << total << "(" << progress << "%) at zoom level" << zoom;
         
-        // 更新进度条
-        progressBar->setValue(progress);
-        progressBar->setFormat(QString("Downloading zoom level %1: %2% (%3/%4)").arg(zoom).arg(progress).arg(current).arg(total));
+        // 使用浮动进度条
+        updateFloatingProgressBar(current, total);
         
-        // 更新状态标签
+        // 更新浮动进度条的金上文本
+        if (floatingProgressBar) {
+            floatingProgressBar->setFormat(QString("Downloading zoom level %1: %2% (%3/%4)").arg(zoom).arg(progress).arg(current).arg(total));
+        }
+        
+        // 更新浮动状态栏文本
         updateStatus(QString("Downloading zoom level %1: %2% (%3/%4)").arg(zoom).arg(progress).arg(current).arg(total));
     } else {
         qDebug() << "Download progress:" << current << "tiles at zoom level" << zoom;
@@ -1597,4 +1643,670 @@ void MyForm::onViewTransformChanged()
     // 视图变换时更新可视范围（用于动态加载）
     // 当前版本暂不实现动态加载，后续优化时可以启用
     LOG_DEBUG("View transform changed");
+}
+
+// ========================================
+// 新功能区槽函数实现
+// ========================================
+
+// 数据与地图模块
+void MyForm::onLoadDataButtonClicked()
+{
+    qDebug() << "[UI] Load Data button clicked";
+    updateStatus("功能开发中：数据导入...");
+    QMessageBox::information(this, "提示", "数据导入功能开发中");
+}
+
+void MyForm::onDownloadMapButtonClicked()
+{
+    qDebug() << "[UI] Download Map button clicked";
+    updateStatus("打开地图下载管理器...");
+    // 触发地图管理对话框
+    auto dlg = new MapManagerDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose, true);
+    static ManifestStore store("manifest.json");
+    store.load();
+    static MapManagerSettings settings = MapManagerSettings::load("settings.json");
+    dlg->setSettings(settings);
+    auto *sched = new DownloadScheduler(dlg);
+    sched->configure(settings);
+    sched->setManifest(&store);
+    sched->setTileManager(tileMapManager);
+    connect(sched, &DownloadScheduler::taskProgress, dlg, &MapManagerDialog::onTaskProgress);
+    connect(dlg, &MapManagerDialog::requestPause, sched, &DownloadScheduler::pause);
+    connect(dlg, &MapManagerDialog::requestResume, sched, &DownloadScheduler::resume);
+    connect(dlg, &MapManagerDialog::requestStartDownload, this, [sched, &store, dlg]() mutable {
+        auto s = dlg->getSettings();
+        DownloadTask t; t.minLat = 18; t.maxLat = 54; t.minLon = 73; t.maxLon = 135;
+        t.minZoom = s.minZoom; t.maxZoom = s.maxZoom; t.status = "pending";
+        store.upsertTask(t); store.save();
+        sched->start();
+    });
+    connect(dlg, &MapManagerDialog::requestSaveSettings, this, [dlg, &settings]() mutable {
+        settings = dlg->getSettings();
+        settings.save("settings.json");
+    });
+    dlg->show();
+}
+
+// 空间分析模块
+void MyForm::onBurstAnalysisButtonClicked()
+{
+    qDebug() << "[UI] Burst Analysis button clicked";
+    updateStatus("功能开发中：爆管影响分析...");
+    QMessageBox::information(this, "提示", "爆管影响分析功能开发中");
+}
+
+void MyForm::onConnectivityAnalysisButtonClicked()
+{
+    qDebug() << "[UI] Connectivity Analysis button clicked";
+    updateStatus("功能开发中：连通性分析...");
+    QMessageBox::information(this, "提示", "连通性分析功能开发中");
+}
+
+// 工单与资产模块
+void MyForm::onWorkOrderButtonClicked()
+{
+    qDebug() << "[UI] Work Order button clicked";
+    updateStatus("功能开发中：工单管理...");
+    QMessageBox::information(this, "提示", "工单管理功能开发中");
+}
+
+void MyForm::onAssetManagementButtonClicked()
+{
+    qDebug() << "[UI] Asset Management button clicked";
+    updateStatus("功能开发中：资产管理...");
+    QMessageBox::information(this, "提示", "资产管理功能开发中");
+}
+
+// 工具模块
+void MyForm::onSettingsButtonClicked()
+{
+    qDebug() << "[UI] Settings button clicked";
+    updateStatus("功能开发中：系统设置...");
+    QMessageBox::information(this, "提示", "系统设置功能开发中");
+}
+
+void MyForm::onHelpButtonClicked()
+{
+    qDebug() << "[UI] Help button clicked";
+    updateStatus("打开帮助文档...");
+    QMessageBox::information(this, "帮助", "欢迎使用城市地下管网智能管理系统(UGIMS)\n\n" 
+                            "主要功能模块：\n"
+                            "• 数据与地图：导入管网数据、下载离线地图\n"
+                            "• 空间分析：爆管影响分析、连通性分析\n"
+                            "• 工单与资产：工单管理、资产台账管理\n"
+                            "• 工具：系统设置、在线帮助");
+}
+
+// 设备树设置
+void MyForm::setupDeviceTree()
+{
+    qDebug() << "Setting up device tree...";
+    
+    // 创建模型
+    deviceTreeModel = new QStandardItemModel(this);
+    
+    // 设置模型（不显示表头）
+    ui->deviceTreeView->setModel(deviceTreeModel);
+    
+    // 连接信号
+    connect(ui->deviceTreeView, &QTreeView::clicked, this, &MyForm::onDeviceTreeItemClicked);
+    connect(ui->deviceTreeView, &QTreeView::doubleClicked, this, &MyForm::onDeviceTreeItemDoubleClicked);
+    
+    // ============ 第1层：管网类型 ============
+    
+    // 1. 给水管网
+    QStandardItem *waterNetwork = new QStandardItem("📘 给水管网");
+    waterNetwork->setEditable(false);
+    deviceTreeModel->appendRow(waterNetwork);
+    
+    // 第2层：设施类别
+    QStandardItem *waterPipes = new QStandardItem("🔧 管线");
+    waterPipes->setEditable(false);
+    waterNetwork->appendRow(waterPipes);
+    
+    // 第3层：具体设备
+    QStandardItem *pipe1 = new QStandardItem("  DN300主干管-GS001 🟢运行中");
+    pipe1->setEditable(false);
+    waterPipes->appendRow(pipe1);
+    
+    QStandardItem *pipe2 = new QStandardItem("  DN200支管-GS002 🟢运行中");
+    pipe2->setEditable(false);
+    waterPipes->appendRow(pipe2);
+    
+    QStandardItem *pipe3 = new QStandardItem("  DN150支管-GS003 🟡维护中");
+    pipe3->setEditable(false);
+    waterPipes->appendRow(pipe3);
+    
+    // 阀门井
+    QStandardItem *waterValves = new QStandardItem("🚰 阀门井");
+    waterValves->setEditable(false);
+    waterNetwork->appendRow(waterValves);
+    
+    QStandardItem *valve1 = new QStandardItem("  阀门井-V001 🟢开启");
+    valve1->setEditable(false);
+    waterValves->appendRow(valve1);
+    
+    QStandardItem *valve2 = new QStandardItem("  阀门井-V002 🟢开启");
+    valve2->setEditable(false);
+    waterValves->appendRow(valve2);
+    
+    QStandardItem *valve3 = new QStandardItem("  阀门井-V003 🔴关闭");
+    valve3->setEditable(false);
+    waterValves->appendRow(valve3);
+    
+    // 泵站
+    QStandardItem *waterPumps = new QStandardItem("⚙️ 泵站");
+    waterPumps->setEditable(false);
+    waterNetwork->appendRow(waterPumps);
+    
+    QStandardItem *pump1 = new QStandardItem("  一泵站-P001 🟢运行中");
+    pump1->setEditable(false);
+    waterPumps->appendRow(pump1);
+    
+    QStandardItem *pump2 = new QStandardItem("  二泵站-P002 🟡待机");
+    pump2->setEditable(false);
+    waterPumps->appendRow(pump2);
+    
+    // 监测点
+    QStandardItem *waterMonitors = new QStandardItem("🔍 监测点");
+    waterMonitors->setEditable(false);
+    waterNetwork->appendRow(waterMonitors);
+    
+    QStandardItem *monitor1 = new QStandardItem("  压力监测-M001 🟢在线");
+    monitor1->setEditable(false);
+    waterMonitors->appendRow(monitor1);
+    
+    QStandardItem *monitor2 = new QStandardItem("  流量监测-M002 🟢在线");
+    monitor2->setEditable(false);
+    waterMonitors->appendRow(monitor2);
+    
+    // 2. 排水管网
+    QStandardItem *drainNetwork = new QStandardItem("📗 排水管网");
+    drainNetwork->setEditable(false);
+    deviceTreeModel->appendRow(drainNetwork);
+    
+    QStandardItem *drainPipes = new QStandardItem("🔧 管线");
+    drainPipes->setEditable(false);
+    drainNetwork->appendRow(drainPipes);
+    
+    QStandardItem *drain1 = new QStandardItem("  DN400雨水管-PS001 🟢运行中");
+    drain1->setEditable(false);
+    drainPipes->appendRow(drain1);
+    
+    QStandardItem *drain2 = new QStandardItem("  DN300污水管-PS002 🟢运行中");
+    drain2->setEditable(false);
+    drainPipes->appendRow(drain2);
+    
+    QStandardItem *drainWells = new QStandardItem("🚪 检查井");
+    drainWells->setEditable(false);
+    drainNetwork->appendRow(drainWells);
+    
+    QStandardItem *well1 = new QStandardItem("  检查井-J001 🟢正常");
+    well1->setEditable(false);
+    drainWells->appendRow(well1);
+    
+    QStandardItem *well2 = new QStandardItem("  检查井-J002 🟡淤积");
+    well2->setEditable(false);
+    drainWells->appendRow(well2);
+    
+    QStandardItem *drainPumps = new QStandardItem("⚙️ 泵站");
+    drainPumps->setEditable(false);
+    drainNetwork->appendRow(drainPumps);
+    
+    QStandardItem *drainPump1 = new QStandardItem("  排水泵站-P003 🟢运行中");
+    drainPump1->setEditable(false);
+    drainPumps->appendRow(drainPump1);
+    
+    // 3. 燃气管网
+    QStandardItem *gasNetwork = new QStandardItem("📙 燃气管网");
+    gasNetwork->setEditable(false);
+    deviceTreeModel->appendRow(gasNetwork);
+    
+    QStandardItem *gasPipes = new QStandardItem("🔧 管线");
+    gasPipes->setEditable(false);
+    gasNetwork->appendRow(gasPipes);
+    
+    QStandardItem *gas1 = new QStandardItem("  DN200主管-RQ001 🟢运行中");
+    gas1->setEditable(false);
+    gasPipes->appendRow(gas1);
+    
+    QStandardItem *gas2 = new QStandardItem("  DN100支管-RQ002 🟢运行中");
+    gas2->setEditable(false);
+    gasPipes->appendRow(gas2);
+    
+    QStandardItem *gasValves = new QStandardItem("🚰 阀门井");
+    gasValves->setEditable(false);
+    gasNetwork->appendRow(gasValves);
+    
+    QStandardItem *gasValve1 = new QStandardItem("  调压柜-V004 🟢正常");
+    gasValve1->setEditable(false);
+    gasValves->appendRow(gasValve1);
+    
+    QStandardItem *gasMonitors = new QStandardItem("🔍 监测点");
+    gasMonitors->setEditable(false);
+    gasNetwork->appendRow(gasMonitors);
+    
+    QStandardItem *gasMonitor1 = new QStandardItem("  燃气监测-M003 🟢在线");
+    gasMonitor1->setEditable(false);
+    gasMonitors->appendRow(gasMonitor1);
+    
+    // 4. 电力管网
+    QStandardItem *powerNetwork = new QStandardItem("📕 电力管网");
+    powerNetwork->setEditable(false);
+    deviceTreeModel->appendRow(powerNetwork);
+    
+    QStandardItem *powerCables = new QStandardItem("🔧 电缆");
+    powerCables->setEditable(false);
+    powerNetwork->appendRow(powerCables);
+    
+    QStandardItem *cable1 = new QStandardItem("  10kV电缆-DL001 🟢运行中");
+    cable1->setEditable(false);
+    powerCables->appendRow(cable1);
+    
+    QStandardItem *powerFacilities = new QStandardItem("⚡ 配电设施");
+    powerFacilities->setEditable(false);
+    powerNetwork->appendRow(powerFacilities);
+    
+    QStandardItem *power1 = new QStandardItem("  配电箱-D001 🟢正常");
+    power1->setEditable(false);
+    powerFacilities->appendRow(power1);
+    
+    // 5. 通信管网
+    QStandardItem *commNetwork = new QStandardItem("📒 通信管网");
+    commNetwork->setEditable(false);
+    deviceTreeModel->appendRow(commNetwork);
+    
+    QStandardItem *commCables = new QStandardItem("🔧 光缆");
+    commCables->setEditable(false);
+    commNetwork->appendRow(commCables);
+    
+    QStandardItem *fiber1 = new QStandardItem("  主干光缆-TX001 🟢运行中");
+    fiber1->setEditable(false);
+    commCables->appendRow(fiber1);
+    
+    QStandardItem *commPoints = new QStandardItem("📡 接入点");
+    commPoints->setEditable(false);
+    commNetwork->appendRow(commPoints);
+    
+    QStandardItem *comm1 = new QStandardItem("  分线盒-F001 🟢正常");
+    comm1->setEditable(false);
+    commPoints->appendRow(comm1);
+    
+    // 6. 热力管网
+    QStandardItem *heatNetwork = new QStandardItem("📓 热力管网");
+    heatNetwork->setEditable(false);
+    deviceTreeModel->appendRow(heatNetwork);
+    
+    QStandardItem *heatPipes = new QStandardItem("🔧 管线");
+    heatPipes->setEditable(false);
+    heatNetwork->appendRow(heatPipes);
+    
+    QStandardItem *heat1 = new QStandardItem("  DN400供热管-RL001 🟢运行中");
+    heat1->setEditable(false);
+    heatPipes->appendRow(heat1);
+    
+    QStandardItem *heatStations = new QStandardItem("⚙️ 换热站");
+    heatStations->setEditable(false);
+    heatNetwork->appendRow(heatStations);
+    
+    QStandardItem *heatStation1 = new QStandardItem("  换热站-H001 🟢运行中");
+    heatStation1->setEditable(false);
+    heatStations->appendRow(heatStation1);
+    
+    // 默认展开第一层（给水管网）
+    ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
+    
+    qDebug() << "Device tree setup completed with hierarchical structure";
+    updateStatus("设备树初始化完成 - 6类管网");
+}
+
+// 设备树点击事件
+void MyForm::onDeviceTreeItemClicked(const QModelIndex &index)
+{
+    if (!index.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(index);
+    if (!item) return;
+    
+    QString text = item->text();
+    
+    // 判断层级：根据父节点数量判断
+    int level = 0;
+    QModelIndex parent = index.parent();
+    while (parent.isValid()) {
+        level++;
+        parent = parent.parent();
+    }
+    
+    QString levelName;
+    switch(level) {
+        case 0: levelName = "管网类型"; break;
+        case 1: levelName = "设施类别"; break;
+        case 2: levelName = "具体设备"; break;
+        default: levelName = "详细信息"; break;
+    }
+    
+    qDebug() << "Device tree item clicked - Level:" << level << "(" << levelName << ")" << "Text:" << text;
+    updateStatus("选中[" + levelName + "]: " + text);
+}
+
+// 设备树双击事件
+void MyForm::onDeviceTreeItemDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(index);
+    if (!item) return;
+    
+    QString name = deviceTreeModel->item(index.row(), 0)->text();
+    
+    qDebug() << "Device tree item double-clicked:" << name;
+    updateStatus("打开设备详情: " + name);
+    
+    // TODO: 打开设备详情对话框
+    QMessageBox::information(this, "设备详情", 
+                             "设备名称: " + name + "\n\n" +
+                             "详细信息功能开发中...");
+}
+
+// 搜索框文本变化事件
+void MyForm::onDeviceSearchTextChanged(const QString &text)
+{
+    qDebug() << "Search text changed:" << text;
+    filterDeviceTree(text);
+    
+    if (text.isEmpty()) {
+        updateStatus("显示所有设备");
+    } else {
+        updateStatus("搜索: " + text);
+    }
+}
+
+// 过滤设备树
+void MyForm::filterDeviceTree(const QString &searchText)
+{
+    if (searchText.isEmpty()) {
+        // 搜索框为空，显示所有节点
+        for (int i = 0; i < deviceTreeModel->rowCount(); ++i) {
+            QStandardItem *item = deviceTreeModel->item(i);
+            setItemVisibility(item, true);
+        }
+        // 折叠所有节点，只展开第一层
+        ui->deviceTreeView->collapseAll();
+        ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
+    } else {
+        // 有搜索文本，过滤节点
+        for (int i = 0; i < deviceTreeModel->rowCount(); ++i) {
+            QStandardItem *item = deviceTreeModel->item(i);
+            bool hasMatch = filterItem(item, searchText);
+            setItemVisibility(item, hasMatch);
+        }
+        // 展开所有匹配的节点
+        ui->deviceTreeView->expandAll();
+    }
+}
+
+// 设置节点可见性
+void MyForm::setItemVisibility(QStandardItem *item, bool visible)
+{
+    if (!item) return;
+    
+    QModelIndex index = item->index();
+    ui->deviceTreeView->setRowHidden(index.row(), index.parent(), !visible);
+    
+    // 递归设置子节点
+    for (int i = 0; i < item->rowCount(); ++i) {
+        QStandardItem *child = item->child(i);
+        if (child) {
+            setItemVisibility(child, visible);
+        }
+    }
+}
+
+// 递归过滤节点（返回是否包含匹配的子节点）
+bool MyForm::filterItem(QStandardItem *item, const QString &searchText)
+{
+    if (!item) return false;
+    
+    QString itemText = item->text();
+    bool currentMatch = itemText.contains(searchText, Qt::CaseInsensitive);
+    
+    bool hasMatchingChild = false;
+    
+    // 递归检查所有子节点
+    for (int i = 0; i < item->rowCount(); ++i) {
+        QStandardItem *child = item->child(i);
+        if (child) {
+            bool childMatch = filterItem(child, searchText);
+            
+            // 设置子节点可见性
+            QModelIndex childIndex = child->index();
+            ui->deviceTreeView->setRowHidden(childIndex.row(), childIndex.parent(), !childMatch);
+            
+            if (childMatch) {
+                hasMatchingChild = true;
+            }
+        }
+    }
+    
+    // 如果当前节点匹配或者有匹配的子节点，则显示当前节点
+    return currentMatch || hasMatchingChild;
+}
+
+// 关于按钮点击事件
+void MyForm::onAboutButtonClicked()
+{
+    qDebug() << "About button clicked";
+    
+    // 创建关于对话框
+    QDialog *aboutDialog = new QDialog(this);
+    aboutDialog->setWindowTitle("关于 " + QString(APP_NAME));
+    aboutDialog->setMinimumSize(600, 500);
+    aboutDialog->setMaximumSize(600, 500);
+    aboutDialog->setAttribute(Qt::WA_DeleteOnClose);
+    
+    // 主布局
+    QVBoxLayout *mainLayout = new QVBoxLayout(aboutDialog);
+    mainLayout->setSpacing(0);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    
+    // ========== 顶部区域（深色背景） ==========
+    QWidget *headerWidget = new QWidget(aboutDialog);
+    headerWidget->setStyleSheet(
+        "QWidget {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "                               stop:0 #FF7A18, stop:1 #FF9A48);"
+        "}"
+    );
+    QVBoxLayout *headerLayout = new QVBoxLayout(headerWidget);
+    headerLayout->setSpacing(8);
+    headerLayout->setContentsMargins(30, 25, 30, 25);
+    
+    // 应用图标（使用符号代替）
+    QLabel *iconLabel = new QLabel("🏛️", headerWidget);
+    QFont iconFont;
+    iconFont.setPointSize(48);
+    iconLabel->setFont(iconFont);
+    iconLabel->setAlignment(Qt::AlignCenter);
+    headerLayout->addWidget(iconLabel);
+    
+    // 中文名称
+    QLabel *titleLabel = new QLabel(APP_NAME, headerWidget);
+    QFont titleFont;
+    titleFont.setPointSize(18);
+    titleFont.setBold(true);
+    titleLabel->setFont(titleFont);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: white;");
+    headerLayout->addWidget(titleLabel);
+    
+    // 英文名称
+    QLabel *enNameLabel = new QLabel(APP_NAME_EN, headerWidget);
+    QFont enNameFont;
+    enNameFont.setPointSize(9);
+    enNameLabel->setFont(enNameFont);
+    enNameLabel->setAlignment(Qt::AlignCenter);
+    enNameLabel->setStyleSheet("color: rgba(255, 255, 255, 0.9);");
+    headerLayout->addWidget(enNameLabel);
+    
+    mainLayout->addWidget(headerWidget);
+    
+    // ========== 内容区域 ==========
+    QWidget *contentWidget = new QWidget(aboutDialog);
+    contentWidget->setStyleSheet("background-color: white;");
+    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setSpacing(15);
+    contentLayout->setContentsMargins(30, 25, 30, 20);
+    
+    // 软件描述
+    QLabel *descLabel = new QLabel(APP_DESCRIPTION, contentWidget);
+    descLabel->setAlignment(Qt::AlignCenter);
+    descLabel->setWordWrap(true);
+    QFont descFont;
+    descFont.setPointSize(9);
+    descLabel->setFont(descFont);
+    descLabel->setStyleSheet("color: #555; line-height: 1.6;");
+    contentLayout->addWidget(descLabel);
+    
+    // 分隔线
+    QFrame *line1 = new QFrame(contentWidget);
+    line1->setFrameShape(QFrame::HLine);
+    line1->setFrameShadow(QFrame::Sunken);
+    line1->setStyleSheet("color: #e0e0e0;");
+    contentLayout->addWidget(line1);
+    
+    // 信息区域（使用网格布局）
+    QGridLayout *infoLayout = new QGridLayout();
+    infoLayout->setSpacing(12);
+    infoLayout->setColumnStretch(0, 1);
+    infoLayout->setColumnStretch(1, 2);
+    
+    QFont labelFont;
+    labelFont.setPointSize(9);
+    labelFont.setBold(true);
+    
+    QFont valueFont;
+    valueFont.setPointSize(9);
+    
+    int row = 0;
+    
+    // 著作人
+    QLabel *authorLabelTitle = new QLabel("著作人:", contentWidget);
+    authorLabelTitle->setFont(labelFont);
+    authorLabelTitle->setStyleSheet("color: #333;");
+    QLabel *authorLabelValue = new QLabel(QString("%1 (%2)").arg(APP_AUTHOR).arg(APP_ORGANIZATION), contentWidget);
+    authorLabelValue->setFont(valueFont);
+    authorLabelValue->setStyleSheet("color: #666;");
+    infoLayout->addWidget(authorLabelTitle, row, 0, Qt::AlignRight);
+    infoLayout->addWidget(authorLabelValue, row++, 1);
+    
+    // 联系方式
+    QLabel *contactLabelTitle = new QLabel("联系方式:", contentWidget);
+    contactLabelTitle->setFont(labelFont);
+    contactLabelTitle->setStyleSheet("color: #333;");
+    QLabel *contactLabelValue = new QLabel(APP_CONTACT, contentWidget);
+    contactLabelValue->setFont(valueFont);
+    contactLabelValue->setStyleSheet("color: #FF7A18;");
+    contactLabelValue->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    contactLabelValue->setCursor(Qt::IBeamCursor);
+    infoLayout->addWidget(contactLabelTitle, row, 0, Qt::AlignRight);
+    infoLayout->addWidget(contactLabelValue, row++, 1);
+    
+    // 网站
+    QLabel *websiteLabelTitle = new QLabel("项目地址:", contentWidget);
+    websiteLabelTitle->setFont(labelFont);
+    websiteLabelTitle->setStyleSheet("color: #333;");
+    QLabel *websiteLabelValue = new QLabel(QString("<a href='%1' style='color: #FF7A18; text-decoration: none;'>%1</a>").arg(APP_WEBSITE), contentWidget);
+    websiteLabelValue->setFont(valueFont);
+    websiteLabelValue->setOpenExternalLinks(true);
+    websiteLabelValue->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    infoLayout->addWidget(websiteLabelTitle, row, 0, Qt::AlignRight);
+    infoLayout->addWidget(websiteLabelValue, row++, 1);
+    
+    // 许可证
+    QLabel *licenseLabelTitle = new QLabel("许可证:", contentWidget);
+    licenseLabelTitle->setFont(labelFont);
+    licenseLabelTitle->setStyleSheet("color: #333;");
+    QLabel *licenseLabelValue = new QLabel(APP_LICENSE, contentWidget);
+    licenseLabelValue->setFont(valueFont);
+    licenseLabelValue->setStyleSheet("color: #666;");
+    infoLayout->addWidget(licenseLabelTitle, row, 0, Qt::AlignRight);
+    infoLayout->addWidget(licenseLabelValue, row++, 1);
+    
+    // 版本号
+    QLabel *versionLabelTitle = new QLabel("版本号:", contentWidget);
+    versionLabelTitle->setFont(labelFont);
+    versionLabelTitle->setStyleSheet("color: #333;");
+    QLabel *versionLabelValue = new QLabel(QString("v%1").arg(APP_VERSION), contentWidget);
+    QFont versionValueFont = valueFont;
+    versionValueFont.setBold(true);
+    versionLabelValue->setFont(versionValueFont);
+    versionLabelValue->setStyleSheet("color: #FF7A18;");
+    infoLayout->addWidget(versionLabelTitle, row, 0, Qt::AlignRight);
+    infoLayout->addWidget(versionLabelValue, row++, 1);
+    
+    contentLayout->addLayout(infoLayout);
+    
+    // 分隔线
+    QFrame *line2 = new QFrame(contentWidget);
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+    line2->setStyleSheet("color: #e0e0e0;");
+    contentLayout->addWidget(line2);
+    
+    // 版权声明
+    QLabel *copyrightLabel = new QLabel(APP_COPYRIGHT, contentWidget);
+    copyrightLabel->setAlignment(Qt::AlignCenter);
+    QFont copyrightFont;
+    copyrightFont.setPointSize(8);
+    copyrightLabel->setFont(copyrightFont);
+    copyrightLabel->setStyleSheet("color: #999;");
+    contentLayout->addWidget(copyrightLabel);
+    
+    // 添加弹性空间
+    contentLayout->addStretch();
+    
+    mainLayout->addWidget(contentWidget);
+    
+    // ========== 底部按钮区 ==========
+    QWidget *buttonWidget = new QWidget(aboutDialog);
+    buttonWidget->setStyleSheet("background-color: #f8f8f8; border-top: 1px solid #e0e0e0;");
+    QHBoxLayout *buttonLayout = new QHBoxLayout(buttonWidget);
+    buttonLayout->setContentsMargins(20, 15, 20, 15);
+    
+    buttonLayout->addStretch();
+    
+    // 确定按钮
+    QPushButton *okButton = new QPushButton("确定", buttonWidget);
+    okButton->setMinimumSize(120, 38);
+    okButton->setCursor(Qt::PointingHandCursor);
+    okButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #FF7A18;"
+        "  color: white;"
+        "  border: none;"
+        "  border-radius: 4px;"
+        "  font-size: 11pt;"
+        "  font-weight: bold;"
+        "  padding: 8px 20px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #FF8C3A;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #E66A08;"
+        "}"
+    );
+    connect(okButton, &QPushButton::clicked, aboutDialog, &QDialog::accept);
+    buttonLayout->addWidget(okButton);
+    
+    buttonLayout->addStretch();
+    
+    mainLayout->addWidget(buttonWidget);
+    
+    qDebug() << "Showing about dialog - Version:" << APP_VERSION << "Build:" << APP_BUILD_DATE;
+    aboutDialog->exec();
+    updateStatus("查看关于信息");
 }

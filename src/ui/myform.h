@@ -4,7 +4,8 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
-#include <QListView>
+#include <QTreeView>
+#include <QStandardItemModel>
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -16,6 +17,7 @@
 #include <QScrollBar>
 #include <QToolButton>
 #include <QGraphicsProxyWidget>
+#include <QPropertyAnimation>
 
 // 添加TileMapManager的前置声明
 class TileMapManager;
@@ -68,6 +70,29 @@ private slots:
     // 管网数据加载槽函数
     void loadPipelineData();
     void onViewTransformChanged();
+    
+    // 新功能区按钮槽函数
+    // 数据与地图模块
+    void onLoadDataButtonClicked();
+    void onDownloadMapButtonClicked();
+    
+    // 空间分析模块
+    void onBurstAnalysisButtonClicked();
+    void onConnectivityAnalysisButtonClicked();
+    
+    // 工单与资产模块
+    void onWorkOrderButtonClicked();
+    void onAssetManagementButtonClicked();
+    
+    // 工具模块
+    void onSettingsButtonClicked();
+    void onHelpButtonClicked();
+
+    // 设备树相关槽函数
+    void onDeviceTreeItemClicked(const QModelIndex &index);
+    void onDeviceTreeItemDoubleClicked(const QModelIndex &index);
+    void onDeviceSearchTextChanged(const QString &text);  // 搜索框文本变化
+    void onAboutButtonClicked();  // 关于按钮点击
 
 private:
     Ui::MyForm *ui;
@@ -117,14 +142,29 @@ private:
     QToolButton *btnZoomOut = nullptr;
     QToolButton *btnPanToggle = nullptr;
     
-    // 日志记录函数
-    void logMessage(const QString &message);
+    // 浮动状态栏相关
+    QWidget *floatingStatusBar = nullptr;             // 浮动状态栏widget
+    QLabel *floatingStatusLabel = nullptr;            // 浮动状态标签
+    QProgressBar *floatingProgressBar = nullptr;      // 浮动进度条
+    QTimer *statusBarFadeTimer = nullptr;             // 状态栏消失定时器
+    QPropertyAnimation *statusBarOpacityAnim = nullptr; // 状态栏淡出动画
     void updateVisibleTiles();  // 更新可见瓦片
+    void logMessage(const QString &message);
+    
+    // 设备树相关成员
+    QStandardItemModel *deviceTreeModel;  // 设备树模型
     
     void setupFunctionalArea();
+    void setupDeviceTree();  // 设置设备树
+    void filterDeviceTree(const QString &searchText);  // 过滤设备树
+    void setItemVisibility(QStandardItem *item, bool visible);  // 设置节点可见性
+    bool filterItem(QStandardItem *item, const QString &searchText);  // 递归过滤节点
     void setupMapArea();
     void setupSplitter();
     void updateStatus(const QString &message);
+    void createFloatingStatusBar();       // 创建浮动状态栏
+    void positionFloatingStatusBar();      // 定位浮动状态栏
+    void updateFloatingProgressBar(int current, int total); // 更新浮动进度条
     void loadMap(const QString &mapPath);
     void createGraphicsOverlay();               // viewport 方案
     void positionGraphicsOverlay();

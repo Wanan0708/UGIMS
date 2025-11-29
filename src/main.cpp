@@ -3,6 +3,8 @@
 #include <QLabel>
 #include <QFile>
 #include <QDebug>
+#include <QScreen>
+#include <QGuiApplication>
 #include "widgets/basewindow.h"
 #include "ui/myform.h"
 
@@ -43,8 +45,19 @@ int main(int argc, char *argv[]) {
     BaseWindow window;
     MyForm *form = new MyForm(&window); // parent 设为 window，自动管理内存
     window.setContentWidget(form);
-    // 启动即最大化
-    window.showMaximized();
+    // 启动时以正常窗口显示
+    window.resize(1200, 800);  // 设置初始窗口大小
+    
+    // 将窗口居中显示在屏幕中间
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        QRect screenGeometry = screen->availableGeometry();
+        int x = (screenGeometry.width() - window.width()) / 2;
+        int y = (screenGeometry.height() - window.height()) / 2;
+        window.move(x, y);
+    }
+    
+    window.show();
 
     qDebug() << "=== Application window shown ===";
     return app.exec();

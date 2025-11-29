@@ -13,8 +13,9 @@ CustomTitleBar::CustomTitleBar(QWidget *parent)
     setFixedHeight(32);
 
     iconLabel = new QLabel(this);
-    iconLabel->setFixedSize(20, 20);
-    iconLabel->setScaledContents(true);
+    iconLabel->setFixedSize(28, 28);
+    iconLabel->setAlignment(Qt::AlignCenter);
+    iconLabel->setScaledContents(false);
 
     // 中间标题文字：程序名 UGMIS
     titleLabel = new QLabel("UGMIS");
@@ -74,6 +75,12 @@ void CustomTitleBar::paintEvent(QPaintEvent *event) {
 }
 
 void CustomTitleBar::mousePressEvent(QMouseEvent *event) {
+    qDebug() << "CustomTitleBar::mousePressEvent - button:" << event->button() 
+             << "isMaximized:" << m_isMaximized
+             << "closeButton underMouse:" << closeButton->underMouse()
+             << "maxButton underMouse:" << maxButton->underMouse()
+             << "minButton underMouse:" << minButton->underMouse();
+    
     if (event->button() == Qt::LeftButton && !m_isMaximized) {
         if (!closeButton->underMouse() && !maxButton->underMouse() && !minButton->underMouse()) {
             m_dragPos = event->globalPos() - window()->frameGeometry().topLeft();
@@ -118,14 +125,17 @@ void CustomTitleBar::mouseDoubleClickEvent(QMouseEvent *event) {
 }
 
 void CustomTitleBar::onClose() {
+    qDebug() << "CustomTitleBar::onClose() called";
     window()->close();
 }
 
 void CustomTitleBar::onMinimize() {
+    qDebug() << "CustomTitleBar::onMinimize() called";
     window()->showMinimized();
 }
 
 void CustomTitleBar::onMaximizeRestore() {
+    qDebug() << "CustomTitleBar::onMaximizeRestore() called, current state:" << m_isMaximized;
     if (m_isMaximized) {
         window()->showNormal();
         setMaximized(false);
@@ -145,7 +155,17 @@ void CustomTitleBar::setTitle(const QString &title)
 void CustomTitleBar::setIcon(const QIcon &icon)
 {
     if (iconLabel) {
-        iconLabel->setPixmap(icon.pixmap(20, 20));
+        // 使用QIcon的pixmap方法获取合适尺寸的图标，确保不被拉伸
+        QPixmap pixmap = icon.pixmap(QSize(20, 20), QIcon::Normal, QIcon::Off);
+        // 如果图标不存在，使用缩放的原始图标
+        if (pixmap.isNull()) {
+            pixmap = icon.pixmap(20, 20);
+        }
+        // 缩放至标签大小，保持长宽比
+        if (!pixmap.isNull()) {
+            pixmap = pixmap.scaledToHeight(20, Qt::SmoothTransformation);
+        }
+        iconLabel->setPixmap(pixmap);
     }
 }
 

@@ -15,7 +15,7 @@ BaseWindow::BaseWindow(QWidget *parent)
 {
     setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
     setAttribute(Qt::WA_TranslucentBackground);
-    setMinimumSize(400, 300);
+    setMinimumSize(800, 600);  // 增加最小尺寸，避免拖动时自动最大化
     setMouseTracking(true);
 
     titleBar = new CustomTitleBar(this);
@@ -60,10 +60,15 @@ void BaseWindow::setContentWidget(QWidget *content) {
 }
 
 bool BaseWindow::event(QEvent *event) {
-    if (event->type() == QEvent::MouseMove) {
+    // 监听窗口状态变化，同步标题栏按钮
+    if (event->type() == QEvent::WindowStateChange) {
+        if (titleBar) {
+            titleBar->setMaximized(isMaximized());
+        }
+    } else if (event->type() == QEvent::MouseMove) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        // 只有在非拖拽、非左键按下时更新光标样式
-        if (!m_resizing && !(mouseEvent->buttons() & Qt::LeftButton)) {
+        // 只有在非拖拽、非左键按下、非最大化时更新光标样式
+        if (!m_resizing && !(mouseEvent->buttons() & Qt::LeftButton) && !isMaximized()) {
             QPoint pos = mapFromGlobal(mouseEvent->globalPosition().toPoint());
             ResizeDirection dir = getResizeDirection(pos);
 
@@ -100,7 +105,8 @@ bool BaseWindow::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::MouseMove) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        if (!m_resizing && !(mouseEvent->buttons() & Qt::LeftButton)) {
+        // 窗口最大化时不显示缩放光标
+        if (!m_resizing && !(mouseEvent->buttons() & Qt::LeftButton) && !isMaximized()) {
             // 仅当鼠标位于本窗口上时处理
             const QPoint globalPos = mouseEvent->globalPosition().toPoint();
             QWidget *w = QApplication::widgetAt(globalPos);
@@ -151,7 +157,8 @@ BaseWindow::ResizeDirection BaseWindow::getResizeDirection(const QPoint &pos) co
 }
 
 void BaseWindow::mousePressEvent(QMouseEvent *event) {
-    if (event->button() == Qt::LeftButton && !titleBar->geometry().contains(event->pos())) {
+    // 窗口最大化时，禁止边框缩放
+    if (event->button() == Qt::LeftButton && !isMaximized() && !titleBar->geometry().contains(event->pos())) {
         m_resizeDir = getResizeDirection(event->pos());
         if (m_resizeDir != None) {
             m_resizing = true;
@@ -172,23 +179,34 @@ void BaseWindow::mouseMoveEvent(QMouseEvent *event) {
 
         int minWidth = this->minimumWidth();
         int minHeight = this->minimumHeight();
+        
+        // 获取屏幕可用区域，避免窗口超出屏幕导致自动最大化
+        auto screen = QGuiApplication::screenAt(event->globalPosition().toPoint());
+        if (!screen) screen = QGuiApplication::primaryScreen();
+        QRect screenGeo = screen->availableGeometry();
+        int maxWidth = screenGeo.width() - 20;  // 留出一些边距
+        int maxHeight = screenGeo.height() - 20;
 
         // 处理垂直方向
         if (m_resizeDir & Top) {
             int newTop = m_startGeometry.top() + delta.y();
             int newHeight = m_startGeometry.bottom() - newTop + 1;
-            if (newHeight >= minHeight) {
+            if (newHeight >= minHeight && newHeight <= maxHeight) {
                 newGeom.setTop(newTop);
-            } else {
+            } else if (newHeight < minHeight) {
                 newGeom.setTop(m_startGeometry.bottom() - minHeight + 1);
+            } else {
+                newGeom.setTop(m_startGeometry.bottom() - maxHeight + 1);
             }
         } else if (m_resizeDir & Bottom) {
             int newBottom = m_startGeometry.bottom() + delta.y();
             int newHeight = newBottom - m_startGeometry.top() + 1;
-            if (newHeight >= minHeight) {
+            if (newHeight >= minHeight && newHeight <= maxHeight) {
                 newGeom.setBottom(newBottom);
-            } else {
+            } else if (newHeight < minHeight) {
                 newGeom.setBottom(m_startGeometry.top() + minHeight - 1);
+            } else {
+                newGeom.setBottom(m_startGeometry.top() + maxHeight - 1);
             }
         }
 
@@ -196,18 +214,22 @@ void BaseWindow::mouseMoveEvent(QMouseEvent *event) {
         if (m_resizeDir & Left) {
             int newLeft = m_startGeometry.left() + delta.x();
             int newWidth = m_startGeometry.right() - newLeft + 1;
-            if (newWidth >= minWidth) {
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
                 newGeom.setLeft(newLeft);
-            } else {
+            } else if (newWidth < minWidth) {
                 newGeom.setLeft(m_startGeometry.right() - minWidth + 1);
+            } else {
+                newGeom.setLeft(m_startGeometry.right() - maxWidth + 1);
             }
         } else if (m_resizeDir & Right) {
             int newRight = m_startGeometry.right() + delta.x();
             int newWidth = newRight - m_startGeometry.left() + 1;
-            if (newWidth >= minWidth) {
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
                 newGeom.setRight(newRight);
-            } else {
+            } else if (newWidth < minWidth) {
                 newGeom.setRight(m_startGeometry.left() + minWidth - 1);
+            } else {
+                newGeom.setRight(m_startGeometry.left() + maxWidth - 1);
             }
         }
 

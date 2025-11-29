@@ -446,8 +446,8 @@ release/moc_myform.cpp: src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListView \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QTreeView \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtreeview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractitemmodel.h \
@@ -463,6 +463,8 @@ release/moc_myform.cpp: src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabbar.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabwidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qrubberband.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QStandardItemModel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qstandarditemmodel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGraphicsView \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpainter.h \
@@ -491,9 +493,14 @@ release/moc_myform.cpp: src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsproxywidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicswidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicslayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPropertyAnimation \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpropertyanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeasingcurve.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\myform.h -o release\moc_myform.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\myform.h -o release\moc_myform.cpp
 
 release/moc_mapmanagerdialog.cpp: src/ui/mapmanagerdialog.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
@@ -691,7 +698,7 @@ release/moc_mapmanagerdialog.cpp: src/ui/mapmanagerdialog.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QStringList \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\mapmanagerdialog.h -o release\moc_mapmanagerdialog.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\mapmanagerdialog.h -o release\moc_mapmanagerdialog.cpp
 
 release/moc_analysispanel.cpp: src/ui/analysispanel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QWidget \
@@ -923,7 +930,7 @@ release/moc_analysispanel.cpp: src/ui/analysispanel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPair \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\analysispanel.h -o release\moc_analysispanel.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\ui\analysispanel.h -o release\moc_analysispanel.cpp
 
 release/moc_basewindow.cpp: src/widgets/basewindow.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QMainWindow \
@@ -1147,7 +1154,7 @@ release/moc_basewindow.cpp: src/widgets/basewindow.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasictimer.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\basewindow.h -o release\moc_basewindow.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\basewindow.h -o release\moc_basewindow.cpp
 
 release/moc_customtitlebar.cpp: src/widgets/customtitlebar.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QWidget \
@@ -1360,7 +1367,7 @@ release/moc_customtitlebar.cpp: src/widgets/customtitlebar.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasictimer.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\customtitlebar.h -o release\moc_customtitlebar.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\customtitlebar.h -o release\moc_customtitlebar.cpp
 
 release/moc_tilemapmanager.cpp: src/tilemap/tilemapmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -1555,7 +1562,7 @@ release/moc_tilemapmanager.cpp: src/tilemap/tilemapmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPointF \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\tilemapmanager.h -o release\moc_tilemapmanager.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\tilemapmanager.h -o release\moc_tilemapmanager.cpp
 
 release/moc_tileworker.cpp: src/tilemap/tileworker.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -1688,7 +1695,7 @@ release/moc_tileworker.cpp: src/tilemap/tileworker.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QString \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\tileworker.h -o release\moc_tileworker.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\tileworker.h -o release\moc_tileworker.cpp
 
 release/moc_downloadscheduler.cpp: src/tilemap/downloadscheduler.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -1824,7 +1831,7 @@ release/moc_downloadscheduler.cpp: src/tilemap/downloadscheduler.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QStringList \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\downloadscheduler.h -o release\moc_downloadscheduler.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\tilemap\downloadscheduler.h -o release\moc_downloadscheduler.cpp
 
 release/moc_layermanager.cpp: src/map/layermanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -1966,7 +1973,7 @@ release/moc_layermanager.cpp: src/map/layermanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QString \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\layermanager.h -o release\moc_layermanager.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\layermanager.h -o release\moc_layermanager.cpp
 
 release/moc_symbolmanager.cpp: src/map/symbolmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -2104,7 +2111,7 @@ release/moc_symbolmanager.cpp: src/map/symbolmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\symbolmanager.h -o release\moc_symbolmanager.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\symbolmanager.h -o release\moc_symbolmanager.cpp
 
 release/moc_pipelinerenderer.cpp: src/map/pipelinerenderer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -2269,7 +2276,7 @@ release/moc_pipelinerenderer.cpp: src/map/pipelinerenderer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QHash \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\pipelinerenderer.h -o release\moc_pipelinerenderer.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\pipelinerenderer.h -o release\moc_pipelinerenderer.cpp
 
 release/moc_facilityrenderer.cpp: src/map/facilityrenderer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -2432,7 +2439,7 @@ release/moc_facilityrenderer.cpp: src/map/facilityrenderer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPointF \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\facilityrenderer.h -o release\moc_facilityrenderer.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\map\facilityrenderer.h -o release\moc_facilityrenderer.cpp
 
 release/moc_spatialanalyzer.cpp: src/analysis/spatialanalyzer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
@@ -2565,7 +2572,7 @@ release/moc_spatialanalyzer.cpp: src/analysis/spatialanalyzer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\spatialanalyzer.h -o release\moc_spatialanalyzer.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\spatialanalyzer.h -o release\moc_spatialanalyzer.cpp
 
 release/moc_burstanalyzer.cpp: src/analysis/burstanalyzer.h \
 		src/analysis/spatialanalyzer.h \
@@ -2699,7 +2706,7 @@ release/moc_burstanalyzer.cpp: src/analysis/burstanalyzer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\burstanalyzer.h -o release\moc_burstanalyzer.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\burstanalyzer.h -o release\moc_burstanalyzer.cpp
 
 release/moc_connectivityanalyzer.cpp: src/analysis/connectivityanalyzer.h \
 		src/analysis/spatialanalyzer.h \
@@ -2834,7 +2841,7 @@ release/moc_connectivityanalyzer.cpp: src/analysis/connectivityanalyzer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPair \
 		release/moc_predefs.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
-	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\connectivityanalyzer.h -o release\moc_connectivityanalyzer.cpp
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/Qoder/GisApp/release/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/Qoder/GisApp -IE:/Project/Qoder/GisApp/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\analysis\connectivityanalyzer.h -o release\moc_connectivityanalyzer.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -3058,6 +3065,8 @@ release/main.o: src/main.cpp ../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidge
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfile.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfiledevice.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDebug \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QScreen \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QGuiApplication \
 		src/widgets/basewindow.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QMainWindow \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qmainwindow.h \
@@ -3080,14 +3089,12 @@ release/main.o: src/main.cpp ../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidge
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractbutton.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QHBoxLayout \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QMouseEvent \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QGuiApplication \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QScreen \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QTimer \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtimer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasictimer.h \
 		src/ui/myform.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListView \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QTreeView \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtreeview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractitemmodel.h \
@@ -3102,6 +3109,8 @@ release/main.o: src/main.cpp ../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidge
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qstyle.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabbar.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qrubberband.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QStandardItemModel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qstandarditemmodel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGraphicsView \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qscrollarea.h \
@@ -3122,7 +3131,12 @@ release/main.o: src/main.cpp ../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidge
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGraphicsProxyWidget \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsproxywidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicswidget.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicslayoutitem.h
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicslayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPropertyAnimation \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpropertyanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeasingcurve.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\main.o src\main.cpp
 
 release/myform.o: src/ui/myform.cpp src/ui/myform.h \
@@ -3323,8 +3337,8 @@ release/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListView \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QTreeView \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtreeview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractitemmodel.h \
@@ -3340,6 +3354,8 @@ release/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabbar.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabwidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qrubberband.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QStandardItemModel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qstandarditemmodel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGraphicsView \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsview.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpainter.h \
@@ -3368,18 +3384,13 @@ release/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicsproxywidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicswidget.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgraphicslayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QPropertyAnimation \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpropertyanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractanimation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeasingcurve.h \
 		ui_myform.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVariant \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QApplication \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qapplication.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGridLayout \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgridlayout.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayout.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayoutitem.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qboxlayout.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QSplitter \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qsplitter.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QVBoxLayout \
+		src/core/common/version.h \
 		src/tilemap/tilemapmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtNetwork/QNetworkAccessManager \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtNetwork/qnetworkaccessmanager.h \
@@ -3391,6 +3402,7 @@ release/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSharedDataPointer \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QString \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QUrl \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVariant \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q26numeric.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtNetwork/QSslConfiguration \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtNetwork/qsslconfiguration.h \
@@ -3439,12 +3451,20 @@ release/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qmenu.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QMenu \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QAction \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QApplication \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qapplication.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QCoreApplication \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QStyle \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QWidgetAction \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidgetaction.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QHBoxLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qboxlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgridlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGridLayout \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QFontMetrics \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QVBoxLayout \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QPainter \
 		src/ui/mapmanagerdialog.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
@@ -4192,7 +4212,8 @@ release/basewindow.o: src/widgets/basewindow.cpp src/widgets/basewindow.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDebug \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QEvent \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QApplication \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qapplication.h
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QShowEvent
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\basewindow.o src\widgets\basewindow.cpp
 
 release/customtitlebar.o: src/widgets/customtitlebar.cpp src/widgets/customtitlebar.h \
@@ -7440,15 +7461,47 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qset.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
+		src/dao/pipelinedao.h \
+		src/dao/basedao.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVariantMap \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlQuery \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqlquery.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsqlglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsql-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsqlexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqldatabase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetaobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVector \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvector.h \
+		src/core/database/databasemanager.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlDatabase \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlError \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqlerror.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QMutex \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
+		src/core/models/pipeline.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDateTime \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatetime.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcalendar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRectF \
+		src/dao/facilitydao.h \
+		src/core/models/facility.h \
+		src/core/common/logger.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QFile \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfile.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfiledevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QTextStream \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDebug \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QtMath \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QFuture \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfutureinterface.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qresultstore.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture_impl.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthreadpool.h \
@@ -7475,7 +7528,6 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractproxymodel.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qanimationgroup.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qapplicationstatic.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QMutex \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnativeinterface.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
@@ -7484,15 +7536,11 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasictimer.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbitarray.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbuffer.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearraymatcher.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcache.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcalendar.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcborarray.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcborvalue.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcborcommon.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatetime.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qregularexpression.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qurl.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/quuid.h \
@@ -7513,8 +7561,6 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qspan.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdir.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdirlisting.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfiledevice.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfile.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfileinfo.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtimezone.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdiriterator.h \
@@ -7540,7 +7586,6 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlockfile.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qloggingcategory.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmessageauthenticationcode.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetaobject.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmimedata.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmimedatabase.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmimetype.h \
@@ -7590,8 +7635,6 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarianthash.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QHash \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantlist.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantmap.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvector.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qwaitcondition.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDeadlineTimer \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qwineventnotifier.h \
@@ -7614,7 +7657,9 @@ release/burstanalyzer.o: src/analysis/burstanalyzer.cpp src/analysis/burstanalyz
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent/qtconcurrentmap.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent/qtconcurrentrun.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent/qtconcurrenttask.h \
-		../../../Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent/qtconcurrentversion.h
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent/qtconcurrentversion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QQueue \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSet
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\burstanalyzer.o src\analysis\burstanalyzer.cpp
 
 release/connectivityanalyzer.o: src/analysis/connectivityanalyzer.cpp src/analysis/connectivityanalyzer.h \
