@@ -17,6 +17,8 @@ MapDrawingManager::MapDrawingManager(QGraphicsScene *scene,
     , m_mode(NoDrawing)
     , m_previewLine(nullptr)
     , m_previewPoint(nullptr)
+    , m_drawingColor(QColor("#1890ff"))  // 默认蓝色
+    , m_lineWidth(3)                      // 默认3px
 {
     qDebug() << "MapDrawingManager initialized";
 }
@@ -58,6 +60,31 @@ void MapDrawingManager::startDrawingFacility(const QString &facilityType)
     updateCursor();
     
     emit drawingStateChanged(true);
+}
+
+void MapDrawingManager::setDrawingStyle(const QColor &color, int lineWidth)
+{
+    m_drawingColor = color;
+    m_lineWidth = qBound(1, lineWidth, 10);  // 限制化1-10px
+    
+    qDebug() << "Drawing style updated: color=" << m_drawingColor.name() 
+             << "lineWidth=" << m_lineWidth;
+    
+    // 如果正在绘制，更新预览样式
+    if (m_previewLine) {
+        QPen pen = m_previewLine->pen();
+        pen.setColor(m_drawingColor);
+        pen.setWidth(m_lineWidth);
+        m_previewLine->setPen(pen);
+    }
+    
+    // 更新已绘制点的颜色
+    for (auto marker : m_pointMarkers) {
+        marker->setBrush(QBrush(m_drawingColor));
+        QPen pen = marker->pen();
+        pen.setColor(m_drawingColor.darker(120));
+        marker->setPen(pen);
+    }
 }
 
 void MapDrawingManager::cancelDrawing()
@@ -141,8 +168,8 @@ void MapDrawingManager::handleMouseClick(const QPointF &scenePos)
             POINT_MARKER_SIZE,
             POINT_MARKER_SIZE
         );
-        marker->setBrush(QBrush(QColor(255, 122, 24))); // 橙色
-        marker->setPen(QPen(Qt::white, 2));
+        marker->setBrush(QBrush(m_drawingColor));  // 使用自定义颜色
+        marker->setPen(QPen(m_drawingColor.darker(120), 2));  // 边框颜色深一点
         marker->setZValue(1000); // 确保在最上层
         m_scene->addItem(marker);
         m_pointMarkers.append(marker);
@@ -255,7 +282,7 @@ void MapDrawingManager::updatePreviewLine(const QPointF &currentPos)
     
     // 创建预览线图形项
     m_previewLine = new QGraphicsPathItem(path);
-    m_previewLine->setPen(QPen(QColor(255, 122, 24, 180), 3, Qt::DashLine)); // 半透明橙色虚线
+    m_previewLine->setPen(QPen(m_drawingColor, m_lineWidth, Qt::DashLine));  // 使用自定义样式
     m_previewLine->setZValue(999); // 确保在点标记下方
     m_scene->addItem(m_previewLine);
 }
@@ -275,8 +302,10 @@ void MapDrawingManager::createPreviewPoint(const QPointF &pos)
         PREVIEW_POINT_SIZE,
         PREVIEW_POINT_SIZE
     );
-    m_previewPoint->setBrush(QBrush(QColor(100, 150, 255, 150))); // 半透明蓝色
-    m_previewPoint->setPen(QPen(Qt::white, 2));
+    QColor previewColor = m_drawingColor;
+    previewColor.setAlpha(150);  // 半透明
+    m_previewPoint->setBrush(QBrush(previewColor));  // 使用自定义颜色
+    m_previewPoint->setPen(QPen(m_drawingColor, 2));
     m_previewPoint->setZValue(1000);
     m_scene->addItem(m_previewPoint);
 }

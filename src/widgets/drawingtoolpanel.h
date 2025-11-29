@@ -5,6 +5,8 @@
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QSpinBox>
+#include <QComboBox>
 #include "widgets/collapsiblegroupbox.h"
 
 /**
@@ -58,6 +60,15 @@ public:
     
     // 重置选择
     void resetSelection();
+    
+    // 获取当前线宽
+    int currentLineWidth() const { return m_lineWidthSpin ? m_lineWidthSpin->value() : 3; }
+    
+    // 获取当前颜色（返回颜色名称）
+    QString currentColorName() const;
+    
+    // 获取当前颜色（返回QColor）
+    QColor currentColor() const;
 
 signals:
     // 绘制类型改变信号
@@ -104,6 +115,11 @@ private:
     QVBoxLayout *m_mainLayout;
     CollapsibleGroupBox *m_pipelineGroup;
     CollapsibleGroupBox *m_facilityGroup;
+    CollapsibleGroupBox *m_styleGroup;  // 样式设置组
+    
+    // 样式设置控件
+    QComboBox *m_colorCombo;       // 颜色选择
+    QSpinBox *m_lineWidthSpin;     // 线宽设置
 };
 
 #endif // DRAWINGTOOLPANEL_H

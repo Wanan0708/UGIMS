@@ -54,6 +54,13 @@ public:
     void startDrawingFacility(const QString &facilityType);
     
     /**
+     * @brief 设置绘制样式
+     * @param color 线条颜色
+     * @param lineWidth 线宽
+     */
+    void setDrawingStyle(const QColor &color, int lineWidth);
+    
+    /**
      * @brief 取消当前绘制
      */
     void cancelDrawing();
@@ -143,6 +150,10 @@ private:
     // 样式配置
     static const int POINT_MARKER_SIZE = 8;         // 点标记大小
     static const int PREVIEW_POINT_SIZE = 12;       // 预览点大小
+    
+    // 用户自定义样式
+    QColor m_drawingColor;      // 绘制颜色
+    int m_lineWidth;            // 线宽
 };
 
 #endif // MAPDRAWINGMANAGER_H

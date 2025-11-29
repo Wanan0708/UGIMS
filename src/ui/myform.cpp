@@ -4,9 +4,12 @@
 #include "tilemap/tilemapmanager.h"  // 添加瓦片地图管理器头文件
 #include "widgets/drawingtoolpanel.h"  // 添加绘制工具面板头文件
 #include "widgets/layercontrolpanel.h"  // 添加图层控制面板头文件
+#include "widgets/entitypropertiesdialog.h"  // 实体属性编辑对话框
 #include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
 #include "ui/pipelineeditdialog.h"  // 添加管线编辑对话框头文件
 #include "core/models/pipeline.h"  // 添加Pipeline模型头文件
+#include "core/commands/drawcommand.h"  // 添加命令类
+#include "core/io/drawingdatabasemanager.h"  // 数据库持久化
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -88,9 +91,17 @@ MyForm::MyForm(QWidget *parent)
     , m_currentPanel("")  // 初始为空，没有面板展开
     , m_selectedItem(nullptr)  // 初始化选中项
     , m_nextPipelineId(1)  // 从ID=1开始
+    , m_copiedItem(nullptr)  // 初始化复制项
+    , m_copiedLineWidth(3)  // 默认线宽
+    , m_hasStyleCopied(false)  // 初始化样式复制标志
+    , m_undoStack(nullptr)  // 初始化撤销栈
 {
     logMessage("=== MyForm constructor started ===");
     ui->setupUi(this);
+    
+    // 创建撤销栈
+    m_undoStack = new QUndoStack(this);
+    m_undoStack->setUndoLimit(50);  // 限制最多50步撤销
     
     // 设置功能区
     setupFunctionalArea();
@@ -1186,89 +1197,48 @@ void MyForm::handleOpenButtonClicked()
 {
     qDebug() << "Open button clicked";
     
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", 
-        tr("Text Files (*.txt);;All Files (*)"));
-    
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            // 这里可以将文件内容加载到编辑区域
-            QString content = in.readAll();
-            // 假设我们有一个文本编辑器来显示内容
-            // ui->textEdit->setPlainText(content);
-            
-            currentFile = fileName;
-            updateStatus("Opened: " + fileName);
-            isModified = false;
-            file.close();
-        } else {
-            QMessageBox::warning(this, tr("Error"), tr("Cannot open file %1").arg(fileName));
-        }
-    }
+    // 加载绘制数据
+    onLoadDrawingData();
 }
 
 void MyForm::handleSaveButtonClicked()
 {
     qDebug() << "Save button clicked";
     
-    if (currentFile.isEmpty()) {
-        // 如果没有当前文件，调用另存为
-        handleSaveAsButtonClicked();
-    } else {
-        QFile file(currentFile);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            // 这里可以保存编辑区域的内容
-            // out << ui->textEdit->toPlainText();
-            
-            updateStatus("Saved: " + currentFile);
-            isModified = false;
-            file.close();
-        } else {
-            QMessageBox::warning(this, tr("Error"), tr("Cannot save file %1").arg(currentFile));
-        }
-    }
+    // 保存绘制数据
+    onSaveDrawingData();
 }
 
 void MyForm::handleSaveAsButtonClicked()
 {
     qDebug() << "Save As button clicked";
     
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"), "", 
-        tr("Text Files (*.txt);;All Files (*)"));
-    
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            // 这里可以保存编辑区域的内容
-            // out << ui->textEdit->toPlainText();
-            
-            currentFile = fileName;
-            updateStatus("Saved as: " + fileName);
-            isModified = false;
-            file.close();
-        } else {
-            QMessageBox::warning(this, tr("Error"), tr("Cannot save file %1").arg(fileName));
-        }
-    }
+    // 保存绘制数据（与Save相同）
+    onSaveDrawingData();
 }
 
 void MyForm::handleUndoButtonClicked()
 {
-    qDebug() << "Undo button clicked";
-    updateStatus("Undo action performed");
-    // 这里可以实现撤销功能
-    // ui->textEdit->undo();
+    if (m_undoStack && m_undoStack->canUndo()) {
+        QString text = m_undoStack->undoText();
+        m_undoStack->undo();
+        qDebug() << "↩️ Undo:" << text;
+        updateStatus("撤销: " + text);
+    } else {
+        updateStatus("无可撤销的操作");
+    }
 }
 
 void MyForm::handleRedoButtonClicked()
 {
-    qDebug() << "Redo button clicked";
-    updateStatus("Redo action performed");
-    // 这里可以实现重做功能
-    // ui->textEdit->redo();
+    if (m_undoStack && m_undoStack->canRedo()) {
+        QString text = m_undoStack->redoText();
+        m_undoStack->redo();
+        qDebug() << "↪️ Redo:" << text;
+        updateStatus("重做: " + text);
+    } else {
+        updateStatus("无可重做的操作");
+    }
 }
 
 void MyForm::handleLoadMapButtonClicked()
@@ -2635,6 +2605,12 @@ void MyForm::onStartDrawingPipeline(const QString &pipelineType)
     updateStatus(QString("开始绘制管线: %1 (左键点击添加点，右键完成)").arg(m_drawingToolPanel->currentTypeName()));
     
     if (m_drawingManager) {
+        // 应用当前样式
+        m_drawingManager->setDrawingStyle(
+            m_drawingToolPanel->currentColor(),
+            m_drawingToolPanel->currentLineWidth()
+        );
+        
         // 开始绘制管线
         m_drawingManager->startDrawingPipeline(pipelineType);
     }
@@ -2646,6 +2622,12 @@ void MyForm::onStartDrawingFacility(const QString &facilityType)
     updateStatus(QString("开始绘制设施: %1 (点击地图设置位置)").arg(m_drawingToolPanel->currentTypeName()));
     
     if (m_drawingManager) {
+        // 应用当前样式
+        m_drawingManager->setDrawingStyle(
+            m_drawingToolPanel->currentColor(),
+            m_drawingToolPanel->currentLineWidth()
+        );
+        
         // 开始绘制设施
         m_drawingManager->startDrawingFacility(facilityType);
     }
@@ -2751,6 +2733,7 @@ void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QStrin
             item->setData(0, "pipeline");
             item->setData(1, pipeline.pipelineId());
             item->setData(2, pipelineType);
+            item->setData(100, static_cast<int>(EntityState::Added));  // 新增：设置实体状态为Added
             
             // 关键：保存管线对象到hash表，用于后续编辑
             m_drawnPipelines[item] = pipeline;
@@ -2789,33 +2772,81 @@ void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QStrin
 
 void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QString &wkt, const QPointF &point)
 {
-    Q_UNUSED(point);
-    
     qDebug() << "Facility drawing finished, type:" << facilityType << "WKT:" << wkt;
     updateStatus("设施绘制完成");
     
-    // TODO: 创建设施编辑对话框
-    // FacilityEditDialog *dialog = new FacilityEditDialog(this);
-    // dialog->setFacilityType(facilityType);
-    // dialog->setGeometry(wkt);
-    // 注意：使用 exec() 时不要设置 Qt::WA_DeleteOnClose，需要手动 delete
-    // int result = dialog->exec();
-    // if (result == QDialog::Accepted) {
-    //     Facility facility = dialog->getFacility();
-    //     delete dialog;
-    //     // ... 保存逼辑
-    // } else {
-    //     delete dialog;
-    // }
-    
-    // 临时显示提示
-    QMessageBox::information(this, "提示",
-        QString("设施绘制完成！\n\n"
-                "类型: %1\n"
-                "几何数据: %2\n"
-                "\n设施编辑对话框正在开发中...")
-        .arg(facilityType)
-        .arg(wkt));
+    // 直接创建设施图形项（暂时不使用对话框）
+    if (mapScene) {
+        qDebug() << "Creating facility on scene at:" << point;
+        
+        // 创建圆形图形项
+        double radius = 8.0;  // 设施半径
+        QGraphicsEllipseItem *ellipseItem = new QGraphicsEllipseItem(
+            point.x() - radius,
+            point.y() - radius,
+            radius * 2,
+            radius * 2
+        );
+        
+        // 设置样式（根据类型）
+        QColor color;
+        QString typeName;
+        if (facilityType == "valve") {
+            color = QColor(255, 0, 0);  // 红色
+            typeName = "阀门";
+        } else if (facilityType == "manhole") {
+            color = QColor(128, 128, 0);  // 黄褐色
+            typeName = "井盖";
+        } else if (facilityType == "pump_station") {
+            color = QColor(0, 128, 255);  // 浅蓝色
+            typeName = "泵站";
+        } else if (facilityType == "transformer") {
+            color = QColor(255, 128, 0);  // 橙色
+            typeName = "变压器";
+        } else if (facilityType == "regulator") {
+            color = QColor(128, 0, 255);  // 紫色
+            typeName = "调压站";
+        } else if (facilityType == "junction_box") {
+            color = QColor(0, 255, 128);  // 青色
+            typeName = "接线盒";
+        } else {
+            color = QColor(128, 128, 128);  // 灰色
+            typeName = "未知";
+        }
+        
+        ellipseItem->setBrush(QBrush(color));
+        ellipseItem->setPen(QPen(Qt::black, 2));
+        ellipseItem->setZValue(150);  // 确保在管线之上
+        
+        // 设置数据
+        ellipseItem->setData(0, "facility");  // 实体类型
+        ellipseItem->setData(1, facilityType);  // 设施类型
+        ellipseItem->setData(2, color);  // 颜色
+        ellipseItem->setData(100, static_cast<int>(EntityState::Added));  // 新增：设置实体状态为Added
+        
+        // 设置工具提示
+        ellipseItem->setToolTip(QString("%1\n\u7c7b型: %2")
+                               .arg(typeName)
+                               .arg(facilityType));
+        
+        // 添加到场景
+        mapScene->addItem(ellipseItem);
+        
+        qDebug() << "✅ Facility created on scene:" << typeName;
+        
+        // 显示成功信息
+        QMessageBox::information(this, "成功",
+            QString("设施创建成功！\n\n"
+                    "类型: %1\n"
+                    "几何数据: %2")
+            .arg(typeName)
+            .arg(wkt));
+        
+        updateStatus("设施创建成功");
+    } else {
+        qDebug() << "❌ Cannot create facility: mapScene is null";
+        updateStatus("设施创建失败");
+    }
 }
 
 // ==========================================
@@ -2888,6 +2919,9 @@ void MyForm::onShowContextMenu(const QPoint &pos)
         "  background-color: #1890ff;"
         "  color: white;"
         "}"
+        "QMenu::item:disabled {"
+        "  color: #bfbfbf;"
+        "}"
         "QMenu::separator {"
         "  height: 1px;"
         "  background-color: #e0e0e0;"
@@ -2895,14 +2929,36 @@ void MyForm::onShowContextMenu(const QPoint &pos)
         "}"
     );
     
-    // 添加菜单项
+    // 基本操作
     QAction *viewAction = contextMenu.addAction("📋 查看属性");
     QAction *editAction = contextMenu.addAction("✏️ 编辑属性");
-    contextMenu.addSeparator();
-    QAction *deleteAction = contextMenu.addAction("🗑️ 删除");
     
-    // 设置删除项颜色
-    deleteAction->setIcon(QIcon());
+    contextMenu.addSeparator();
+    
+    // 复制/粘贴操作
+    QAction *copyAction = contextMenu.addAction("📋 复制");
+    QAction *pasteAction = contextMenu.addAction("📄 粘贴");
+    pasteAction->setEnabled(m_copiedItem != nullptr);
+    
+    QAction *duplicateAction = contextMenu.addAction("📌 原位复制");
+    
+    contextMenu.addSeparator();
+    
+    // 样式操作
+    QAction *copyStyleAction = contextMenu.addAction("🎨 复制样式");
+    QAction *pasteStyleAction = contextMenu.addAction("🖌️ 粘贴样式");
+    pasteStyleAction->setEnabled(m_hasStyleCopied);
+    
+    contextMenu.addSeparator();
+    
+    // 图层操作
+    QAction *bringToFrontAction = contextMenu.addAction("⬆️ 置于顶层");
+    QAction *sendToBackAction = contextMenu.addAction("⬇️ 置于底层");
+    
+    contextMenu.addSeparator();
+    
+    // 删除操作
+    QAction *deleteAction = contextMenu.addAction("🗑️ 删除");
     QFont deleteFont = deleteAction->font();
     deleteFont.setBold(true);
     deleteAction->setFont(deleteFont);
@@ -2910,6 +2966,13 @@ void MyForm::onShowContextMenu(const QPoint &pos)
     // 连接信号
     connect(viewAction, &QAction::triggered, this, &MyForm::onViewEntityProperties);
     connect(editAction, &QAction::triggered, this, &MyForm::onEditSelectedEntity);
+    connect(copyAction, &QAction::triggered, this, &MyForm::onCopyEntity);
+    connect(pasteAction, &QAction::triggered, this, &MyForm::onPasteEntity);
+    connect(duplicateAction, &QAction::triggered, this, &MyForm::onDuplicateEntity);
+    connect(copyStyleAction, &QAction::triggered, this, &MyForm::onCopyStyle);
+    connect(pasteStyleAction, &QAction::triggered, this, &MyForm::onPasteStyle);
+    connect(bringToFrontAction, &QAction::triggered, this, &MyForm::onBringToFront);
+    connect(sendToBackAction, &QAction::triggered, this, &MyForm::onSendToBack);
     connect(deleteAction, &QAction::triggered, this, &MyForm::onDeleteSelectedEntity);
     
     // 显示菜单
@@ -2939,16 +3002,18 @@ void MyForm::onDeleteSelectedEntity()
     if (reply == QMessageBox::Yes) {
         qDebug() << "Deleting entity:" << entityId;
         
-        // 从场景中删除
-        if (mapScene) {
-            mapScene->removeItem(m_selectedItem);
+        // 使用命令模式删除（支持撤销）
+        DeleteEntityCommand *cmd = new DeleteEntityCommand(
+            mapScene,
+            m_selectedItem,
+            &m_drawnPipelines
+        );
+        
+        if (m_undoStack) {
+            m_undoStack->push(cmd);
         }
         
-        // 从哈希表中删除
-        m_drawnPipelines.remove(m_selectedItem);
-        
-        // 删除图形项
-        delete m_selectedItem;
+        // 清除选中
         m_selectedItem = nullptr;
         
         updateStatus("已删除实体");
@@ -2964,53 +3029,29 @@ void MyForm::onEditSelectedEntity()
     
     QString entityType = m_selectedItem->data(0).toString();
     
-    if (entityType == "pipeline") {
-        // 编辑管线
-        if (!m_drawnPipelines.contains(m_selectedItem)) {
-            QMessageBox::warning(this, "错误", "未找到管线数据！");
-            return;
-        }
-        
-        Pipeline pipeline = m_drawnPipelines[m_selectedItem];
-        
-        // 创建编辑对话框
-        PipelineEditDialog *dialog = new PipelineEditDialog(this);
-        dialog->loadPipeline(pipeline);  // 加载现有数据
-        
-        int result = dialog->exec();
-        
-        if (result == QDialog::Accepted) {
-            // 获取修改后的数据
-            Pipeline updatedPipeline = dialog->getPipeline();
-            
-            // 更新哈希表
-            m_drawnPipelines[m_selectedItem] = updatedPipeline;
-            
-            // 更新工具提示
-            QString typeName;
-            if (updatedPipeline.pipelineType() == "water_supply") typeName = "给水";
-            else if (updatedPipeline.pipelineType() == "sewage") typeName = "排水";
-            else if (updatedPipeline.pipelineType() == "gas") typeName = "燃气";
-            else if (updatedPipeline.pipelineType() == "electric") typeName = "电力";
-            else if (updatedPipeline.pipelineType() == "telecom") typeName = "通信";
-            else if (updatedPipeline.pipelineType() == "heat") typeName = "供热";
-            else typeName = "未知";
-            
-            QString tooltip = QString("%1\n类型: %2\n管径: DN%3")
-                                  .arg(updatedPipeline.pipelineName())
-                                  .arg(typeName)
-                                  .arg(updatedPipeline.diameterMm());
-            m_selectedItem->setToolTip(tooltip);
-            
-            // 更新数据
-            m_selectedItem->setData(1, updatedPipeline.pipelineId());
-            
-            updateStatus("管线属性已更新");
-            qDebug() << "✅ Pipeline updated:" << updatedPipeline.pipelineName();
-        }
-        
-        delete dialog;
-    }
+    // 判断实体类型，使用通用属性对话框
+    EntityPropertiesDialog::EntityType dialogType = 
+        (entityType == "pipeline") ? EntityPropertiesDialog::Pipeline : EntityPropertiesDialog::Facility;
+    
+    EntityPropertiesDialog *dialog = new EntityPropertiesDialog(
+        m_selectedItem, 
+        dialogType,
+        this
+    );
+    
+    // 连接删除信号
+    connect(dialog, &EntityPropertiesDialog::deleteRequested, this, [this]() {
+        onDeleteSelectedEntity();
+    });
+    
+    // 连接属性变化信号
+    connect(dialog, &EntityPropertiesDialog::propertiesChanged, this, [this]() {
+        updateStatus("实体属性已更新");
+        qDebug() << "✅ Entity properties updated";
+    });
+    
+    dialog->exec();
+    delete dialog;
 }
 
 void MyForm::onViewEntityProperties()
@@ -3130,6 +3171,269 @@ bool MyForm::isEntityItem(QGraphicsItem *item)
     // 检查是否有实体标记
     QString entityType = item->data(0).toString();
     return (entityType == "pipeline" || entityType == "facility");
+}
+
+// ==========================================
+// 复制/粘贴/样式操作功能实现
+// ==========================================
+
+void MyForm::onCopyEntity()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    m_copiedItem = m_selectedItem;
+    updateStatus("✅ 已复制实体");
+    qDebug() << "📋 Entity copied";
+}
+
+void MyForm::onPasteEntity()
+{
+    if (!m_copiedItem || !mapScene) {
+        QMessageBox::warning(this, "提示", "没有复制的实体！");
+        return;
+    }
+    
+    // 获取鼠标当前位置（场景坐标）
+    QPointF scenePos = ui->graphicsView->mapToScene(
+        ui->graphicsView->viewport()->rect().center()
+    );
+    
+    // 复制图形项
+    QGraphicsItem *newItem = nullptr;
+    
+    if (auto pathItem = qgraphicsitem_cast<QGraphicsPathItem*>(m_copiedItem)) {
+        // 复制路径项（管线）
+        QGraphicsPathItem *newPathItem = new QGraphicsPathItem();
+        newPathItem->setPath(pathItem->path());
+        newPathItem->setPen(pathItem->pen());
+        newPathItem->setBrush(pathItem->brush());
+        newPathItem->setZValue(100);
+        
+        // 复制数据
+        for (int i = 0; i < 10; ++i) {
+            newPathItem->setData(i, m_copiedItem->data(i));
+        }
+        
+        // 偏移位置（20像素）
+        newPathItem->setPos(m_copiedItem->pos() + QPointF(20, 20));
+        
+        newItem = newPathItem;
+    } else if (auto ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(m_copiedItem)) {
+        // 复制椭圆项（设施）
+        QGraphicsEllipseItem *newEllipseItem = new QGraphicsEllipseItem();
+        newEllipseItem->setRect(ellipseItem->rect());
+        newEllipseItem->setPen(ellipseItem->pen());
+        newEllipseItem->setBrush(ellipseItem->brush());
+        newEllipseItem->setZValue(100);
+        
+        // 复制数据
+        for (int i = 0; i < 10; ++i) {
+            newEllipseItem->setData(i, m_copiedItem->data(i));
+        }
+        
+        // 偏移位置
+        newEllipseItem->setPos(m_copiedItem->pos() + QPointF(20, 20));
+        
+        newItem = newEllipseItem;
+    }
+    
+    if (newItem) {
+        // 添加到场景
+        mapScene->addItem(newItem);
+        
+        // 选中新复制的项
+        clearSelection();
+        selectItem(newItem);
+        
+        updateStatus("✅ 已粘贴实体");
+        qDebug() << "📄 Entity pasted";
+    }
+}
+
+void MyForm::onDuplicateEntity()
+{
+    if (!m_selectedItem || !mapScene) {
+        return;
+    }
+    
+    // 保存当前选中项
+    QGraphicsItem *sourceItem = m_selectedItem;
+    
+    // 使用复制逻辑
+    m_copiedItem = sourceItem;
+    onPasteEntity();
+    
+    // 恢复原始选中
+    m_copiedItem = nullptr;
+    
+    updateStatus("✅ 已原位复制实体");
+}
+
+void MyForm::onCopyStyle()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    // 获取颜色和线宽
+    QColor color = m_selectedItem->data(3).value<QColor>();
+    int lineWidth = m_selectedItem->data(4).toInt();
+    
+    if (color.isValid() && lineWidth > 0) {
+        m_copiedColor = color;
+        m_copiedLineWidth = lineWidth;
+        m_hasStyleCopied = true;
+        
+        updateStatus(QString("✅ 已复制样式: %1, %2px")
+                        .arg(color.name())
+                        .arg(lineWidth));
+        qDebug() << "🎨 Style copied:" << color.name() << lineWidth;
+    } else {
+        QMessageBox::warning(this, "提示", "无法复制样式！");
+    }
+}
+
+void MyForm::onPasteStyle()
+{
+    if (!m_selectedItem || !m_hasStyleCopied) {
+        return;
+    }
+    
+    // 获取旧样式
+    QColor oldColor = m_selectedItem->data(3).value<QColor>();
+    int oldWidth = m_selectedItem->data(4).toInt();
+    
+    // 使用命令模式修改样式（支持撤销）
+    ChangeStyleCommand *cmd = new ChangeStyleCommand(
+        m_selectedItem,
+        oldColor,
+        oldWidth,
+        m_copiedColor,
+        m_copiedLineWidth
+    );
+    
+    if (m_undoStack) {
+        m_undoStack->push(cmd);
+    }
+    
+    updateStatus("✅ 已粘贴样式");
+    qDebug() << "🖌️ Style pasted";
+}
+
+void MyForm::onBringToFront()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    // 设置最高层级（除了高亮时的200）
+    m_selectedItem->setZValue(150);
+    
+    updateStatus("⬆️ 已置于顶层");
+    qDebug() << "⬆️ Brought to front";
+}
+
+void MyForm::onSendToBack()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    // 设置最低层级
+    m_selectedItem->setZValue(50);
+    
+    updateStatus("⬇️ 已置于底层");
+    qDebug() << "⬇️ Sent to back";
+}
+
+// ==========================================
+// 数据持久化功能实现
+// ==========================================
+
+void MyForm::onSaveDrawingData()
+{
+    // 确认保存到数据库
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "确认保存",
+        "将绘制的管线和设施保存到数据库中，是否继续？",
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::Yes
+    );
+    
+    if (reply != QMessageBox::Yes) {
+        return;
+    }
+    
+    // 保存到数据库
+    bool success = DrawingDatabaseManager::saveToDatabase(
+        mapScene,
+        m_drawnPipelines
+    );
+    
+    if (success) {
+        QMessageBox::information(this, "成功", "绘制数据已保存到数据库！");
+        updateStatus("✅ 已保存绘制数据到数据库");
+    } else {
+        QMessageBox::warning(this, "错误", "保存失败！请检查数据库连接。");
+        updateStatus("❌ 保存失败");
+    }
+}
+
+void MyForm::onLoadDrawingData()
+{
+    // 确认加载（会清空当前数据）
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "确认加载",
+        "从数据库加载绘制数据会清空当前的绘制内容，是否继续？",
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No
+    );
+    
+    if (reply != QMessageBox::Yes) {
+        return;
+    }
+    
+    // 清空当前的绘制内容
+    QList<QGraphicsItem*> itemsToRemove;
+    for (QGraphicsItem *item : mapScene->items()) {
+        QString entityType = item->data(0).toString();
+        if (entityType == "pipeline" || entityType == "facility") {
+            itemsToRemove.append(item);
+        }
+    }
+    
+    for (QGraphicsItem *item : itemsToRemove) {
+        mapScene->removeItem(item);
+        delete item;
+    }
+    
+    m_drawnPipelines.clear();
+    clearSelection();
+    
+    // 清空撤销栈
+    if (m_undoStack) {
+        m_undoStack->clear();
+    }
+    
+    // 从数据库加载数据
+    bool success = DrawingDatabaseManager::loadFromDatabase(
+        mapScene,
+        m_drawnPipelines,
+        m_nextPipelineId
+    );
+    
+    if (success) {
+        QMessageBox::information(this, "成功", 
+            QString("已从数据库加载 %1 个管线实体！").arg(m_drawnPipelines.size()));
+        updateStatus("✅ 已从数据库加载绘制数据");
+    } else {
+        QMessageBox::warning(this, "错误", "加载失败！请检查数据库连接。");
+        updateStatus("❌ 加载失败");
+    }
 }
 
 void MyForm::setupLayerControlPanel()

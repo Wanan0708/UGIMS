@@ -23,6 +23,7 @@ SOURCES += \
     src/widgets/drawingtoolpanel.cpp \
     src/widgets/layercontrolpanel.cpp \
     src/widgets/collapsiblegroupbox.cpp \
+    src/widgets/entitypropertiesdialog.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
     src/tilemap/manifeststore.cpp \
@@ -32,6 +33,9 @@ SOURCES += \
     src/core/database/databasemanager.cpp \
     src/core/models/pipeline.cpp \
     src/core/models/facility.cpp \
+    src/core/commands/drawcommand.cpp \
+    src/core/io/drawingdatamanager.cpp \
+    src/core/io/drawingdatabasemanager.cpp \
     src/dao/pipelinedao.cpp \
     src/dao/facilitydao.cpp \
     src/map/layermanager.cpp \
@@ -54,6 +58,7 @@ HEADERS += \
     src/widgets/drawingtoolpanel.h \
     src/widgets/layercontrolpanel.h \
     src/widgets/collapsiblegroupbox.h \
+    src/widgets/entitypropertiesdialog.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \
     src/tilemap/manifeststore.h \
@@ -63,6 +68,9 @@ HEADERS += \
     src/core/database/databasemanager.h \
     src/core/models/pipeline.h \
     src/core/models/facility.h \
+    src/core/commands/drawcommand.h \
+    src/core/io/drawingdatamanager.h \
+    src/core/io/drawingdatabasemanager.h \
     src/dao/basedao.h \
     src/dao/pipelinedao.h \
     src/dao/facilitydao.h \

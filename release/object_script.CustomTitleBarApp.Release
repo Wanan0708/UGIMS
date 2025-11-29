@@ -9,6 +9,7 @@ release/mapmanagersettings.o
 release/drawingtoolpanel.o
 release/layercontrolpanel.o
 release/collapsiblegroupbox.o
+release/entitypropertiesdialog.o
 release/tilemapmanager.o
 release/tileworker.o
 release/manifeststore.o
@@ -18,6 +19,9 @@ release/config.o
 release/databasemanager.o
 release/pipeline.o
 release/facility.o
+release/drawcommand.o
+release/drawingdatamanager.o
+release/drawingdatabasemanager.o
 release/pipelinedao.o
 release/facilitydao.o
 release/layermanager.o
@@ -39,6 +43,7 @@ release/moc_customtitlebar.o
 release/moc_drawingtoolpanel.o
 release/moc_layercontrolpanel.o
 release/moc_collapsiblegroupbox.o
+release/moc_entitypropertiesdialog.o
 release/moc_tilemapmanager.o
 release/moc_tileworker.o
 release/moc_downloadscheduler.o

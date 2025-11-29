@@ -1,6 +1,8 @@
 #include "widgets/drawingtoolpanel.h"
 #include <QScrollArea>
 #include <QLabel>
+#include <QHBoxLayout>
+#include <QColor>
 
 DrawingToolPanel::DrawingToolPanel(QWidget *parent)
     : QWidget(parent)
@@ -92,9 +94,56 @@ void DrawingToolPanel::setupUI()
     m_facilityButtonGroup->addButton(m_junctionBoxBtn, JunctionBox);
     m_facilityButtonGroup->setExclusive(true);
     
+    // ========== 样式设置组 ==========
+    m_styleGroup = new CollapsibleGroupBox("🎨 绘制样式", this);
+    
+    QVBoxLayout *styleLayout = new QVBoxLayout();
+    styleLayout->setSpacing(8);
+    styleLayout->setContentsMargins(8, 8, 8, 8);
+    
+    // 颜色选择
+    QHBoxLayout *colorLayout = new QHBoxLayout();
+    QLabel *colorLabel = new QLabel("颜色:", this);
+    colorLabel->setFixedWidth(50);
+    m_colorCombo = new QComboBox(this);
+    m_colorCombo->addItem("🔵 蓝色", "#1890ff");
+    m_colorCombo->addItem("🔴 红色", "#ff4d4f");
+    m_colorCombo->addItem("🟢 绿色", "#52c41a");
+    m_colorCombo->addItem("🟡 黄色", "#faad14");
+    m_colorCombo->addItem("🟣 紫色", "#722ed1");
+    m_colorCombo->addItem("🟠 橙色", "#fa8c16");
+    m_colorCombo->addItem("⚫ 灰色", "#8c8c8c");
+    m_colorCombo->setCurrentIndex(0);  // 默认蓝色
+    colorLayout->addWidget(colorLabel);
+    colorLayout->addWidget(m_colorCombo, 1);
+    
+    // 线宽设置
+    QHBoxLayout *widthLayout = new QHBoxLayout();
+    QLabel *widthLabel = new QLabel("线宽:", this);
+    widthLabel->setFixedWidth(50);
+    m_lineWidthSpin = new QSpinBox(this);
+    m_lineWidthSpin->setRange(1, 10);
+    m_lineWidthSpin->setValue(3);  // 默认3px
+    m_lineWidthSpin->setSuffix(" px");
+    widthLayout->addWidget(widthLabel);
+    widthLayout->addWidget(m_lineWidthSpin, 1);
+    
+    styleLayout->addLayout(colorLayout);
+    styleLayout->addLayout(widthLayout);
+    
+    // 添加提示
+    QLabel *hintLabel = new QLabel("💡 提示: 选择类型后点击地图绘制", this);
+    hintLabel->setStyleSheet("color: #8c8c8c; font-size: 11px; padding: 4px;");
+    hintLabel->setWordWrap(true);
+    styleLayout->addWidget(hintLabel);
+    
+    m_styleGroup->setContentLayout(styleLayout);
+    m_styleGroup->setExpanded(true, false);  // 默认展开
+    
     // 添加到主布局
     m_mainLayout->addWidget(m_pipelineGroup);
     m_mainLayout->addWidget(m_facilityGroup);
+    m_mainLayout->addWidget(m_styleGroup);
     m_mainLayout->addStretch();
 }
 
@@ -243,4 +292,17 @@ void DrawingToolPanel::resetSelection()
     
     m_currentType = None;
     emit drawingTypeChanged(None);
+}
+
+QString DrawingToolPanel::currentColorName() const
+{
+    if (m_colorCombo) {
+        return m_colorCombo->currentData().toString();
+    }
+    return "#1890ff";  // 默认蓝色
+}
+
+QColor DrawingToolPanel::currentColor() const
+{
+    return QColor(currentColorName());
 }

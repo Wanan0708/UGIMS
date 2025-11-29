@@ -9,6 +9,7 @@ debug/mapmanagersettings.o
 debug/drawingtoolpanel.o
 debug/layercontrolpanel.o
 debug/collapsiblegroupbox.o
+debug/entitypropertiesdialog.o
 debug/tilemapmanager.o
 debug/tileworker.o
 debug/manifeststore.o
@@ -18,6 +19,9 @@ debug/config.o
 debug/databasemanager.o
 debug/pipeline.o
 debug/facility.o
+debug/drawcommand.o
+debug/drawingdatamanager.o
+debug/drawingdatabasemanager.o
 debug/pipelinedao.o
 debug/facilitydao.o
 debug/layermanager.o
@@ -39,6 +43,7 @@ debug/moc_customtitlebar.o
 debug/moc_drawingtoolpanel.o
 debug/moc_layercontrolpanel.o
 debug/moc_collapsiblegroupbox.o
+debug/moc_entitypropertiesdialog.o
 debug/moc_tilemapmanager.o
 debug/moc_tileworker.o
 debug/moc_downloadscheduler.o

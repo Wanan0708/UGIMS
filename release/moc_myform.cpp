@@ -98,7 +98,16 @@ static constexpr auto qt_meta_stringdata_ZN6MyFormE = QtMocHelpers::stringData(
     "onDeleteSelectedEntity",
     "onEditSelectedEntity",
     "onViewEntityProperties",
-    "clearSelection"
+    "onCopyEntity",
+    "onPasteEntity",
+    "onCopyStyle",
+    "onPasteStyle",
+    "onDuplicateEntity",
+    "onBringToFront",
+    "onSendToBack",
+    "clearSelection",
+    "onSaveDrawingData",
+    "onLoadDrawingData"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -110,7 +119,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      42,   14, // methods
+      51,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -118,48 +127,57 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,  266,    2, 0x08,    1 /* Private */,
-       3,    0,  267,    2, 0x08,    2 /* Private */,
-       4,    0,  268,    2, 0x08,    3 /* Private */,
-       5,    0,  269,    2, 0x08,    4 /* Private */,
-       6,    0,  270,    2, 0x08,    5 /* Private */,
-       7,    0,  271,    2, 0x08,    6 /* Private */,
-       8,    0,  272,    2, 0x08,    7 /* Private */,
-       9,    0,  273,    2, 0x08,    8 /* Private */,
-      10,    0,  274,    2, 0x08,    9 /* Private */,
-      11,    0,  275,    2, 0x08,   10 /* Private */,
-      12,    0,  276,    2, 0x08,   11 /* Private */,
-      13,    0,  277,    2, 0x08,   12 /* Private */,
-      14,    0,  278,    2, 0x08,   13 /* Private */,
-      15,    2,  279,    2, 0x08,   14 /* Private */,
-      18,    3,  284,    2, 0x08,   17 /* Private */,
-      20,    1,  291,    2, 0x08,   21 /* Private */,
-      22,    0,  294,    2, 0x08,   23 /* Private */,
-      23,    0,  295,    2, 0x08,   24 /* Private */,
-      24,    0,  296,    2, 0x08,   25 /* Private */,
-      25,    0,  297,    2, 0x08,   26 /* Private */,
-      26,    0,  298,    2, 0x08,   27 /* Private */,
-      27,    0,  299,    2, 0x08,   28 /* Private */,
-      28,    0,  300,    2, 0x08,   29 /* Private */,
-      29,    0,  301,    2, 0x08,   30 /* Private */,
-      30,    0,  302,    2, 0x08,   31 /* Private */,
-      31,    0,  303,    2, 0x08,   32 /* Private */,
-      32,    1,  304,    2, 0x08,   33 /* Private */,
-      35,    1,  307,    2, 0x08,   35 /* Private */,
-      36,    1,  310,    2, 0x08,   37 /* Private */,
-      38,    0,  313,    2, 0x08,   39 /* Private */,
-      39,    1,  314,    2, 0x08,   40 /* Private */,
-      40,    1,  317,    2, 0x08,   42 /* Private */,
-      42,    1,  320,    2, 0x08,   44 /* Private */,
-      44,    3,  323,    2, 0x08,   46 /* Private */,
-      48,    3,  330,    2, 0x08,   50 /* Private */,
-      50,    1,  337,    2, 0x08,   54 /* Private */,
-      53,    1,  340,    2, 0x08,   56 /* Private */,
-      54,    1,  343,    2, 0x08,   58 /* Private */,
-      56,    0,  346,    2, 0x08,   60 /* Private */,
-      57,    0,  347,    2, 0x08,   61 /* Private */,
-      58,    0,  348,    2, 0x08,   62 /* Private */,
-      59,    0,  349,    2, 0x08,   63 /* Private */,
+       1,    0,  320,    2, 0x08,    1 /* Private */,
+       3,    0,  321,    2, 0x08,    2 /* Private */,
+       4,    0,  322,    2, 0x08,    3 /* Private */,
+       5,    0,  323,    2, 0x08,    4 /* Private */,
+       6,    0,  324,    2, 0x08,    5 /* Private */,
+       7,    0,  325,    2, 0x08,    6 /* Private */,
+       8,    0,  326,    2, 0x08,    7 /* Private */,
+       9,    0,  327,    2, 0x08,    8 /* Private */,
+      10,    0,  328,    2, 0x08,    9 /* Private */,
+      11,    0,  329,    2, 0x08,   10 /* Private */,
+      12,    0,  330,    2, 0x08,   11 /* Private */,
+      13,    0,  331,    2, 0x08,   12 /* Private */,
+      14,    0,  332,    2, 0x08,   13 /* Private */,
+      15,    2,  333,    2, 0x08,   14 /* Private */,
+      18,    3,  338,    2, 0x08,   17 /* Private */,
+      20,    1,  345,    2, 0x08,   21 /* Private */,
+      22,    0,  348,    2, 0x08,   23 /* Private */,
+      23,    0,  349,    2, 0x08,   24 /* Private */,
+      24,    0,  350,    2, 0x08,   25 /* Private */,
+      25,    0,  351,    2, 0x08,   26 /* Private */,
+      26,    0,  352,    2, 0x08,   27 /* Private */,
+      27,    0,  353,    2, 0x08,   28 /* Private */,
+      28,    0,  354,    2, 0x08,   29 /* Private */,
+      29,    0,  355,    2, 0x08,   30 /* Private */,
+      30,    0,  356,    2, 0x08,   31 /* Private */,
+      31,    0,  357,    2, 0x08,   32 /* Private */,
+      32,    1,  358,    2, 0x08,   33 /* Private */,
+      35,    1,  361,    2, 0x08,   35 /* Private */,
+      36,    1,  364,    2, 0x08,   37 /* Private */,
+      38,    0,  367,    2, 0x08,   39 /* Private */,
+      39,    1,  368,    2, 0x08,   40 /* Private */,
+      40,    1,  371,    2, 0x08,   42 /* Private */,
+      42,    1,  374,    2, 0x08,   44 /* Private */,
+      44,    3,  377,    2, 0x08,   46 /* Private */,
+      48,    3,  384,    2, 0x08,   50 /* Private */,
+      50,    1,  391,    2, 0x08,   54 /* Private */,
+      53,    1,  394,    2, 0x08,   56 /* Private */,
+      54,    1,  397,    2, 0x08,   58 /* Private */,
+      56,    0,  400,    2, 0x08,   60 /* Private */,
+      57,    0,  401,    2, 0x08,   61 /* Private */,
+      58,    0,  402,    2, 0x08,   62 /* Private */,
+      59,    0,  403,    2, 0x08,   63 /* Private */,
+      60,    0,  404,    2, 0x08,   64 /* Private */,
+      61,    0,  405,    2, 0x08,   65 /* Private */,
+      62,    0,  406,    2, 0x08,   66 /* Private */,
+      63,    0,  407,    2, 0x08,   67 /* Private */,
+      64,    0,  408,    2, 0x08,   68 /* Private */,
+      65,    0,  409,    2, 0x08,   69 /* Private */,
+      66,    0,  410,    2, 0x08,   70 /* Private */,
+      67,    0,  411,    2, 0x08,   71 /* Private */,
+      68,    0,  412,    2, 0x08,   72 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -200,6 +218,15 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
     QMetaType::Void, 0x80000000 | 51,   52,
     QMetaType::Void, 0x80000000 | 51,   52,
     QMetaType::Void, QMetaType::QPoint,   55,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -320,7 +347,25 @@ Q_CONSTINIT const QMetaObject MyForm::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onViewEntityProperties'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onCopyEntity'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onPasteEntity'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onCopyStyle'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onPasteStyle'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onDuplicateEntity'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onBringToFront'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onSendToBack'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'clearSelection'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onSaveDrawingData'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onLoadDrawingData'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -372,7 +417,16 @@ void MyForm::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 38: _t->onDeleteSelectedEntity(); break;
         case 39: _t->onEditSelectedEntity(); break;
         case 40: _t->onViewEntityProperties(); break;
-        case 41: _t->clearSelection(); break;
+        case 41: _t->onCopyEntity(); break;
+        case 42: _t->onPasteEntity(); break;
+        case 43: _t->onCopyStyle(); break;
+        case 44: _t->onPasteStyle(); break;
+        case 45: _t->onDuplicateEntity(); break;
+        case 46: _t->onBringToFront(); break;
+        case 47: _t->onSendToBack(); break;
+        case 48: _t->clearSelection(); break;
+        case 49: _t->onSaveDrawingData(); break;
+        case 50: _t->onLoadDrawingData(); break;
         default: ;
         }
     }
@@ -423,14 +477,14 @@ int MyForm::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 42)
+        if (_id < 51)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 42;
+        _id -= 51;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 42)
+        if (_id < 51)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 42;
+        _id -= 51;
     }
     return _id;
 }

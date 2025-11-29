@@ -20,6 +20,7 @@
 #include <QPropertyAnimation>
 #include <QDockWidget>
 #include <QStackedWidget>
+#include <QUndoStack>  // 撤销栈
 
 // 添加TileMapManager的前置声明
 class TileMapManager;
@@ -117,7 +118,18 @@ private slots:
     void onDeleteSelectedEntity();                    // 删除选中实体
     void onEditSelectedEntity();                      // 编辑选中实体
     void onViewEntityProperties();                    // 查看实体属性
+    void onCopyEntity();                              // 复制实体
+    void onPasteEntity();                             // 粘贴实体
+    void onCopyStyle();                               // 复制样式
+    void onPasteStyle();                              // 粘贴样式
+    void onDuplicateEntity();                         // 复制实体（原位复制）
+    void onBringToFront();                            // 置于顶层
+    void onSendToBack();                              // 置于底层
     void clearSelection();                            // 清除选中
+    
+    // 数据持久化槽函数
+    void onSaveDrawingData();                         // 保存绘制数据
+    void onLoadDrawingData();                         // 加载绘制数据
 
 private:
     Ui::MyForm *ui;
@@ -207,6 +219,15 @@ private:
     QPen m_originalPen;                    // 选中前的原始画笔（用于恢复）
     QHash<QGraphicsItem*, Pipeline> m_drawnPipelines;  // 已绘制的管线数据（用于编辑）
     int m_nextPipelineId;                  // 下一个管线ID（自增）
+    
+    // 复制/粘贴功能
+    QGraphicsItem *m_copiedItem;           // 复制的图形项（用于粘贴）
+    QColor m_copiedColor;                  // 复制的颜色（样式复制）
+    int m_copiedLineWidth;                 // 复制的线宽（样式复制）
+    bool m_hasStyleCopied;                 // 是否复制了样式
+    
+    // 撤销/重做功能
+    QUndoStack *m_undoStack;               // 撤销栈
     
     void setupFunctionalArea();
     void setupDeviceTree();  // 设置设备树
