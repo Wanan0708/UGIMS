@@ -18,10 +18,12 @@
 #include <QToolButton>
 #include <QGraphicsProxyWidget>
 #include <QPropertyAnimation>
+#include <QDockWidget>
 
 // 添加TileMapManager的前置声明
 class TileMapManager;
 class LayerManager;
+class DrawingToolPanel;
 
 namespace Ui {
 class MyForm;
@@ -93,6 +95,11 @@ private slots:
     void onDeviceTreeItemDoubleClicked(const QModelIndex &index);
     void onDeviceSearchTextChanged(const QString &text);  // 搜索框文本变化
     void onAboutButtonClicked();  // 关于按钮点击
+    
+    // 绘制工具相关槽函数
+    void onToggleDrawingTool(bool checked);  // 切换绘制工具显示
+    void onStartDrawingPipeline(const QString &pipelineType);  // 开始绘制管线
+    void onStartDrawingFacility(const QString &facilityType);  // 开始绘制设施
 
 private:
     Ui::MyForm *ui;
@@ -154,8 +161,15 @@ private:
     // 设备树相关成员
     QStandardItemModel *deviceTreeModel;  // 设备树模型
     
+    // 绘制工具相关成员
+    QWidget *m_drawingToolContainer;       // 绘制工具容器（右侧滑出面板）
+    DrawingToolPanel *m_drawingToolPanel;  // 绘制工具面板
+    QPushButton *m_drawingToolToggleBtn;   // 浮动切换按钮
+    
     void setupFunctionalArea();
     void setupDeviceTree();  // 设置设备树
+    void setupDrawingToolPanel();  // 设置绘制工具面板（右侧滑出）
+    void positionDrawingToolPanel();  // 定位绘制工具面板
     void filterDeviceTree(const QString &searchText);  // 过滤设备树
     void setItemVisibility(QStandardItem *item, bool visible);  // 设置节点可见性
     bool filterItem(QStandardItem *item, const QString &searchText);  // 递归过滤节点

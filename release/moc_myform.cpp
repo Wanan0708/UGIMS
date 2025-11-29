@@ -76,7 +76,12 @@ static constexpr auto qt_meta_stringdata_ZN6MyFormE = QtMocHelpers::stringData(
     "onDeviceTreeItemDoubleClicked",
     "onDeviceSearchTextChanged",
     "text",
-    "onAboutButtonClicked"
+    "onAboutButtonClicked",
+    "onToggleDrawingTool",
+    "onStartDrawingPipeline",
+    "pipelineType",
+    "onStartDrawingFacility",
+    "facilityType"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -88,7 +93,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      30,   14, // methods
+      33,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -96,36 +101,39 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,  194,    2, 0x08,    1 /* Private */,
-       3,    0,  195,    2, 0x08,    2 /* Private */,
-       4,    0,  196,    2, 0x08,    3 /* Private */,
-       5,    0,  197,    2, 0x08,    4 /* Private */,
-       6,    0,  198,    2, 0x08,    5 /* Private */,
-       7,    0,  199,    2, 0x08,    6 /* Private */,
-       8,    0,  200,    2, 0x08,    7 /* Private */,
-       9,    0,  201,    2, 0x08,    8 /* Private */,
-      10,    0,  202,    2, 0x08,    9 /* Private */,
-      11,    0,  203,    2, 0x08,   10 /* Private */,
-      12,    0,  204,    2, 0x08,   11 /* Private */,
-      13,    0,  205,    2, 0x08,   12 /* Private */,
-      14,    0,  206,    2, 0x08,   13 /* Private */,
-      15,    2,  207,    2, 0x08,   14 /* Private */,
-      18,    3,  212,    2, 0x08,   17 /* Private */,
-      20,    1,  219,    2, 0x08,   21 /* Private */,
-      22,    0,  222,    2, 0x08,   23 /* Private */,
-      23,    0,  223,    2, 0x08,   24 /* Private */,
-      24,    0,  224,    2, 0x08,   25 /* Private */,
-      25,    0,  225,    2, 0x08,   26 /* Private */,
-      26,    0,  226,    2, 0x08,   27 /* Private */,
-      27,    0,  227,    2, 0x08,   28 /* Private */,
-      28,    0,  228,    2, 0x08,   29 /* Private */,
-      29,    0,  229,    2, 0x08,   30 /* Private */,
-      30,    0,  230,    2, 0x08,   31 /* Private */,
-      31,    0,  231,    2, 0x08,   32 /* Private */,
-      32,    1,  232,    2, 0x08,   33 /* Private */,
-      35,    1,  235,    2, 0x08,   35 /* Private */,
-      36,    1,  238,    2, 0x08,   37 /* Private */,
-      38,    0,  241,    2, 0x08,   39 /* Private */,
+       1,    0,  212,    2, 0x08,    1 /* Private */,
+       3,    0,  213,    2, 0x08,    2 /* Private */,
+       4,    0,  214,    2, 0x08,    3 /* Private */,
+       5,    0,  215,    2, 0x08,    4 /* Private */,
+       6,    0,  216,    2, 0x08,    5 /* Private */,
+       7,    0,  217,    2, 0x08,    6 /* Private */,
+       8,    0,  218,    2, 0x08,    7 /* Private */,
+       9,    0,  219,    2, 0x08,    8 /* Private */,
+      10,    0,  220,    2, 0x08,    9 /* Private */,
+      11,    0,  221,    2, 0x08,   10 /* Private */,
+      12,    0,  222,    2, 0x08,   11 /* Private */,
+      13,    0,  223,    2, 0x08,   12 /* Private */,
+      14,    0,  224,    2, 0x08,   13 /* Private */,
+      15,    2,  225,    2, 0x08,   14 /* Private */,
+      18,    3,  230,    2, 0x08,   17 /* Private */,
+      20,    1,  237,    2, 0x08,   21 /* Private */,
+      22,    0,  240,    2, 0x08,   23 /* Private */,
+      23,    0,  241,    2, 0x08,   24 /* Private */,
+      24,    0,  242,    2, 0x08,   25 /* Private */,
+      25,    0,  243,    2, 0x08,   26 /* Private */,
+      26,    0,  244,    2, 0x08,   27 /* Private */,
+      27,    0,  245,    2, 0x08,   28 /* Private */,
+      28,    0,  246,    2, 0x08,   29 /* Private */,
+      29,    0,  247,    2, 0x08,   30 /* Private */,
+      30,    0,  248,    2, 0x08,   31 /* Private */,
+      31,    0,  249,    2, 0x08,   32 /* Private */,
+      32,    1,  250,    2, 0x08,   33 /* Private */,
+      35,    1,  253,    2, 0x08,   35 /* Private */,
+      36,    1,  256,    2, 0x08,   37 /* Private */,
+      38,    0,  259,    2, 0x08,   39 /* Private */,
+      39,    1,  260,    2, 0x08,   40 /* Private */,
+      40,    1,  263,    2, 0x08,   42 /* Private */,
+      42,    1,  266,    2, 0x08,   44 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -158,6 +166,9 @@ Q_CONSTINIT static const uint qt_meta_data_ZN6MyFormE[] = {
     QMetaType::Void, 0x80000000 | 33,   34,
     QMetaType::Void, QMetaType::QString,   37,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::Bool,   21,
+    QMetaType::Void, QMetaType::QString,   41,
+    QMetaType::Void, QMetaType::QString,   43,
 
        0        // eod
 };
@@ -239,7 +250,16 @@ Q_CONSTINIT const QMetaObject MyForm::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
         // method 'onAboutButtonClicked'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onToggleDrawingTool'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<bool, std::false_type>,
+        // method 'onStartDrawingPipeline'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
+        // method 'onStartDrawingFacility'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>
     >,
     nullptr
 } };
@@ -279,6 +299,9 @@ void MyForm::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 27: _t->onDeviceTreeItemDoubleClicked((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
         case 28: _t->onDeviceSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         case 29: _t->onAboutButtonClicked(); break;
+        case 30: _t->onToggleDrawingTool((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+        case 31: _t->onStartDrawingPipeline((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 32: _t->onStartDrawingFacility((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         default: ;
         }
     }
@@ -303,14 +326,14 @@ int MyForm::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 30)
+        if (_id < 33)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 30;
+        _id -= 33;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 30)
+        if (_id < 33)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 30;
+        _id -= 33;
     }
     return _id;
 }

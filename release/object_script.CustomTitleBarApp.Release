@@ -5,6 +5,7 @@ release/analysispanel.o
 release/basewindow.o
 release/customtitlebar.o
 release/mapmanagersettings.o
+release/drawingtoolpanel.o
 release/tilemapmanager.o
 release/tileworker.o
 release/manifeststore.o
@@ -30,6 +31,7 @@ release/moc_mapmanagerdialog.o
 release/moc_analysispanel.o
 release/moc_basewindow.o
 release/moc_customtitlebar.o
+release/moc_drawingtoolpanel.o
 release/moc_tilemapmanager.o
 release/moc_tileworker.o
 release/moc_downloadscheduler.o

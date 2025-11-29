@@ -19,6 +19,7 @@ SOURCES += \
     src/widgets/basewindow.cpp \
     src/widgets/customtitlebar.cpp \
     src/widgets/mapmanagersettings.cpp \
+    src/widgets/drawingtoolpanel.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
     src/tilemap/manifeststore.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     src/widgets/basewindow.h \
     src/widgets/customtitlebar.h \
     src/widgets/mapmanagersettings.h \
+    src/widgets/drawingtoolpanel.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \
     src/tilemap/manifeststore.h \

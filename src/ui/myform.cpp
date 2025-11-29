@@ -2,6 +2,7 @@
 #include "ui_myform.h"
 #include "core/common/version.h"  // 添加版本信息头文件
 #include "tilemap/tilemapmanager.h"  // 添加瓦片地图管理器头文件
+#include "widgets/drawingtoolpanel.h"  // 添加绘制工具面板头文件
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -33,6 +34,7 @@
 #include <QFontMetrics>
 #include <QVBoxLayout>
 #include <QPainter>
+#include <QMainWindow>
 #include <cmath>
 #include "mapmanagerdialog.h"
 #include "tilemap/downloadscheduler.h"
@@ -61,6 +63,9 @@ MyForm::MyForm(QWidget *parent)
     , isDownloading(false)  // 初始化下载状态
     , viewUpdateTimer(nullptr)  // 初始化更新定时器
     , deviceTreeModel(nullptr)  // 初始化设备树模型
+    , m_drawingToolContainer(nullptr)  // 初始化绘制工具容器
+    , m_drawingToolPanel(nullptr)  // 初始化绘制工具面板
+    , m_drawingToolToggleBtn(nullptr)  // 初始化浮动切换按钮
 {
     logMessage("=== MyForm constructor started ===");
     ui->setupUi(this);
@@ -70,6 +75,9 @@ MyForm::MyForm(QWidget *parent)
     
     // 设置设备树
     setupDeviceTree();
+    
+    // 设置绘制工具面板（右侧滑出）
+    setupDrawingToolPanel();
     
     // 连接搜索框信号
     connect(ui->deviceSearchBox, &QLineEdit::textChanged, this, &MyForm::onDeviceSearchTextChanged);
@@ -137,10 +145,12 @@ void MyForm::showEvent(QShowEvent *event)
     // 窗口显示后设置splitter比例
     QWidget::showEvent(event);
     setupSplitter();
-    // 确保浮动工具条创建并定位（放到下一个事件循环，确保viewport已布局）
+    // 确保浮动工具条创建并定位（放到下一个事件循环，确俚viewport已布局）
     QTimer::singleShot(0, this, [this]() {
         if (mapScene && !gvOverlay) createGraphicsOverlay();
         if (mapScene) positionGraphicsOverlay();
+        // 初始化绘制工具面板位置
+        positionDrawingToolPanel();
     });
 }
 
@@ -159,6 +169,8 @@ void MyForm::resizeEvent(QResizeEvent *event)
     positionGraphicsOverlay();
     // 重新定位浮动状态栏
     positionFloatingStatusBar();
+    // 重新定位绘制工具面板
+    positionDrawingToolPanel();
 }
 
 void MyForm::setupSplitter()
@@ -2309,4 +2321,195 @@ void MyForm::onAboutButtonClicked()
     qDebug() << "Showing about dialog - Version:" << APP_VERSION << "Build:" << APP_BUILD_DATE;
     aboutDialog->exec();
     updateStatus("查看关于信息");
+}
+
+// ========================================
+// 绘制工具相关函数（右侧滑出面板）
+// ========================================
+
+void MyForm::setupDrawingToolPanel()
+{
+    qDebug() << "Setting up drawing tool panel (right-side slide-out)...";
+    
+    // 创建绘制工具面板
+    m_drawingToolPanel = new DrawingToolPanel(this);
+    
+    // 创建容器窗口（用于滑出效果）
+    m_drawingToolContainer = new QWidget(this);
+    m_drawingToolContainer->setObjectName("drawingToolContainer");
+    m_drawingToolContainer->setStyleSheet(
+        "#drawingToolContainer {"
+        "  background-color: white;"
+        "  border-left: 2px solid #d0d0d0;"
+        "  border-radius: 0px;"
+        "}"
+    );
+    
+    // 容器布局
+    QVBoxLayout *containerLayout = new QVBoxLayout(m_drawingToolContainer);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+    
+    // 添加面板到容器
+    containerLayout->addWidget(m_drawingToolPanel);
+    
+    // 设置容器宽度
+    m_drawingToolContainer->setFixedWidth(250);
+    
+    // 初始隐藏（移到右侧外面）
+    m_drawingToolContainer->hide();
+    
+    // 创建浮动切换按钮（贴在地图右侧）
+    m_drawingToolToggleBtn = new QPushButton("◀", this);  // ◀ 左箭头（收起状态）
+    m_drawingToolToggleBtn->setObjectName("drawingToolToggleBtn");
+    m_drawingToolToggleBtn->setToolTip("绘制工具");
+    m_drawingToolToggleBtn->setCheckable(true);
+    m_drawingToolToggleBtn->setFixedSize(24, 60);  // 缩小尺寸：24x60
+    m_drawingToolToggleBtn->setCursor(Qt::PointingHandCursor);
+    m_drawingToolToggleBtn->setStyleSheet(
+        "#drawingToolToggleBtn {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(100, 150, 255, 0.85),"  // 浅蓝色渐变，半透明
+        "                               stop:1 rgba(80, 130, 235, 0.85));"
+        "  color: white;"
+        "  border: 1px solid rgba(255, 255, 255, 0.4);"  // 白色边框增强可见性
+        "  border-radius: 4px 0px 0px 4px;"
+        "  font-size: 12pt;"
+        "  font-weight: bold;"
+        "  padding: 0px;"
+        "  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);"  // 轻微阴影
+        "}"
+        "#drawingToolToggleBtn:hover {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(120, 170, 255, 0.95),"
+        "                               stop:1 rgba(100, 150, 245, 0.95));"
+        "  border: 1px solid rgba(255, 255, 255, 0.6);"
+        "}"
+        "#drawingToolToggleBtn:checked {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(70, 120, 200, 0.9),"
+        "                               stop:1 rgba(60, 110, 180, 0.9));"
+        "  border: 1px solid rgba(255, 255, 255, 0.5);"
+        "}"
+    );
+    
+    // 注意：初始定位会在 showEvent 中进行，这里不调用
+    // positionDrawingToolPanel() 会在窗口显示后由 resizeEvent 自动调用
+    
+    // 连接按钮信号
+    connect(m_drawingToolToggleBtn, &QPushButton::toggled, this, [this](bool checked) {
+        if (checked) {
+            // 展开面板
+            m_drawingToolContainer->show();
+            m_drawingToolContainer->raise();  // 确保在最上层
+            m_drawingToolToggleBtn->setText("▶");  // 右箭头（展开状态）
+            positionDrawingToolPanel();  // 重新定位
+            updateStatus("打开绘制工具面板");
+        } else {
+            // 收起面板
+            m_drawingToolContainer->hide();
+            m_drawingToolToggleBtn->setText("◀");  // 左箭头（收起状态）
+            positionDrawingToolPanel();  // 重新定位
+            updateStatus("关闭绘制工具面板");
+        }
+    });
+    
+    // 连接绘制工具面板的信号
+    connect(m_drawingToolPanel, &DrawingToolPanel::startDrawingPipeline,
+            this, &MyForm::onStartDrawingPipeline);
+    connect(m_drawingToolPanel, &DrawingToolPanel::startDrawingFacility,
+            this, &MyForm::onStartDrawingFacility);
+    
+    qDebug() << "Drawing tool panel setup completed";
+}
+
+void MyForm::positionDrawingToolPanel()
+{
+    if (!m_drawingToolToggleBtn || !m_drawingToolContainer) {
+        return;
+    }
+    
+    // 获取地图视图的几何信息
+    QRect viewportRect = ui->graphicsView->viewport()->rect();
+    QPoint viewportGlobalPos = ui->graphicsView->viewport()->mapToGlobal(QPoint(0, 0));
+    QPoint viewportLocalPos = this->mapFromGlobal(viewportGlobalPos);
+    
+    int viewportWidth = viewportRect.width();
+    int viewportHeight = viewportRect.height();
+    
+    bool isExpanded = m_drawingToolToggleBtn->isChecked();
+    
+    if (isExpanded) {
+        // 展开状态：面板显示在右侧
+        int panelWidth = m_drawingToolContainer->width();
+        m_drawingToolContainer->setGeometry(
+            viewportLocalPos.x() + viewportWidth - panelWidth,
+            viewportLocalPos.y(),
+            panelWidth,
+            viewportHeight
+        );
+        
+        // 按钮在面板左侧
+        m_drawingToolToggleBtn->move(
+            viewportLocalPos.x() + viewportWidth - panelWidth - m_drawingToolToggleBtn->width(),
+            viewportLocalPos.y() + (viewportHeight - m_drawingToolToggleBtn->height()) / 2
+        );
+    } else {
+        // 收起状态：只显示按钮
+        m_drawingToolToggleBtn->move(
+            viewportLocalPos.x() + viewportWidth - m_drawingToolToggleBtn->width(),
+            viewportLocalPos.y() + (viewportHeight - m_drawingToolToggleBtn->height()) / 2
+        );
+    }
+    
+    // 确保按钮始终在最上层
+    m_drawingToolToggleBtn->raise();
+    if (isExpanded) {
+        m_drawingToolContainer->raise();
+    }
+}
+
+void MyForm::onToggleDrawingTool(bool checked)
+{
+    // 这个函数现在由 lambda 处理，保留作为备用
+    Q_UNUSED(checked);
+}
+
+void MyForm::onStartDrawingPipeline(const QString &pipelineType)
+{
+    qDebug() << "Start drawing pipeline:" << pipelineType;
+    updateStatus(QString("开始绘制管线: %1").arg(m_drawingToolPanel->currentTypeName()));
+    
+    // TODO: 实现管线绘制逻辑
+    // 1. 进入管线绘制模式
+    // 2. 监听地图点击事件
+    // 3. 收集坐标点
+    // 4. 绘制临时预览线
+    // 5. 完成后弹出属性编辑对话框
+    
+    QMessageBox::information(this, "提示", 
+        QString("绘制功能正在开发中...\n\n"
+                "当前选择类型: %1\n"
+                "类型标识: %2")
+        .arg(m_drawingToolPanel->currentTypeName())
+        .arg(pipelineType));
+}
+
+void MyForm::onStartDrawingFacility(const QString &facilityType)
+{
+    qDebug() << "Start drawing facility:" << facilityType;
+    updateStatus(QString("开始绘制设施: %1").arg(m_drawingToolPanel->currentTypeName()));
+    
+    // TODO: 实现设施绘制逻辑
+    // 1. 进入设施绘制模式
+    // 2. 监听地图点击事件
+    // 3. 记录点击位置
+    // 4. 弹出属性编辑对话框
+    
+    QMessageBox::information(this, "提示", 
+        QString("绘制功能正在开发中...\n\n"
+                "当前选择类型: %1\n"
+                "类型标识: %2")
+        .arg(m_drawingToolPanel->currentTypeName())
+        .arg(facilityType));
 }
