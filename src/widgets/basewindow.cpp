@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QWidget>
+#include <QShowEvent>
 
 const int BaseWindow::BORDER_WIDTH = 6;
 
@@ -35,6 +36,10 @@ BaseWindow::BaseWindow(QWidget *parent)
     centralWidgetContainer->setMouseTracking(true);
     titleBar->setMouseTracking(true);
     contentContainer->setMouseTracking(true);
+
+    // 设置标题栏标题和图标
+    titleBar->setTitle("UGMIS");
+    titleBar->setIcon(qApp->windowIcon());
 
     // 安装事件过滤器，确保子控件不吞掉鼠标移动，用于更新边框光标
     this->installEventFilter(this);
@@ -221,5 +226,14 @@ void BaseWindow::mouseReleaseEvent(QMouseEvent *event) {
         unsetCursor();
     }
     QMainWindow::mouseReleaseEvent(event);
+}
+
+void BaseWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    // 同步标题栏的最大化状态与窗口当前状态
+    if (titleBar) {
+        titleBar->setMaximized(isMaximized());
+    }
 }
 

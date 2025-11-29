@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
     BaseWindow window;
     MyForm *form = new MyForm(&window); // parent 设为 window，自动管理内存
     window.setContentWidget(form);
-    window.resize(960, 720);
-    window.show();
+    // 启动即最大化
+    window.showMaximized();
 
     qDebug() << "=== Application window shown ===";
     return app.exec();

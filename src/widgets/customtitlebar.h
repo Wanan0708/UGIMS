@@ -17,6 +17,13 @@ class CustomTitleBar : public QWidget {
 public:
     explicit CustomTitleBar(QWidget *parent = nullptr);
 
+    // 设置标题文本
+    void setTitle(const QString &title);
+    // 设置左侧图标
+    void setIcon(const QIcon &icon);
+    // 同步窗口最大化状态（用于启动时或外部状态变化时）
+    void setMaximized(bool maximized);
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -29,6 +36,7 @@ private slots:
     void onMaximizeRestore();
 
 private:
+    QLabel *iconLabel;
     QLabel *titleLabel;
     QPushButton *minButton;
     QPushButton *maxButton;

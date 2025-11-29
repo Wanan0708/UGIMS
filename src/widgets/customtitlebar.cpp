@@ -12,7 +12,12 @@ CustomTitleBar::CustomTitleBar(QWidget *parent)
 {
     setFixedHeight(32);
 
-    titleLabel = new QLabel("My App");
+    iconLabel = new QLabel(this);
+    iconLabel->setFixedSize(20, 20);
+    iconLabel->setScaledContents(true);
+
+    // 中间标题文字：程序名 UGMIS
+    titleLabel = new QLabel("UGMIS");
     titleLabel->setObjectName("titleLabel");
 
     minButton = new QPushButton();
@@ -26,7 +31,8 @@ CustomTitleBar::CustomTitleBar(QWidget *parent)
 
     // 设置图标（从资源加载）
     minButton->setIcon(QIcon(":/new/prefix1/images/minimize.png"));
-    maxButton->setIcon(QIcon(":/new/prefix1/images/restore.png"));
+    // 默认窗口是正常状态，此时按钮图标应为“最大化”
+    maxButton->setIcon(QIcon(":/new/prefix1/images/maximize.png"));
     closeButton->setIcon(QIcon(":/new/prefix1/images/close.png"));
 
     // 设置图标大小（必须！否则可能不显示）
@@ -41,12 +47,15 @@ CustomTitleBar::CustomTitleBar(QWidget *parent)
     }
 
     QHBoxLayout *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(8, 0, 0, 0);
     layout->setSpacing(0);
 
-    // 统一布局：标题在左，按钮在右（所有平台）
+    // 布局：左侧图标，中间居中标题，右侧按钮
+    layout->addWidget(iconLabel);
+    layout->addSpacing(6);
+    layout->addStretch();
     layout->addWidget(titleLabel);
-    layout->addStretch(); // 关键：弹性空间
+    layout->addStretch();
     layout->addWidget(minButton);
     layout->addWidget(maxButton);
     layout->addWidget(closeButton);
@@ -119,11 +128,34 @@ void CustomTitleBar::onMinimize() {
 void CustomTitleBar::onMaximizeRestore() {
     if (m_isMaximized) {
         window()->showNormal();
-        maxButton->setIcon(QIcon(":/new/prefix1/images/restore.png")); // 还原为最大化图标
-        m_isMaximized = false;
+        setMaximized(false);
     } else {
         window()->showMaximized();
-        maxButton->setIcon(QIcon(":/new/prefix1/images/maximize.png")); // 切换为还原图标
-        m_isMaximized = true;
+        setMaximized(true);
+    }
+}
+
+void CustomTitleBar::setTitle(const QString &title)
+{
+    if (titleLabel) {
+        titleLabel->setText(title);
+    }
+}
+
+void CustomTitleBar::setIcon(const QIcon &icon)
+{
+    if (iconLabel) {
+        iconLabel->setPixmap(icon.pixmap(20, 20));
+    }
+}
+
+void CustomTitleBar::setMaximized(bool maximized)
+{
+    m_isMaximized = maximized;
+    // 当窗口最大化时，按钮显示“还原”图标；正常时显示“最大化”图标
+    if (m_isMaximized) {
+        maxButton->setIcon(QIcon(":/new/prefix1/images/restore.png"));
+    } else {
+        maxButton->setIcon(QIcon(":/new/prefix1/images/maximize.png"));
     }
 }

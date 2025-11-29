@@ -1535,43 +1535,13 @@ void MyForm::loadPipelineData()
         0.020     // 高度（纬度跨度）
     );
     
-    // 将地图中心移动到测试数据区域（北京天安门）
-    if (tileMapManager) {
-        qDebug() << "[Pipeline] Moving map to Beijing (test data area)...";
-        tileMapManager->setCenter(39.91, 116.40);
-        
-        // 如果当前缩放级别太小，放大到合适级别
-        if (currentZoomLevel < 13) {
-            qDebug() << "[Pipeline] Zoom level too low (" << currentZoomLevel << "), setting to 15";
-            currentZoomLevel = 15;
-            tileMapManager->setZoom(currentZoomLevel);
-            
-            // 同步到管网渲染器
-            if (m_layerManager) {
-                m_layerManager->setZoom(currentZoomLevel);
-            }
-        }
-        
-        // 等待地图加载完成
-        QTimer::singleShot(200, this, [this, geoBounds]() {
-            qDebug() << "[Pipeline] Map repositioned, now loading pipeline data...";
-            
-            // 设置可视范围
-            m_layerManager->setVisibleBounds(geoBounds);
-            qDebug() << "[Pipeline] Visible bounds set to:" << geoBounds;
-            
-            // 刷新所有可见图层
-            m_layerManager->refreshAllLayers();
-            qDebug() << "[Pipeline] refreshAllLayers() called";
-            
-            checkPipelineRenderResult();
-        });
-        return;
-    }
-    
-    // 如果没有 tileMapManager，直接加载
+    // 只用于数据库空间查询的可视范围，不改变当前地图视图和缩放
     m_layerManager->setVisibleBounds(geoBounds);
+    qDebug() << "[Pipeline] Visible bounds set to:" << geoBounds;
+    
+    // 刷新所有可见图层（不会修改 tileMapManager 的 center/zoom）
     m_layerManager->refreshAllLayers();
+    qDebug() << "[Pipeline] refreshAllLayers() called";
     
     LOG_INFO("Pipeline layers refreshed");
     checkPipelineRenderResult();
