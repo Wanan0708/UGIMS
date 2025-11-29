@@ -5,7 +5,7 @@
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QGroupBox>
+#include "widgets/collapsiblegroupbox.h"
 
 /**
  * @brief 绘制工具面板
@@ -102,8 +102,8 @@ private:
     
     // 布局
     QVBoxLayout *m_mainLayout;
-    QGroupBox *m_pipelineGroup;
-    QGroupBox *m_facilityGroup;
+    CollapsibleGroupBox *m_pipelineGroup;
+    CollapsibleGroupBox *m_facilityGroup;
 };
 
 #endif // DRAWINGTOOLPANEL_H

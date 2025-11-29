@@ -21,25 +21,11 @@ void DrawingToolPanel::setupUI()
     m_mainLayout->setSpacing(6);
     
     // ========== 管线工具组 ==========
-    m_pipelineGroup = new QGroupBox("📍 管线类型", this);
-    m_pipelineGroup->setStyleSheet(
-        "QGroupBox {"
-        "  font-weight: bold;"
-        "  border: 1px solid #cccccc;"
-        "  border-radius: 4px;"
-        "  margin-top: 8px;"
-        "  padding-top: 8px;"
-        "}"
-        "QGroupBox::title {"
-        "  subcontrol-origin: margin;"
-        "  left: 10px;"
-        "  padding: 0 5px;"
-        "}"
-    );
+    m_pipelineGroup = new CollapsibleGroupBox("📍 管线类型", this);
     
-    QVBoxLayout *pipelineLayout = new QVBoxLayout(m_pipelineGroup);
+    QVBoxLayout *pipelineLayout = new QVBoxLayout();
     pipelineLayout->setSpacing(4);
-    pipelineLayout->setContentsMargins(6, 6, 6, 6);
+    pipelineLayout->setContentsMargins(0, 0, 0, 0);
     
     // 创建管线按钮
     m_waterSupplyBtn = createToolButton("💧 给水管");
@@ -56,6 +42,10 @@ void DrawingToolPanel::setupUI()
     pipelineLayout->addWidget(m_telecomBtn);
     pipelineLayout->addWidget(m_heatBtn);
     
+    // 设置管线组内容
+    m_pipelineGroup->setContentLayout(pipelineLayout);
+    m_pipelineGroup->setExpanded(true, false);  // 默认展开，不用动画
+    
     // 管线按钮组
     m_pipelineButtonGroup = new QButtonGroup(this);
     m_pipelineButtonGroup->addButton(m_waterSupplyBtn, WaterSupply);
@@ -67,25 +57,11 @@ void DrawingToolPanel::setupUI()
     m_pipelineButtonGroup->setExclusive(true);
     
     // ========== 设施工具组 ==========
-    m_facilityGroup = new QGroupBox("🔧 设施类型", this);
-    m_facilityGroup->setStyleSheet(
-        "QGroupBox {"
-        "  font-weight: bold;"
-        "  border: 1px solid #cccccc;"
-        "  border-radius: 4px;"
-        "  margin-top: 8px;"
-        "  padding-top: 8px;"
-        "}"
-        "QGroupBox::title {"
-        "  subcontrol-origin: margin;"
-        "  left: 10px;"
-        "  padding: 0 5px;"
-        "}"
-    );
+    m_facilityGroup = new CollapsibleGroupBox("🔧 设施类型", this);
     
-    QVBoxLayout *facilityLayout = new QVBoxLayout(m_facilityGroup);
+    QVBoxLayout *facilityLayout = new QVBoxLayout();
     facilityLayout->setSpacing(4);
-    facilityLayout->setContentsMargins(6, 6, 6, 6);
+    facilityLayout->setContentsMargins(0, 0, 0, 0);
     
     // 创建设施按钮
     m_valveBtn = createToolButton("🔵 阀门");
@@ -101,6 +77,10 @@ void DrawingToolPanel::setupUI()
     facilityLayout->addWidget(m_transformerBtn);
     facilityLayout->addWidget(m_regulatorBtn);
     facilityLayout->addWidget(m_junctionBoxBtn);
+    
+    // 设置设施组内容
+    m_facilityGroup->setContentLayout(facilityLayout);
+    m_facilityGroup->setExpanded(true, false);  // 默认展开，不用动画
     
     // 设施按钮组
     m_facilityButtonGroup = new QButtonGroup(this);

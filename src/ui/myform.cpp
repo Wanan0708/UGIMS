@@ -3,14 +3,21 @@
 #include "core/common/version.h"  // 添加版本信息头文件
 #include "tilemap/tilemapmanager.h"  // 添加瓦片地图管理器头文件
 #include "widgets/drawingtoolpanel.h"  // 添加绘制工具面板头文件
+#include "widgets/layercontrolpanel.h"  // 添加图层控制面板头文件
+#include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
+#include "ui/pipelineeditdialog.h"  // 添加管线编辑对话框头文件
+#include "core/models/pipeline.h"  // 添加Pipeline模型头文件
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
+#include <QGraphicsPathItem>
+#include <QPainterPath>
 #include <QPixmap>
 #include <QWheelEvent>
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QTimer>
 #include <QShowEvent>
@@ -65,7 +72,22 @@ MyForm::MyForm(QWidget *parent)
     , deviceTreeModel(nullptr)  // 初始化设备树模型
     , m_drawingToolContainer(nullptr)  // 初始化绘制工具容器
     , m_drawingToolPanel(nullptr)  // 初始化绘制工具面板
-    , m_drawingToolToggleBtn(nullptr)  // 初始化浮动切换按钮
+    , m_drawingToolToggleBtn(nullptr)  // 初始化浮动切换按钮（已废弃）
+    , m_drawingManager(nullptr)  // 初始化绘制管理器
+    , m_layerControlContainer(nullptr)  // 初始化图层控制容器
+    , m_layerControlPanel(nullptr)  // 初始化图层控制面板
+    , m_layerControlToggleBtn(nullptr)  // 初始化浮动切换按钮（已废弃）
+    , m_panelSwitcher(nullptr)  // 初始化右侧工具栏
+    , m_drawingToolBtn(nullptr)  // 初始化绘制工具按钮
+    , m_layerControlBtn(nullptr)  // 初始化图层管理按钮
+    , m_panelContainer(nullptr)  // 初始化面板容器
+    , m_panelStack(nullptr)  // 初始化面板堆栈
+    , m_panelDrawingBtn(nullptr)  // 初始化面板绘制按钮
+    , m_panelLayerBtn(nullptr)  // 初始化面板图层按钮
+    , m_panelCloseBtn(nullptr)  // 初始化面板关闭按钮
+    , m_currentPanel("")  // 初始为空，没有面板展开
+    , m_selectedItem(nullptr)  // 初始化选中项
+    , m_nextPipelineId(1)  // 从ID=1开始
 {
     logMessage("=== MyForm constructor started ===");
     ui->setupUi(this);
@@ -78,6 +100,11 @@ MyForm::MyForm(QWidget *parent)
     
     // 设置绘制工具面板（右侧滑出）
     setupDrawingToolPanel();
+    
+    // 设置图层控制面板（右侧滑出）
+    setupLayerControlPanel();
+    
+    // 注意：底部面板切换器在 showEvent 中创建，因为需要 viewport 已经准备好
     
     // 连接搜索框信号
     connect(ui->deviceSearchBox, &QLineEdit::textChanged, this, &MyForm::onDeviceSearchTextChanged);
@@ -145,13 +172,55 @@ void MyForm::showEvent(QShowEvent *event)
     // 窗口显示后设置splitter比例
     QWidget::showEvent(event);
     setupSplitter();
-    // 确保浮动工具条创建并定位（放到下一个事件循环，确俚viewport已布局）
+    
+    // 创建底部面板切换器（只创建一次）
+    if (!m_panelSwitcher) {
+        setupPanelSwitcher();
+    }
+    
+    // 确保浮动工具条创建并定位（放到下一个事件循环，确保 viewport已布局）
     QTimer::singleShot(0, this, [this]() {
         if (mapScene && !gvOverlay) createGraphicsOverlay();
         if (mapScene) positionGraphicsOverlay();
         // 初始化绘制工具面板位置
         positionDrawingToolPanel();
+        // 初始化图层控制面板位置
+        positionLayerControlPanel();
+        // 初始化右侧工具栏位置（延迟一点确保布局完成）
+        QTimer::singleShot(50, this, [this]() {
+            positionPanelSwitcher();
+        });
     });
+}
+
+void MyForm::keyPressEvent(QKeyEvent *event)
+{
+    // Delete 键删除选中的实体
+    if (event->key() == Qt::Key_Delete) {
+        if (m_selectedItem) {
+            onDeleteSelectedEntity();
+            event->accept();
+            return;
+        }
+    }
+    // Esc 键：优先取消绘制，其次取消选中
+    else if (event->key() == Qt::Key_Escape) {
+        // 如果正在绘制，取消绘制
+        if (m_drawingManager && m_drawingManager->isDrawing()) {
+            m_drawingManager->cancelDrawing();
+            updateStatus("✅ 已取消绘制");
+            event->accept();
+            return;
+        }
+        // 如果有选中项，取消选中
+        if (m_selectedItem) {
+            clearSelection();
+            event->accept();
+            return;
+        }
+    }
+    
+    QWidget::keyPressEvent(event);
 }
 
 void MyForm::resizeEvent(QResizeEvent *event)
@@ -167,10 +236,10 @@ void MyForm::resizeEvent(QResizeEvent *event)
     }
     // 重新定位右上角浮动工具条
     positionGraphicsOverlay();
-    // 重新定位浮动状态栏
+    // 重新定位浮动状态条
     positionFloatingStatusBar();
-    // 重新定位绘制工具面板
-    positionDrawingToolPanel();
+    // 重新定位右侧工具栏和面板（注意：不再定位drawingToolPanel和layerControlPanel）
+    positionPanelSwitcher();
 }
 
 void MyForm::setupSplitter()
@@ -386,6 +455,7 @@ void MyForm::setupMapArea() {
             viewUpdateTimer->start();  // 重启定时器，实现防抖更新
         }
         positionGraphicsOverlay();
+        positionPanelSwitcher();  // 同步更新面板和按钮位置
     });
     connect(ui->graphicsView->verticalScrollBar(), &QScrollBar::valueChanged, 
             this, [this]() {
@@ -393,6 +463,7 @@ void MyForm::setupMapArea() {
             viewUpdateTimer->start();  // 重启定时器，实现防抖更新
         }
         positionGraphicsOverlay();
+        positionPanelSwitcher();  // 同步更新面板和按钮位置
     });
     
     // 连接下载进度信号（在这里连接，因为tileMapManager已经创建）
@@ -470,6 +541,17 @@ void MyForm::setupMapArea() {
     // 创建浮动状态栏（位于地图左下角）
     createFloatingStatusBar();
     
+    // 创建绘制管理器（必须在 mapScene 和 tileMapManager 创建之后）
+    qDebug() << "Creating MapDrawingManager...";
+    m_drawingManager = new MapDrawingManager(mapScene, ui->graphicsView, tileMapManager, this);
+    
+    // 连接绘制完成信号
+    connect(m_drawingManager, &MapDrawingManager::pipelineDrawingFinished,
+            this, &MyForm::onPipelineDrawingFinished);
+    connect(m_drawingManager, &MapDrawingManager::facilityDrawingFinished,
+            this, &MyForm::onFacilityDrawingFinished);
+    qDebug() << "MapDrawingManager created and connected";
+    
     // 显示初始状态信息
     updateStatus("Ready");
 }
@@ -515,14 +597,46 @@ void MyForm::createGraphicsOverlay()
     btnPanToggle->setChecked(ui->graphicsView->dragMode() == QGraphicsView::ScrollHandDrag);
     btnPanToggle->setIcon(QApplication::style()->standardIcon(QStyle::SP_DesktopIcon));
     connect(btnPanToggle, &QToolButton::toggled, this, &MyForm::onOverlayPanToggled);
+    
+    // 第4个按钮：图层管理
+    QToolButton *btnLayerControl = new QToolButton(gvOverlay);
+    btnLayerControl->setToolTip(tr("图层管理"));
+    QIcon layerIcon = QApplication::style()->standardIcon(QStyle::SP_DirIcon);
+    btnLayerControl->setIcon(layerIcon);
+    btnLayerControl->setIconSize(QSize(18,18));
+    connect(btnLayerControl, &QToolButton::clicked, this, [this]() {
+        // 切换逻辑：如果已经打开图层面板，再次点击则关闭
+        if (m_currentPanel == "layer") {
+            switchToPanel("");
+        } else {
+            switchToPanel("layer");
+        }
+    });
+    
+    // 第5个按钮：绘制工具
+    QToolButton *btnDrawingTool = new QToolButton(gvOverlay);
+    btnDrawingTool->setToolTip(tr("绘制工具"));
+    QIcon drawIcon = QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView);
+    btnDrawingTool->setIcon(drawIcon);
+    btnDrawingTool->setIconSize(QSize(18,18));
+    connect(btnDrawingTool, &QToolButton::clicked, this, [this]() {
+        // 切换逻辑：如果已经打开绘制面板，再次点击则关闭
+        if (m_currentPanel == "drawing") {
+            switchToPanel("");
+        } else {
+            switchToPanel("drawing");
+        }
+    });
 
     vl->addWidget(btnZoomIn);
     vl->addWidget(btnZoomOut);
     vl->addWidget(btnPanToggle);
+    vl->addWidget(btnLayerControl);
+    vl->addWidget(btnDrawingTool);
 
     // 明确设置容器尺寸，避免 sizeHint 为 0 导致不可见
     int w = 28;
-    int h = 28 * 3 + 8 * 2; // 三个按钮 + 两个间距
+    int h = 28 * 5 + 8 * 4; // 5个按钮 + 4个间距
     gvOverlay->setFixedSize(w + 2, h + 2);
     gvOverlay->adjustSize();
     gvOverlay->raise();
@@ -538,10 +652,18 @@ void MyForm::positionGraphicsOverlay()
     QSize vp = ui->graphicsView->viewport()->size();
     QSize sz = gvOverlay->sizeHint();
     if (sz.isEmpty()) sz = gvOverlay->size();
-    int x = vp.width() - sz.width() - margin;
+    
+    // 如果面板展开，缩放按钮放在面板左侧
+    int rightOffset = margin;
+    if (m_panelContainer && m_panelContainer->isVisible()) {
+        rightOffset = m_panelContainer->width() + margin;  // 面板宽度 + 间距
+    }
+    
+    int x = vp.width() - sz.width() - rightOffset;
     int y = margin;
     gvOverlay->setGeometry(x, y, sz.width(), sz.height());
-    qDebug() << "Overlay positioned at:" << gvOverlay->geometry() << "viewport:" << vp;
+    qDebug() << "Overlay positioned at:" << gvOverlay->geometry() << "viewport:" << vp 
+             << "panel visible:" << (m_panelContainer && m_panelContainer->isVisible());
 }
 
 void MyForm::onOverlayPanToggled(bool checked)
@@ -674,22 +796,82 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             return true; // 事件已处理
         } else if (event->type() == QEvent::MouseButtonPress) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            // 只有当鼠标在QGraphicsView区域时，右键按下才启用拖拽模式
-            if (mouseEvent->button() == Qt::RightButton) {
-                // 检查鼠标是否在graphicsView区域内
-                QPoint mousePos = ui->graphicsView->mapFromGlobal(QCursor::pos());
-                QRect viewRect = ui->graphicsView->rect();
-                if (viewRect.contains(mousePos)) {
-                    lastRightClickPos = mouseEvent->pos();
-                    lastRightClickScenePos = ui->graphicsView->mapToScene(lastRightClickPos);
-                    isRightClickDragging = true;
-                    if (tileMapManager) tileMapManager->setDragging(true);
-                    ui->graphicsView->setCursor(Qt::ClosedHandCursor);
-                    return true; // 事件已处理
+            
+            // 处理绘制模式下的鼠标点击
+            if (m_drawingManager && m_drawingManager->isDrawing()) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    // 左键：添加点
+                    m_drawingManager->handleMouseClick(scenePos);
+                    return true; // 阻止事件继续传播
+                } else if (mouseEvent->button() == Qt::RightButton) {
+                    // 右键：完成绘制
+                    m_drawingManager->handleRightClick(scenePos);
+                    return true;
+                }
+            }
+            
+            // 非绘制模式：处理实体选中和右键菜单
+            if (!m_drawingManager || !m_drawingManager->isDrawing()) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                QGraphicsItem *item = mapScene->itemAt(scenePos, ui->graphicsView->transform());
+                
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    // 左键点击：选中实体
+                    if (item && isEntityItem(item)) {
+                        onEntityClicked(item);
+                        return true;
+                    } else {
+                        // 点击空白处，清除选中
+                        clearSelection();
+                    }
+                } else if (mouseEvent->button() == Qt::RightButton) {
+                    // 右键点击：显示菜单或拖拽
+                    if (item && isEntityItem(item)) {
+                        // 如果点击的是实体，显示菜单
+                        if (item != m_selectedItem) {
+                            onEntityClicked(item);  // 先选中
+                        }
+                        onShowContextMenu(mouseEvent->pos());
+                        return true;
+                    } else {
+                        // 点击空白处，启用拖拽
+                        QPoint mousePos = ui->graphicsView->mapFromGlobal(QCursor::pos());
+                        QRect viewRect = ui->graphicsView->rect();
+                        if (viewRect.contains(mousePos)) {
+                            lastRightClickPos = mouseEvent->pos();
+                            lastRightClickScenePos = ui->graphicsView->mapToScene(lastRightClickPos);
+                            isRightClickDragging = true;
+                            if (tileMapManager) tileMapManager->setDragging(true);
+                            ui->graphicsView->setCursor(Qt::ClosedHandCursor);
+                            return true;
+                        }
+                    }
+                }
+            }
+        } else if (event->type() == QEvent::MouseButtonDblClick) {
+            // 处理双击事件
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (!m_drawingManager || !m_drawingManager->isDrawing()) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                QGraphicsItem *item = mapScene->itemAt(scenePos, ui->graphicsView->transform());
+                
+                if (item && isEntityItem(item) && mouseEvent->button() == Qt::LeftButton) {
+                    onEntityDoubleClicked(item);
+                    return true;
                 }
             }
         } else if (event->type() == QEvent::MouseMove) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            
+            // 处理绘制模式下的鼠标移动（显示预览）
+            if (m_drawingManager && m_drawingManager->isDrawing()) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                m_drawingManager->handleMouseMove(scenePos);
+                // 不阻止事件，允许同时拖动
+            }
+            
             // 只有当鼠标在QGraphicsView区域时，右键拖拽才生效
             if (isRightClickDragging && (mouseEvent->buttons() & Qt::RightButton)) {
                 // 使用滚动条实现 1:1 平移，避免映射误差与轴向耦合
@@ -1553,6 +1735,12 @@ void MyForm::initializePipelineVisualization()
         qDebug() << "[Pipeline] ✅ Signals connected";
         updateStatus("数据库已连接，准备加载管网数据...");
         
+        // 连接图层管理器到控制面板
+        if (m_layerControlPanel) {
+            m_layerControlPanel->setLayerManager(m_layerManager);
+            qDebug() << "[Pipeline] ✅ LayerManager connected to control panel";
+        }
+        
         // 6. 延迟加载初始数据（再延迟1秒，让界面完全稳定）
         qDebug() << "[Pipeline] Scheduling data load in 1 second...";
         QTimer::singleShot(1000, this, &MyForm::loadPipelineData);
@@ -2329,13 +2517,13 @@ void MyForm::onAboutButtonClicked()
 
 void MyForm::setupDrawingToolPanel()
 {
-    qDebug() << "Setting up drawing tool panel (right-side slide-out)...";
+    qDebug() << "设置绘制工具面板 (右侧滑出)...";
     
     // 创建绘制工具面板
     m_drawingToolPanel = new DrawingToolPanel(this);
     
     // 创建容器窗口（用于滑出效果）
-    m_drawingToolContainer = new QWidget(this);
+    m_drawingToolContainer = new QWidget(ui->graphicsView->viewport());  // 父对象改为viewport
     m_drawingToolContainer->setObjectName("drawingToolContainer");
     m_drawingToolContainer->setStyleSheet(
         "#drawingToolContainer {"
@@ -2359,12 +2547,12 @@ void MyForm::setupDrawingToolPanel()
     // 初始隐藏（移到右侧外面）
     m_drawingToolContainer->hide();
     
-    // 创建浮动切换按钮（贴在地图右侧）
-    m_drawingToolToggleBtn = new QPushButton("◀", this);  // ◀ 左箭头（收起状态）
+    // 创建浮动切换按钮（贴在地图右侧） - 暂时不显示，会被底部按钮替代
+    m_drawingToolToggleBtn = new QPushButton("绘制\n工具", ui->graphicsView->viewport());  // 父对象改为viewport
     m_drawingToolToggleBtn->setObjectName("drawingToolToggleBtn");
     m_drawingToolToggleBtn->setToolTip("绘制工具");
     m_drawingToolToggleBtn->setCheckable(true);
-    m_drawingToolToggleBtn->setFixedSize(24, 60);  // 缩小尺寸：24x60
+    m_drawingToolToggleBtn->setFixedSize(30, 80);  // 调整尺寸：30x80
     m_drawingToolToggleBtn->setCursor(Qt::PointingHandCursor);
     m_drawingToolToggleBtn->setStyleSheet(
         "#drawingToolToggleBtn {"
@@ -2374,9 +2562,10 @@ void MyForm::setupDrawingToolPanel()
         "  color: white;"
         "  border: 1px solid rgba(255, 255, 255, 0.4);"  // 白色边框增强可见性
         "  border-radius: 4px 0px 0px 4px;"
-        "  font-size: 12pt;"
+        "  font-size: 11px;"
         "  font-weight: bold;"
-        "  padding: 0px;"
+        "  padding: 4px 2px;"
+        "  line-height: 1.2;"
         "  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);"  // 轻微阴影
         "}"
         "#drawingToolToggleBtn:hover {"
@@ -2393,26 +2582,10 @@ void MyForm::setupDrawingToolPanel()
         "}"
     );
     
-    // 注意：初始定位会在 showEvent 中进行，这里不调用
-    // positionDrawingToolPanel() 会在窗口显示后由 resizeEvent 自动调用
+    // 隐藏右侧按钮（改用底部切换）
+    m_drawingToolToggleBtn->hide();
     
-    // 连接按钮信号
-    connect(m_drawingToolToggleBtn, &QPushButton::toggled, this, [this](bool checked) {
-        if (checked) {
-            // 展开面板
-            m_drawingToolContainer->show();
-            m_drawingToolContainer->raise();  // 确保在最上层
-            m_drawingToolToggleBtn->setText("▶");  // 右箭头（展开状态）
-            positionDrawingToolPanel();  // 重新定位
-            updateStatus("打开绘制工具面板");
-        } else {
-            // 收起面板
-            m_drawingToolContainer->hide();
-            m_drawingToolToggleBtn->setText("◀");  // 左箭头（收起状态）
-            positionDrawingToolPanel();  // 重新定位
-            updateStatus("关闭绘制工具面板");
-        }
-    });
+    // 注意：不再使用右侧按钮的信号，改用底部StackWidget切换
     
     // 连接绘制工具面板的信号
     connect(m_drawingToolPanel, &DrawingToolPanel::startDrawingPipeline,
@@ -2420,53 +2593,34 @@ void MyForm::setupDrawingToolPanel()
     connect(m_drawingToolPanel, &DrawingToolPanel::startDrawingFacility,
             this, &MyForm::onStartDrawingFacility);
     
-    qDebug() << "Drawing tool panel setup completed";
+    // 注意：m_drawingManager 将在 setupMapArea() 中创建，因为它依赖 mapScene 和 tileMapManager
+    
+    qDebug() << "Drawing tool panel setup completed (DrawingManager will be created after map initialization)";
 }
 
 void MyForm::positionDrawingToolPanel()
 {
-    if (!m_drawingToolToggleBtn || !m_drawingToolContainer) {
+    if (!m_drawingToolContainer) {
         return;
     }
     
-    // 获取地图视图的几何信息
+    // 获取viewport的几何信息
     QRect viewportRect = ui->graphicsView->viewport()->rect();
-    QPoint viewportGlobalPos = ui->graphicsView->viewport()->mapToGlobal(QPoint(0, 0));
-    QPoint viewportLocalPos = this->mapFromGlobal(viewportGlobalPos);
-    
     int viewportWidth = viewportRect.width();
     int viewportHeight = viewportRect.height();
     
-    bool isExpanded = m_drawingToolToggleBtn->isChecked();
+    // 面板宽度
+    int panelWidth = m_drawingToolContainer->width();
     
-    if (isExpanded) {
-        // 展开状态：面板显示在右侧
-        int panelWidth = m_drawingToolContainer->width();
-        m_drawingToolContainer->setGeometry(
-            viewportLocalPos.x() + viewportWidth - panelWidth,
-            viewportLocalPos.y(),
-            panelWidth,
-            viewportHeight
-        );
-        
-        // 按钮在面板左侧
-        m_drawingToolToggleBtn->move(
-            viewportLocalPos.x() + viewportWidth - panelWidth - m_drawingToolToggleBtn->width(),
-            viewportLocalPos.y() + (viewportHeight - m_drawingToolToggleBtn->height()) / 2
-        );
-    } else {
-        // 收起状态：只显示按钮
-        m_drawingToolToggleBtn->move(
-            viewportLocalPos.x() + viewportWidth - m_drawingToolToggleBtn->width(),
-            viewportLocalPos.y() + (viewportHeight - m_drawingToolToggleBtn->height()) / 2
-        );
-    }
+    // 面板展开显示在右侧，高度与地图窗口一致
+    m_drawingToolContainer->setGeometry(
+        viewportWidth - panelWidth,  // 贴到右边
+        0,                           // 从顶部开始
+        panelWidth,
+        viewportHeight               // 高度与viewport一致
+    );
     
-    // 确保按钮始终在最上层
-    m_drawingToolToggleBtn->raise();
-    if (isExpanded) {
-        m_drawingToolContainer->raise();
-    }
+    m_drawingToolContainer->raise();
 }
 
 void MyForm::onToggleDrawingTool(bool checked)
@@ -2478,38 +2632,747 @@ void MyForm::onToggleDrawingTool(bool checked)
 void MyForm::onStartDrawingPipeline(const QString &pipelineType)
 {
     qDebug() << "Start drawing pipeline:" << pipelineType;
-    updateStatus(QString("开始绘制管线: %1").arg(m_drawingToolPanel->currentTypeName()));
+    updateStatus(QString("开始绘制管线: %1 (左键点击添加点，右键完成)").arg(m_drawingToolPanel->currentTypeName()));
     
-    // TODO: 实现管线绘制逻辑
-    // 1. 进入管线绘制模式
-    // 2. 监听地图点击事件
-    // 3. 收集坐标点
-    // 4. 绘制临时预览线
-    // 5. 完成后弹出属性编辑对话框
-    
-    QMessageBox::information(this, "提示", 
-        QString("绘制功能正在开发中...\n\n"
-                "当前选择类型: %1\n"
-                "类型标识: %2")
-        .arg(m_drawingToolPanel->currentTypeName())
-        .arg(pipelineType));
+    if (m_drawingManager) {
+        // 开始绘制管线
+        m_drawingManager->startDrawingPipeline(pipelineType);
+    }
 }
 
 void MyForm::onStartDrawingFacility(const QString &facilityType)
 {
     qDebug() << "Start drawing facility:" << facilityType;
-    updateStatus(QString("开始绘制设施: %1").arg(m_drawingToolPanel->currentTypeName()));
+    updateStatus(QString("开始绘制设施: %1 (点击地图设置位置)").arg(m_drawingToolPanel->currentTypeName()));
     
-    // TODO: 实现设施绘制逻辑
-    // 1. 进入设施绘制模式
-    // 2. 监听地图点击事件
-    // 3. 记录点击位置
-    // 4. 弹出属性编辑对话框
+    if (m_drawingManager) {
+        // 开始绘制设施
+        m_drawingManager->startDrawingFacility(facilityType);
+    }
+}
+
+void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &points)
+{
+    Q_UNUSED(points);
     
-    QMessageBox::information(this, "提示", 
-        QString("绘制功能正在开发中...\n\n"
-                "当前选择类型: %1\n"
-                "类型标识: %2")
-        .arg(m_drawingToolPanel->currentTypeName())
-        .arg(facilityType));
+    qDebug() << "Pipeline drawing finished, type:" << pipelineType << "WKT:" << wkt;
+    updateStatus("管线绘制完成，请输入属性...");
+    
+    // 创建并显示属性编辑对话框
+    PipelineEditDialog *dialog = new PipelineEditDialog(this);
+    dialog->setPipelineType(pipelineType);
+    dialog->setGeometry(wkt);
+    
+    // 生成唯一ID（自增）
+    int newId = m_nextPipelineId;
+    
+    // 自动生成管线编号（可修改）
+    dialog->setAutoGeneratedCode(newId, pipelineType);
+    
+    // 自动计算管线长度（使用地理坐标，可手动修改）
+    dialog->calculateAndSetLengthFromWKT(wkt);
+    
+    // 注意：不要设置 Qt::WA_DeleteOnClose，因为我们使用 exec() 模态对话框，手动管理内存
+    
+    int result = dialog->exec();
+    
+    if (result == QDialog::Accepted) {
+        // 获取管线对象（在对话框关闭前获取数据）
+        Pipeline pipeline = dialog->getPipeline();
+        
+        // 生成唯一ID（自增）
+        pipeline.setId(m_nextPipelineId++);
+        
+        qDebug() << "Pipeline created:" << pipeline.pipelineName() << "Type:" << pipeline.pipelineType();
+        qDebug() << "Generated ID:" << pipeline.id();
+        qDebug() << "WKT:" << wkt;
+        qDebug() << "Points count:" << points.size();
+        
+        // 手动删除对话框
+        delete dialog;
+        dialog = nullptr;
+        
+        // TODO: 保存到数据库
+        // PipelineDAO dao;
+        // bool success = dao.insert(pipeline);
+        
+        // 直接在场景中绘制管线（使用绘制时的场景坐标）
+        if (mapScene && points.size() >= 2) {
+            qDebug() << "Drawing pipeline on scene...";
+            
+            // 创建路径
+            QPainterPath path;
+            path.moveTo(points.first());
+            for (int i = 1; i < points.size(); ++i) {
+                path.lineTo(points[i]);
+            }
+            
+            // 获取管线样式（根据类型设置颜色）
+            QColor lineColor;
+            QString typeName;
+            if (pipelineType == "water_supply") {
+                lineColor = QColor(0, 112, 192);  // 蓝色
+                typeName = "给水";
+            } else if (pipelineType == "sewage") {
+                lineColor = QColor(112, 48, 160);  // 紫色
+                typeName = "排水";
+            } else if (pipelineType == "gas") {
+                lineColor = QColor(255, 192, 0);   // 黄色
+                typeName = "燃气";
+            } else if (pipelineType == "electric") {
+                lineColor = QColor(255, 0, 0);     // 红色
+                typeName = "电力";
+            } else if (pipelineType == "telecom") {
+                lineColor = QColor(0, 176, 80);    // 绿色
+                typeName = "通信";
+            } else if (pipelineType == "heat") {
+                lineColor = QColor(255, 128, 0);   // 橙色
+                typeName = "供热";
+            } else {
+                lineColor = QColor(128, 128, 128); // 灰色
+                typeName = "未知";
+            }
+            
+            // 创建画笔
+            QPen pen(lineColor, 4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            
+            // 添加到场景
+            QGraphicsPathItem *item = mapScene->addPath(path, pen);
+            item->setZValue(100);  // 确保在瓦片地图之上
+            
+            // 设置工具提示
+            QString tooltip = QString("%1\n类型: %2\n管径: DN%3")
+                                  .arg(pipeline.pipelineName())
+                                  .arg(typeName)
+                                  .arg(pipeline.diameterMm());
+            item->setToolTip(tooltip);
+            
+            // 存储数据（用于后续查询和删除）
+            item->setData(0, "pipeline");
+            item->setData(1, pipeline.pipelineId());
+            item->setData(2, pipelineType);
+            
+            // 关键：保存管线对象到hash表，用于后续编辑
+            m_drawnPipelines[item] = pipeline;
+            
+            qDebug() << "✅ Pipeline drawn successfully on scene";
+            qDebug() << "   Color:" << lineColor.name() << "Type:" << typeName;
+            qDebug() << "   First point:" << points.first();
+            qDebug() << "   Last point:" << points.last();
+        } else {
+            qDebug() << "❌ Cannot draw pipeline: mapScene=" << mapScene 
+                     << "points.size()=" << points.size();
+        }
+        
+        // 显示成功信息
+        QMessageBox::information(this, "成功", 
+            QString("管线创建成功！\n\n"
+                    "ID: %1\n"
+                    "名称: %2\n"
+                    "类型: %3\n"
+                    "几何数据: %4")
+            .arg(pipeline.id())
+            .arg(pipeline.pipelineName())
+            .arg(pipeline.pipelineType())
+            .arg(wkt.left(50) + "..."));
+        
+        updateStatus("管线创建成功");
+    } else {
+        // 取消操作，手动删除对话框
+        delete dialog;
+        dialog = nullptr;
+        
+        qDebug() << "Pipeline creation cancelled";
+        updateStatus("取消管线创建");
+    }
+}
+
+void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QString &wkt, const QPointF &point)
+{
+    Q_UNUSED(point);
+    
+    qDebug() << "Facility drawing finished, type:" << facilityType << "WKT:" << wkt;
+    updateStatus("设施绘制完成");
+    
+    // TODO: 创建设施编辑对话框
+    // FacilityEditDialog *dialog = new FacilityEditDialog(this);
+    // dialog->setFacilityType(facilityType);
+    // dialog->setGeometry(wkt);
+    // 注意：使用 exec() 时不要设置 Qt::WA_DeleteOnClose，需要手动 delete
+    // int result = dialog->exec();
+    // if (result == QDialog::Accepted) {
+    //     Facility facility = dialog->getFacility();
+    //     delete dialog;
+    //     // ... 保存逼辑
+    // } else {
+    //     delete dialog;
+    // }
+    
+    // 临时显示提示
+    QMessageBox::information(this, "提示",
+        QString("设施绘制完成！\n\n"
+                "类型: %1\n"
+                "几何数据: %2\n"
+                "\n设施编辑对话框正在开发中...")
+        .arg(facilityType)
+        .arg(wkt));
+}
+
+// ==========================================
+// 实体交互功能实现
+// ==========================================
+
+void MyForm::onEntityClicked(QGraphicsItem *item)
+{
+    if (!item || item == m_selectedItem) {
+        return;
+    }
+    
+    qDebug() << "Entity clicked:" << item->data(1).toString();
+    
+    // 清除之前的选中
+    clearSelection();
+    
+    // 选中新项
+    selectItem(item);
+    
+    // 更新状态栏
+    QString entityType = item->data(0).toString();
+    QString entityId = item->data(1).toString();
+    QString typeName = item->data(2).toString();
+    
+    if (entityType == "pipeline") {
+        updateStatus(QString("已选中管线: %1 (类型: %2)")
+                        .arg(entityId)
+                        .arg(typeName));
+    }
+}
+
+void MyForm::onEntityDoubleClicked(QGraphicsItem *item)
+{
+    if (!item || !isEntityItem(item)) {
+        return;
+    }
+    
+    qDebug() << "Entity double-clicked:" << item->data(1).toString();
+    
+    // 先选中
+    if (item != m_selectedItem) {
+        onEntityClicked(item);
+    }
+    
+    // 编辑属性
+    onEditSelectedEntity();
+}
+
+void MyForm::onShowContextMenu(const QPoint &pos)
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    // 创建右键菜单
+    QMenu contextMenu(this);
+    contextMenu.setStyleSheet(
+        "QMenu {"
+        "  background-color: white;"
+        "  border: 1px solid #d0d0d0;"
+        "  border-radius: 4px;"
+        "  padding: 4px;"
+        "}"
+        "QMenu::item {"
+        "  padding: 6px 20px;"
+        "  border-radius: 2px;"
+        "}"
+        "QMenu::item:selected {"
+        "  background-color: #1890ff;"
+        "  color: white;"
+        "}"
+        "QMenu::separator {"
+        "  height: 1px;"
+        "  background-color: #e0e0e0;"
+        "  margin: 4px 0px;"
+        "}"
+    );
+    
+    // 添加菜单项
+    QAction *viewAction = contextMenu.addAction("📋 查看属性");
+    QAction *editAction = contextMenu.addAction("✏️ 编辑属性");
+    contextMenu.addSeparator();
+    QAction *deleteAction = contextMenu.addAction("🗑️ 删除");
+    
+    // 设置删除项颜色
+    deleteAction->setIcon(QIcon());
+    QFont deleteFont = deleteAction->font();
+    deleteFont.setBold(true);
+    deleteAction->setFont(deleteFont);
+    
+    // 连接信号
+    connect(viewAction, &QAction::triggered, this, &MyForm::onViewEntityProperties);
+    connect(editAction, &QAction::triggered, this, &MyForm::onEditSelectedEntity);
+    connect(deleteAction, &QAction::triggered, this, &MyForm::onDeleteSelectedEntity);
+    
+    // 显示菜单
+    contextMenu.exec(ui->graphicsView->mapToGlobal(pos));
+}
+
+void MyForm::onDeleteSelectedEntity()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    QString entityType = m_selectedItem->data(0).toString();
+    QString entityId = m_selectedItem->data(1).toString();
+    
+    // 确认删除
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "确认删除",
+        QString("确定要删除该%1吗？\n\nID: %2")
+            .arg(entityType == "pipeline" ? "管线" : "设施")
+            .arg(entityId),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No
+    );
+    
+    if (reply == QMessageBox::Yes) {
+        qDebug() << "Deleting entity:" << entityId;
+        
+        // 从场景中删除
+        if (mapScene) {
+            mapScene->removeItem(m_selectedItem);
+        }
+        
+        // 从哈希表中删除
+        m_drawnPipelines.remove(m_selectedItem);
+        
+        // 删除图形项
+        delete m_selectedItem;
+        m_selectedItem = nullptr;
+        
+        updateStatus("已删除实体");
+        qDebug() << "✅ Entity deleted successfully";
+    }
+}
+
+void MyForm::onEditSelectedEntity()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    QString entityType = m_selectedItem->data(0).toString();
+    
+    if (entityType == "pipeline") {
+        // 编辑管线
+        if (!m_drawnPipelines.contains(m_selectedItem)) {
+            QMessageBox::warning(this, "错误", "未找到管线数据！");
+            return;
+        }
+        
+        Pipeline pipeline = m_drawnPipelines[m_selectedItem];
+        
+        // 创建编辑对话框
+        PipelineEditDialog *dialog = new PipelineEditDialog(this);
+        dialog->loadPipeline(pipeline);  // 加载现有数据
+        
+        int result = dialog->exec();
+        
+        if (result == QDialog::Accepted) {
+            // 获取修改后的数据
+            Pipeline updatedPipeline = dialog->getPipeline();
+            
+            // 更新哈希表
+            m_drawnPipelines[m_selectedItem] = updatedPipeline;
+            
+            // 更新工具提示
+            QString typeName;
+            if (updatedPipeline.pipelineType() == "water_supply") typeName = "给水";
+            else if (updatedPipeline.pipelineType() == "sewage") typeName = "排水";
+            else if (updatedPipeline.pipelineType() == "gas") typeName = "燃气";
+            else if (updatedPipeline.pipelineType() == "electric") typeName = "电力";
+            else if (updatedPipeline.pipelineType() == "telecom") typeName = "通信";
+            else if (updatedPipeline.pipelineType() == "heat") typeName = "供热";
+            else typeName = "未知";
+            
+            QString tooltip = QString("%1\n类型: %2\n管径: DN%3")
+                                  .arg(updatedPipeline.pipelineName())
+                                  .arg(typeName)
+                                  .arg(updatedPipeline.diameterMm());
+            m_selectedItem->setToolTip(tooltip);
+            
+            // 更新数据
+            m_selectedItem->setData(1, updatedPipeline.pipelineId());
+            
+            updateStatus("管线属性已更新");
+            qDebug() << "✅ Pipeline updated:" << updatedPipeline.pipelineName();
+        }
+        
+        delete dialog;
+    }
+}
+
+void MyForm::onViewEntityProperties()
+{
+    if (!m_selectedItem) {
+        return;
+    }
+    
+    QString entityType = m_selectedItem->data(0).toString();
+    
+    if (entityType == "pipeline") {
+        if (!m_drawnPipelines.contains(m_selectedItem)) {
+            QMessageBox::warning(this, "错误", "未找到管线数据！");
+            return;
+        }
+        
+        Pipeline pipeline = m_drawnPipelines[m_selectedItem];
+        
+        // 显示属性信息
+        QString info = QString(
+            "管线属性\n\n"
+            "🆔 ID: %1\n"
+            "名称: %2\n"
+            "编号: %3\n"
+            "类型: %4\n"
+            "管径: DN%5 mm\n"
+            "材质: %6\n"
+            "长度: %7 m\n"
+            "埋深: %8 m\n"
+            "压力等级: %9\n"
+            "建设日期: %10\n"
+            "施工单位: %11\n"
+            "运行状态: %12\n"
+            "备注: %13"
+        )
+        .arg(pipeline.id())
+        .arg(pipeline.pipelineName())
+        .arg(pipeline.pipelineId())
+        .arg(pipeline.pipelineType())
+        .arg(pipeline.diameterMm())
+        .arg(pipeline.material())
+        .arg(pipeline.lengthM(), 0, 'f', 2)
+        .arg(pipeline.depthM(), 0, 'f', 2)
+        .arg(pipeline.pressureClass())
+        .arg(pipeline.buildDate().toString("yyyy-MM-dd"))
+        .arg(pipeline.builder())
+        .arg(pipeline.status())
+        .arg(pipeline.remarks());
+        
+        QMessageBox::information(this, "管线属性", info);
+    }
+}
+
+void MyForm::clearSelection()
+{
+    if (m_selectedItem) {
+        unhighlightItem(m_selectedItem);
+        m_selectedItem = nullptr;
+        updateStatus("Ready");
+    }
+}
+
+void MyForm::selectItem(QGraphicsItem *item)
+{
+    if (!item) {
+        return;
+    }
+    
+    m_selectedItem = item;
+    highlightItem(item);
+}
+
+void MyForm::highlightItem(QGraphicsItem *item)
+{
+    if (!item) {
+        return;
+    }
+    
+    QGraphicsPathItem *pathItem = qgraphicsitem_cast<QGraphicsPathItem*>(item);
+    if (pathItem) {
+        // 保存原始画笔
+        m_originalPen = pathItem->pen();
+        
+        // 创建高亮画笔（加粗 + 黄色）
+        QPen highlightPen = m_originalPen;
+        highlightPen.setWidth(m_originalPen.width() + 3);
+        highlightPen.setColor(QColor(255, 215, 0));  // 金色
+        pathItem->setPen(highlightPen);
+        pathItem->setZValue(200);  // 提升层级
+        
+        qDebug() << "✨ Item highlighted";
+    }
+}
+
+void MyForm::unhighlightItem(QGraphicsItem *item)
+{
+    if (!item) {
+        return;
+    }
+    
+    QGraphicsPathItem *pathItem = qgraphicsitem_cast<QGraphicsPathItem*>(item);
+    if (pathItem) {
+        // 恢复原始画笔
+        pathItem->setPen(m_originalPen);
+        pathItem->setZValue(100);  // 恢复层级
+        
+        qDebug() << "➖ Item unhighlighted";
+    }
+}
+
+bool MyForm::isEntityItem(QGraphicsItem *item)
+{
+    if (!item) {
+        return false;
+    }
+    
+    // 检查是否有实体标记
+    QString entityType = item->data(0).toString();
+    return (entityType == "pipeline" || entityType == "facility");
+}
+
+void MyForm::setupLayerControlPanel()
+{
+    qDebug() << "设置图层控制面板 (右侧滑出)...";
+    
+    // 创建图层控制面板
+    m_layerControlPanel = new LayerControlPanel(this);
+    
+    // 创建容器窗口（用于滑出效果）
+    m_layerControlContainer = new QWidget(ui->graphicsView->viewport());  // 父对象改为viewport
+    m_layerControlContainer->setObjectName("layerControlContainer");
+    m_layerControlContainer->setStyleSheet(
+        "#layerControlContainer {"
+        "  background-color: white;"
+        "  border-left: 2px solid #d0d0d0;"
+        "  border-radius: 0px;"
+        "}"
+    );
+    
+    // 容器布局
+    QVBoxLayout *containerLayout = new QVBoxLayout(m_layerControlContainer);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+    
+    // 添加面板到容器
+    containerLayout->addWidget(m_layerControlPanel);
+    
+    // 设置容器宽度
+    m_layerControlContainer->setFixedWidth(280);
+    
+    // 初始隐藏（移到右侧外面）
+    m_layerControlContainer->hide();
+    
+    // 创建浮动切换按钮（贴在地图右侧） - 暂时不显示，会被底部按钮替代
+    m_layerControlToggleBtn = new QPushButton("图层\n管理", ui->graphicsView->viewport());  // 父对象改为viewport
+    m_layerControlToggleBtn->setObjectName("layerControlToggleBtn");
+    m_layerControlToggleBtn->setToolTip("图层控制");
+    m_layerControlToggleBtn->setCheckable(true);
+    m_layerControlToggleBtn->setFixedSize(30, 80);  // 调整尺寸：30x80
+    m_layerControlToggleBtn->setCursor(Qt::PointingHandCursor);
+    m_layerControlToggleBtn->setStyleSheet(
+        "#layerControlToggleBtn {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(76, 175, 80, 0.85),"  // 绿色渐变，半透明
+        "                               stop:1 rgba(56, 155, 60, 0.85));"
+        "  color: white;"
+        "  border: 1px solid rgba(255, 255, 255, 0.4);"  // 白色边框增强可见性
+        "  border-radius: 4px 0px 0px 4px;"
+        "  font-size: 11px;"
+        "  font-weight: bold;"
+        "  padding: 4px 2px;"
+        "  line-height: 1.2;"
+        "  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);"  // 轻微阴影
+        "}"
+        "#layerControlToggleBtn:hover {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(96, 195, 100, 0.95),"
+        "                               stop:1 rgba(76, 175, 80, 0.95));"
+        "  border: 1px solid rgba(255, 255, 255, 0.6);"
+        "}"
+        "#layerControlToggleBtn:checked {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+        "                               stop:0 rgba(56, 155, 60, 0.9),"
+        "                               stop:1 rgba(46, 135, 50, 0.9));"
+        "  border: 1px solid rgba(255, 255, 255, 0.5);"
+        "}"
+    );
+    
+    // 隐藏右侧按钮（改用底部切换）
+    m_layerControlToggleBtn->hide();
+    
+    // 连接图层管理器（如果已创建）
+    if (m_layerManager) {
+        m_layerControlPanel->setLayerManager(m_layerManager);
+    }
+    
+    qDebug() << "图层控制面板设置完成";
+}
+
+void MyForm::positionLayerControlPanel()
+{
+    if (!m_layerControlContainer) {
+        return;
+    }
+    
+    // 获取viewport的几何信息
+    QRect viewportRect = ui->graphicsView->viewport()->rect();
+    int viewportWidth = viewportRect.width();
+    int viewportHeight = viewportRect.height();
+    
+    // 面板宽度
+    int panelWidth = m_layerControlContainer->width();
+    
+    // 面板展开显示在右侧，高度与地图窗口一致
+    m_layerControlContainer->setGeometry(
+        viewportWidth - panelWidth,  // 贴到右边
+        0,                           // 从顶部开始
+        panelWidth,
+        viewportHeight               // 高度与viewport一致
+    );
+    
+    m_layerControlContainer->raise();
+}
+
+// 设置右侧工具栏
+void MyForm::setupPanelSwitcher()
+{
+    qDebug() << "设置面板系统...";
+    
+    // ==================== 1. 隐藏原来的右侧工具栏（不再使用） ====================
+    // 注：不再创建 m_panelSwitcher，因为按钮已经集成到 gvOverlay 中
+    m_panelSwitcher = nullptr;
+    
+    // ==================== 2. 创建面板容器（StackWidget + 底部关闭按钮） ====================
+    m_panelContainer = new QWidget(ui->graphicsView->viewport());
+    m_panelContainer->setObjectName("panelContainer");
+    m_panelContainer->setStyleSheet(
+        "#panelContainer { background-color: white; border-left: 2px solid #d0d0d0; }"
+    );
+    m_panelContainer->setFixedWidth(280);
+    m_panelContainer->hide();  // 初始隐藏
+    
+    QVBoxLayout *containerLayout = new QVBoxLayout(m_panelContainer);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+    
+    // 创建 StackWidget
+    m_panelStack = new QStackedWidget(m_panelContainer);
+    m_panelStack->addWidget(m_drawingToolPanel);  // 索引0: 绘制面板
+    m_panelStack->addWidget(m_layerControlPanel); // 索引1: 图层面板
+    containerLayout->addWidget(m_panelStack, 1);
+    
+    // 创建底部关闭按钮区域
+    QWidget *bottomBar = new QWidget(m_panelContainer);
+    bottomBar->setObjectName("bottomBar");
+    bottomBar->setStyleSheet(
+        "#bottomBar { background-color: transparent; }"
+    );
+    bottomBar->setFixedHeight(60);  // 增加高度以容纳优雅的按钮
+    
+    QHBoxLayout *bottomLayout = new QHBoxLayout(bottomBar);
+    bottomLayout->setContentsMargins(12, 12, 12, 12);
+    bottomLayout->setSpacing(0);
+    
+    // 关闭按钮（现代卡片样式，图标+文字）
+    m_panelCloseBtn = new QPushButton(bottomBar);
+    
+    // 设置图标和文字
+    QIcon closeIcon = QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton);
+    m_panelCloseBtn->setIcon(closeIcon);
+    m_panelCloseBtn->setIconSize(QSize(16, 16));
+    m_panelCloseBtn->setText("关闭面板");
+    
+    m_panelCloseBtn->setFixedHeight(36);
+    m_panelCloseBtn->setCursor(Qt::PointingHandCursor);
+    m_panelCloseBtn->setToolTip("点击关闭当前面板");
+    m_panelCloseBtn->setStyleSheet(
+        "QPushButton {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:1 #f8f9fa);"
+        "  border: 1px solid #dee2e6;"
+        "  border-radius: 6px;"
+        "  padding: 6px 16px;"
+        "  font-size: 13px;"
+        "  font-weight: 500;"
+        "  color: #495057;"
+        "  text-align: center;"
+        "}"
+        "QPushButton:hover {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff5f5, stop:1 #ffe3e3);"
+        "  border: 1px solid #f87171;"
+        "  color: #dc2626;"
+        "}"
+        "QPushButton:pressed {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fee2e2, stop:1 #fecaca);"
+        "  border: 1px solid #ef4444;"
+        "  color: #b91c1c;"
+        "}"
+    );
+    
+    bottomLayout->addStretch();
+    bottomLayout->addWidget(m_panelCloseBtn);
+    bottomLayout->addStretch();
+    
+    containerLayout->addWidget(bottomBar);
+    
+    // 设置 m_panelDrawingBtn 和 m_panelLayerBtn 为 nullptr（不再使用）
+    m_panelDrawingBtn = nullptr;
+    m_panelLayerBtn = nullptr;
+    
+    // ==================== 3. 连接信号 ====================
+    // 关闭按钮
+    connect(m_panelCloseBtn, &QPushButton::clicked, this, [this]() {
+        switchToPanel("");  // 关闭面板
+    });
+    
+    qDebug() << "面板系统设置完成";
+}
+
+// 定位面板容器
+void MyForm::positionPanelSwitcher()
+{
+    // 定位面板容器（贴到viewport右边缘）
+    if (m_panelContainer) {
+        QRect viewportRect = ui->graphicsView->viewport()->rect();
+        int viewportWidth = viewportRect.width();
+        int viewportHeight = viewportRect.height();
+        
+        int panelWidth = m_panelContainer->width();
+        m_panelContainer->setGeometry(
+            viewportWidth - panelWidth,  // 贴到右边缘
+            0,
+            panelWidth,
+            viewportHeight
+        );
+        
+        qDebug() << "面板已定位 - viewport:" << viewportWidth << "x" << viewportHeight;
+    }
+}
+
+// 切换面板显示
+void MyForm::switchToPanel(const QString &panelName)
+{
+    qDebug() << "切换面板至:" << panelName;
+    
+    if (panelName.isEmpty()) {
+        // 关闭面板
+        m_panelContainer->hide();
+        m_currentPanel = "";
+        updateStatus("面板已关闭");
+        positionGraphicsOverlay();  // 重新定位缩放按钮
+    } else {
+        // 打开面板
+        m_panelContainer->show();
+        m_currentPanel = panelName;
+        positionGraphicsOverlay();  // 重新定位缩放按钮
+        
+        if (panelName == "drawing") {
+            m_panelStack->setCurrentIndex(0);
+            updateStatus("打开绘制工具面板");
+        } else if (panelName == "layer") {
+            m_panelStack->setCurrentIndex(1);
+            updateStatus("打开图层管理面板");
+        }
+    }
 }

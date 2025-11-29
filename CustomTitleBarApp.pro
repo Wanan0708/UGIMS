@@ -16,10 +16,13 @@ SOURCES += \
     src/ui/myform.cpp \
     src/ui/mapmanagerdialog.cpp \
     src/ui/analysispanel.cpp \
+    src/ui/pipelineeditdialog.cpp \
     src/widgets/basewindow.cpp \
     src/widgets/customtitlebar.cpp \
     src/widgets/mapmanagersettings.cpp \
     src/widgets/drawingtoolpanel.cpp \
+    src/widgets/layercontrolpanel.cpp \
+    src/widgets/collapsiblegroupbox.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
     src/tilemap/manifeststore.cpp \
@@ -35,6 +38,7 @@ SOURCES += \
     src/map/symbolmanager.cpp \
     src/map/pipelinerenderer.cpp \
     src/map/facilityrenderer.cpp \
+    src/map/mapdrawingmanager.cpp \
     src/analysis/spatialanalyzer.cpp \
     src/analysis/burstanalyzer.cpp \
     src/analysis/connectivityanalyzer.cpp
@@ -43,10 +47,13 @@ HEADERS += \
     src/ui/myform.h \
     src/ui/mapmanagerdialog.h \
     src/ui/analysispanel.h \
+    src/ui/pipelineeditdialog.h \
     src/widgets/basewindow.h \
     src/widgets/customtitlebar.h \
     src/widgets/mapmanagersettings.h \
     src/widgets/drawingtoolpanel.h \
+    src/widgets/layercontrolpanel.h \
+    src/widgets/collapsiblegroupbox.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \
     src/tilemap/manifeststore.h \
@@ -63,6 +70,7 @@ HEADERS += \
     src/map/symbolmanager.h \
     src/map/pipelinerenderer.h \
     src/map/facilityrenderer.h \
+    src/map/mapdrawingmanager.h \
     src/analysis/spatialanalyzer.h \
     src/analysis/burstanalyzer.h \
     src/analysis/connectivityanalyzer.h

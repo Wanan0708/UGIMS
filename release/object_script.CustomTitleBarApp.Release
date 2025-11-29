@@ -2,10 +2,13 @@ release/main.o
 release/myform.o
 release/mapmanagerdialog.o
 release/analysispanel.o
+release/pipelineeditdialog.o
 release/basewindow.o
 release/customtitlebar.o
 release/mapmanagersettings.o
 release/drawingtoolpanel.o
+release/layercontrolpanel.o
+release/collapsiblegroupbox.o
 release/tilemapmanager.o
 release/tileworker.o
 release/manifeststore.o
@@ -21,6 +24,7 @@ release/layermanager.o
 release/symbolmanager.o
 release/pipelinerenderer.o
 release/facilityrenderer.o
+release/mapdrawingmanager.o
 release/spatialanalyzer.o
 release/burstanalyzer.o
 release/connectivityanalyzer.o
@@ -29,9 +33,12 @@ release/qrc_style.o
 release/moc_myform.o
 release/moc_mapmanagerdialog.o
 release/moc_analysispanel.o
+release/moc_pipelineeditdialog.o
 release/moc_basewindow.o
 release/moc_customtitlebar.o
 release/moc_drawingtoolpanel.o
+release/moc_layercontrolpanel.o
+release/moc_collapsiblegroupbox.o
 release/moc_tilemapmanager.o
 release/moc_tileworker.o
 release/moc_downloadscheduler.o
@@ -39,6 +46,7 @@ release/moc_layermanager.o
 release/moc_symbolmanager.o
 release/moc_pipelinerenderer.o
 release/moc_facilityrenderer.o
+release/moc_mapdrawingmanager.o
 release/moc_spatialanalyzer.o
 release/moc_burstanalyzer.o
 release/moc_connectivityanalyzer.o

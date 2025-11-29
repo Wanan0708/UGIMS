@@ -19,11 +19,15 @@
 #include <QGraphicsProxyWidget>
 #include <QPropertyAnimation>
 #include <QDockWidget>
+#include <QStackedWidget>
 
 // 添加TileMapManager的前置声明
 class TileMapManager;
 class LayerManager;
+class LayerControlPanel;
 class DrawingToolPanel;
+class MapDrawingManager;
+class Pipeline;  // 添加Pipeline前置声明
 
 namespace Ui {
 class MyForm;
@@ -40,6 +44,7 @@ public:
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;  // 添加键盘事件
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
@@ -100,6 +105,19 @@ private slots:
     void onToggleDrawingTool(bool checked);  // 切换绘制工具显示
     void onStartDrawingPipeline(const QString &pipelineType);  // 开始绘制管线
     void onStartDrawingFacility(const QString &facilityType);  // 开始绘制设施
+    
+    // 绘制完成槽函数
+    void onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &points);
+    void onFacilityDrawingFinished(const QString &facilityType, const QString &wkt, const QPointF &point);
+    
+    // 实体交互槽函数
+    void onEntityClicked(QGraphicsItem *item);        // 实体单击
+    void onEntityDoubleClicked(QGraphicsItem *item);  // 实体双击
+    void onShowContextMenu(const QPoint &pos);        // 显示右键菜单
+    void onDeleteSelectedEntity();                    // 删除选中实体
+    void onEditSelectedEntity();                      // 编辑选中实体
+    void onViewEntityProperties();                    // 查看实体属性
+    void clearSelection();                            // 清除选中
 
 private:
     Ui::MyForm *ui;
@@ -164,12 +182,41 @@ private:
     // 绘制工具相关成员
     QWidget *m_drawingToolContainer;       // 绘制工具容器（右侧滑出面板）
     DrawingToolPanel *m_drawingToolPanel;  // 绘制工具面板
-    QPushButton *m_drawingToolToggleBtn;   // 浮动切换按钮
+    QPushButton *m_drawingToolToggleBtn;   // 浮动切换按钮（已废弃，改用底部按钮）
+    MapDrawingManager *m_drawingManager;   // 地图绘制管理器
+    
+    // 图层控制面板相关成员
+    QWidget *m_layerControlContainer;      // 图层控制容器（右侧滑出面板）
+    LayerControlPanel *m_layerControlPanel; // 图层控制面板
+    QPushButton *m_layerControlToggleBtn;  // 浮动切换按钮（已废弃，改用底部按钮）
+    
+    // 右侧工具栏和面板系统
+    QWidget *m_panelSwitcher;              // 右侧工具栏（按钮容器）
+    QPushButton *m_drawingToolBtn;         // 绘制工具按钮（右侧）
+    QPushButton *m_layerControlBtn;        // 图层管理按钮（右侧）
+    
+    QWidget *m_panelContainer;             // 面板总容器（包含StackWidget+底部按钮）
+    QStackedWidget *m_panelStack;          // 面板堆栈（切换绘制/图层面板）
+    QPushButton *m_panelDrawingBtn;        // 面板内的绘制按钮
+    QPushButton *m_panelLayerBtn;          // 面板内的图层按钮
+    QPushButton *m_panelCloseBtn;          // 面板关闭按钮
+    QString m_currentPanel;                // 当前显示的面板（"drawing" / "layer" / ""）
+    
+    // 实体选中管理
+    QGraphicsItem *m_selectedItem;         // 当前选中的图形项
+    QPen m_originalPen;                    // 选中前的原始画笔（用于恢复）
+    QHash<QGraphicsItem*, Pipeline> m_drawnPipelines;  // 已绘制的管线数据（用于编辑）
+    int m_nextPipelineId;                  // 下一个管线ID（自增）
     
     void setupFunctionalArea();
     void setupDeviceTree();  // 设置设备树
     void setupDrawingToolPanel();  // 设置绘制工具面板（右侧滑出）
     void positionDrawingToolPanel();  // 定位绘制工具面板
+    void setupLayerControlPanel();  // 设置图层控制面板（右侧滑出）
+    void positionLayerControlPanel();  // 定位图层控制面板
+    void setupPanelSwitcher();  // 设置底部面板切换器
+    void positionPanelSwitcher();  // 定位底部面板切换器
+    void switchToPanel(const QString &panelName);  // 切换到指定面板
     void filterDeviceTree(const QString &searchText);  // 过滤设备树
     void setItemVisibility(QStandardItem *item, bool visible);  // 设置节点可见性
     bool filterItem(QStandardItem *item, const QString &searchText);  // 递归过滤节点
@@ -188,6 +235,12 @@ private:
     // 管网可视化初始化
     void initializePipelineVisualization();
     void checkPipelineRenderResult();
+    
+    // 实体选中辅助方法
+    void selectItem(QGraphicsItem *item);     // 选中项
+    void highlightItem(QGraphicsItem *item);  // 高亮显示
+    void unhighlightItem(QGraphicsItem *item);// 取消高亮
+    bool isEntityItem(QGraphicsItem *item);   // 判断是否为实体项
     
     // 添加公共方法来触发区域下载
 public:

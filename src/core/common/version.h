@@ -15,7 +15,7 @@
 #define APP_AUTHOR "CHD"
 #define APP_ORGANIZATION "CHD Studio"
 #define APP_CONTACT "898194998@qq.com"
-#define APP_WEBSITE "https://github.com/CHD"
+#define APP_WEBSITE "https://global.me"
 #define APP_COPYRIGHT "© 2024 CHD. All rights reserved."
 
 // 软件描述

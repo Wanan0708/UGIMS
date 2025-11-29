@@ -2,10 +2,13 @@ debug/main.o
 debug/myform.o
 debug/mapmanagerdialog.o
 debug/analysispanel.o
+debug/pipelineeditdialog.o
 debug/basewindow.o
 debug/customtitlebar.o
 debug/mapmanagersettings.o
 debug/drawingtoolpanel.o
+debug/layercontrolpanel.o
+debug/collapsiblegroupbox.o
 debug/tilemapmanager.o
 debug/tileworker.o
 debug/manifeststore.o
@@ -21,6 +24,7 @@ debug/layermanager.o
 debug/symbolmanager.o
 debug/pipelinerenderer.o
 debug/facilityrenderer.o
+debug/mapdrawingmanager.o
 debug/spatialanalyzer.o
 debug/burstanalyzer.o
 debug/connectivityanalyzer.o
@@ -29,9 +33,12 @@ debug/qrc_style.o
 debug/moc_myform.o
 debug/moc_mapmanagerdialog.o
 debug/moc_analysispanel.o
+debug/moc_pipelineeditdialog.o
 debug/moc_basewindow.o
 debug/moc_customtitlebar.o
 debug/moc_drawingtoolpanel.o
+debug/moc_layercontrolpanel.o
+debug/moc_collapsiblegroupbox.o
 debug/moc_tilemapmanager.o
 debug/moc_tileworker.o
 debug/moc_downloadscheduler.o
@@ -39,6 +46,7 @@ debug/moc_layermanager.o
 debug/moc_symbolmanager.o
 debug/moc_pipelinerenderer.o
 debug/moc_facilityrenderer.o
+debug/moc_mapdrawingmanager.o
 debug/moc_spatialanalyzer.o
 debug/moc_burstanalyzer.o
 debug/moc_connectivityanalyzer.o
