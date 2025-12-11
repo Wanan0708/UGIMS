@@ -1,8 +1,23 @@
 #include "widgets/drawingtoolpanel.h"
-#include <QScrollArea>
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QColor>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QHBoxLayout>
+#include <QtGui/QColor>
+#include <QtWidgets/QFrame>
+#include <QtGui/QWheelEvent>
+
+// 专用滚动区，始终消费滚轮事件，防止继续冒泡到地图
+class DrawingToolScrollArea : public QScrollArea
+{
+public:
+    using QScrollArea::QScrollArea;
+protected:
+    void wheelEvent(QWheelEvent *event) override
+    {
+        QScrollArea::wheelEvent(event); // 正常滚动
+        event->accept();                // 即便滚到边界也不向上传播
+    }
+};
 
 DrawingToolPanel::DrawingToolPanel(QWidget *parent)
     : QWidget(parent)
@@ -18,9 +33,16 @@ DrawingToolPanel::~DrawingToolPanel()
 
 void DrawingToolPanel::setupUI()
 {
+    // 外层主布局只负责容纳滚动区，防止内容过长时挤压控件
     m_mainLayout = new QVBoxLayout(this);
-    m_mainLayout->setContentsMargins(4, 4, 4, 4);
-    m_mainLayout->setSpacing(6);
+    m_mainLayout->setContentsMargins(0, 0, 0, 0);
+    m_mainLayout->setSpacing(0);
+
+    // 滚动内容区域
+    QWidget *contentWidget = new QWidget(this);
+    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(4, 4, 4, 4);
+    contentLayout->setSpacing(6);
     
     // ========== 管线工具组 ==========
     m_pipelineGroup = new CollapsibleGroupBox("📍 管线类型", this);
@@ -125,6 +147,8 @@ void DrawingToolPanel::setupUI()
     m_lineWidthSpin->setRange(1, 10);
     m_lineWidthSpin->setValue(3);  // 默认3px
     m_lineWidthSpin->setSuffix(" px");
+    m_lineWidthSpin->setMinimumWidth(54); // 保证数值和单位完整显示
+    m_lineWidthSpin->setMaximumWidth(90); // 避免拉伸过宽
     widthLayout->addWidget(widthLabel);
     widthLayout->addWidget(m_lineWidthSpin, 1);
     
@@ -133,18 +157,28 @@ void DrawingToolPanel::setupUI()
     
     // 添加提示
     QLabel *hintLabel = new QLabel("💡 提示: 选择类型后点击地图绘制", this);
-    hintLabel->setStyleSheet("color: #8c8c8c; font-size: 11px; padding: 4px;");
+    hintLabel->setStyleSheet("color: #8c8c8c; font-size: 11px; padding: 8px 4px 4px 4px;");
     hintLabel->setWordWrap(true);
     styleLayout->addWidget(hintLabel);
     
     m_styleGroup->setContentLayout(styleLayout);
     m_styleGroup->setExpanded(true, false);  // 默认展开
     
-    // 添加到主布局
-    m_mainLayout->addWidget(m_pipelineGroup);
-    m_mainLayout->addWidget(m_facilityGroup);
-    m_mainLayout->addWidget(m_styleGroup);
-    m_mainLayout->addStretch();
+    // 添加到内容布局（用于滚动）
+    contentLayout->addWidget(m_pipelineGroup);
+    contentLayout->addWidget(m_facilityGroup);
+    contentLayout->addWidget(m_styleGroup);
+    contentLayout->addStretch();
+
+    // 滚动区，整体只占用一个滚动条
+    m_scrollArea = new DrawingToolScrollArea(this);
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setFrameShape(QFrame::NoFrame);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_scrollArea->setWidget(contentWidget);
+
+    m_mainLayout->addWidget(m_scrollArea);
 }
 
 void DrawingToolPanel::setupConnections()

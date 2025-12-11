@@ -6,8 +6,8 @@ echo ========================================
 echo.
 
 echo [1/6] 检查可执行文件...
-set EXE_DEBUG=build\Desktop_Qt_6_8_1_MinGW_64_bit-Debug\debug\CustomTitleBarApp.exe
-set EXE_RELEASE=release\CustomTitleBarApp.exe
+set EXE_DEBUG=build\Desktop_Qt_6_8_1_MinGW_64_bit-Debug\debug\UGIMS.exe
+set EXE_RELEASE=release\UGIMS.exe
 
 if exist "%EXE_DEBUG%" (
     echo ✅ Debug版本存在: %EXE_DEBUG%
@@ -31,7 +31,7 @@ if exist "%EXE_DEBUG%" (
     ) else (
         echo ❌ Debug版本缺少Qt DLL
         echo    运行: cd build\Desktop_Qt_6_8_1_MinGW_64_bit-Debug\debug
-        echo          windeployqt CustomTitleBarApp.exe
+        echo          windeployqt UGIMS.exe
     )
 )
 
@@ -41,7 +41,7 @@ if exist "%EXE_RELEASE%" (
     ) else (
         echo ❌ Release版本缺少Qt DLL
         echo    运行: cd release
-        echo          windeployqt CustomTitleBarApp.exe
+        echo          windeployqt UGIMS.exe
     )
 )
 

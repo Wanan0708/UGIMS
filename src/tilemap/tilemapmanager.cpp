@@ -133,7 +133,7 @@ TileMapManager::TileMapManager(QObject *parent)
     QDir dir(projectRoot);
     
     // 如果当前在build目录中，向上查找项目根目录
-    while (!dir.exists("CustomTitleBarApp.pro") && !dir.isRoot()) {
+    while (!dir.exists("UGIMS.pro") && !dir.isRoot()) {
         dir.cdUp();
         projectRoot = dir.absolutePath();
     }

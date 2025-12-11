@@ -94,6 +94,11 @@ public:
      * @brief 处理右键点击事件（完成绘制）
      */
     void handleRightClick(const QPointF &scenePos);
+    
+    /**
+     * @brief 处理双击事件（结束当前管线）
+     */
+    void handleDoubleClick(const QPointF &scenePos);
 
 signals:
     /**

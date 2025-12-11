@@ -16,7 +16,7 @@ if exist "Makefile" (
 
 echo.
 echo [2/5] 运行 qmake 生成 Makefile...
-qmake CustomTitleBarApp.pro -spec win32-g++ "CONFIG+=release"
+qmake UGIMS.pro -spec win32-g++ "CONFIG+=release"
 
 if errorlevel 1 (
     echo ❌ qmake 失败
@@ -39,16 +39,16 @@ echo ✅ 编译成功
 echo.
 echo [4/5] 部署 Qt 依赖...
 cd release
-windeployqt CustomTitleBarApp.exe --no-translations
+windeployqt UGIMS.exe --no-translations
 cd ..
 echo ✅ Qt 依赖部署完成
 
 echo.
 echo [5/5] 检查文件...
-if exist "release\CustomTitleBarApp.exe" (
-    echo ✅ 可执行文件: release\CustomTitleBarApp.exe
+if exist "release\UGIMS.exe" (
+    echo ✅ 可执行文件: release\UGIMS.exe
     
-    for %%F in (release\CustomTitleBarApp.exe) do (
+    for %%F in (release\UGIMS.exe) do (
         echo    大小: %%~zF 字节
     )
 ) else (
@@ -63,7 +63,7 @@ echo 🎉 Release 版本编译完成！
 echo ========================================
 echo.
 echo 运行方式:
-echo   1. 双击: release\CustomTitleBarApp.exe
+echo   1. 双击: release\UGIMS.exe
 echo   2. 或运行: run_release.bat
 echo.
 pause

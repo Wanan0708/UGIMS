@@ -27,8 +27,8 @@ echo ✅ 目录结构正常
 echo.
 
 echo [2/3] 检查可执行文件...
-if not exist "release\CustomTitleBarApp.exe" (
-    echo ❌ 错误: release\CustomTitleBarApp.exe 不存在
+if not exist "release\UGIMS.exe" (
+    echo ❌ 错误: release\UGIMS.exe 不存在
     echo 请先编译项目
     pause
     exit /b 1
@@ -40,7 +40,7 @@ echo [3/3] 启动程序...
 echo ========================================
 echo.
 
-start "" "%~dp0release\CustomTitleBarApp.exe"
+start "" "%~dp0release\UGIMS.exe"
 
 echo.
 echo 程序已启动！

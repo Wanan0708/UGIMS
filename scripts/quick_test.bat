@@ -90,8 +90,8 @@ echo.
 
 REM 4. 检查可执行文件
 echo [4/6] 可执行文件...
-if not exist "release\CustomTitleBarApp.exe" (
-    echo %RED%❌ release\CustomTitleBarApp.exe 不存在%NC%
+if not exist "release\UGIMS.exe" (
+    echo %RED%❌ release\UGIMS.exe 不存在%NC%
     echo.
     echo 请先编译:
     echo   qmake
@@ -147,7 +147,7 @@ echo ----------------------------------------
 echo.
 
 REM 启动程序
-start "" release\CustomTitleBarApp.exe
+start "" release\UGIMS.exe
 
 echo 程序已在后台启动
 echo.

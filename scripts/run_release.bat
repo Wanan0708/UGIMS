@@ -5,7 +5,7 @@ echo 启动 UGIMS (Release版本)
 echo ========================================
 echo.
 
-if not exist "release\CustomTitleBarApp.exe" (
+if not exist "release\UGIMS.exe" (
     echo ❌ 错误: Release 版本不存在
     echo.
     echo 请先编译 Release 版本:
@@ -31,7 +31,7 @@ if not exist "logs" (
 
 echo 🚀 启动程序...
 echo.
-start "" "%~dp0release\CustomTitleBarApp.exe"
+start "" "%~dp0release\UGIMS.exe"
 
 echo 程序已启动！
 echo.

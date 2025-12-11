@@ -15,7 +15,7 @@
 
 ### 2. 修改的文件
 
-- ✅ `CustomTitleBarApp.pro` - 添加新文件到编译
+- ✅ `UGIMS.pro` - 添加新文件到编译
 - ✅ `src/ui/myform.h` - 添加成员变量和方法声明
 - ✅ `src/ui/myform.cpp` - 实现 DockWidget 集成
 

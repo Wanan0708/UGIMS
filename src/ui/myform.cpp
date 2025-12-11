@@ -864,7 +864,13 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
         } else if (event->type() == QEvent::MouseButtonDblClick) {
             // 处理双击事件
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            if (!m_drawingManager || !m_drawingManager->isDrawing()) {
+            if (m_drawingManager && m_drawingManager->isDrawing()) {
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                    m_drawingManager->handleDoubleClick(scenePos);
+                    return true;
+                }
+            } else {
                 QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
                 QGraphicsItem *item = mapScene->itemAt(scenePos, ui->graphicsView->transform());
                 
@@ -2602,7 +2608,7 @@ void MyForm::onToggleDrawingTool(bool checked)
 void MyForm::onStartDrawingPipeline(const QString &pipelineType)
 {
     qDebug() << "Start drawing pipeline:" << pipelineType;
-    updateStatus(QString("开始绘制管线: %1 (左键点击添加点，右键完成)").arg(m_drawingToolPanel->currentTypeName()));
+    updateStatus(QString("开始绘制管线: %1 (左键添加点，右键或双击结束当前线)").arg(m_drawingToolPanel->currentTypeName()));
     
     if (m_drawingManager) {
         // 应用当前样式

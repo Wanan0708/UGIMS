@@ -233,6 +233,22 @@ void MapDrawingManager::handleRightClick(const QPointF &scenePos)
     }
 }
 
+void MapDrawingManager::handleDoubleClick(const QPointF &scenePos)
+{
+    if (m_mode != DrawingPolyline) {
+        return;
+    }
+
+    // 若双击位置与最后一个点不同，则补充终点
+    if (m_points.isEmpty() || m_points.last() != scenePos) {
+        handleMouseClick(scenePos);
+    }
+
+    // 结束当前这条管线（保持绘制状态，便于继续下一条）
+    qDebug() << "Double click - finish current pipeline";
+    finishDrawing();
+}
+
 void MapDrawingManager::clearTemporaryGraphics()
 {
     // 清除点标记

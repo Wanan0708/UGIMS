@@ -270,7 +270,7 @@ psql -U postgres -d ugims -c "SELECT COUNT(*) FROM pipelines;"
 
 ```bash
 # 运行程序，查看日志
-.\release\CustomTitleBarApp.exe
+.\release\UGIMS.exe
 
 # 检查日志
 type logs\app.log | findstr /C:"Database"
@@ -475,7 +475,7 @@ notepad config\database.ini
 # 修改password
 
 # 6. 运行程序
-.\release\CustomTitleBarApp.exe
+.\release\UGIMS.exe
 ```
 
 ### 已有数据库
@@ -491,7 +491,7 @@ psql -U postgres -d ugims -c "SELECT 1"
 notepad config\database.ini
 
 # 4. 运行程序
-.\release\CustomTitleBarApp.exe
+.\release\UGIMS.exe
 ```
 
 ---

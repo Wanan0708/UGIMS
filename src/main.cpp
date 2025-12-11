@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     qDebug() << "=== Application started ===";
 
     // 设置应用信息（影响任务栏/dock）
-    app.setApplicationName("CustomTitleBarApp");
+    app.setApplicationName("UGIMS");
     app.setOrganizationName("MyOrg");
 
     // 设置窗口图标（替换为你的图标路径）

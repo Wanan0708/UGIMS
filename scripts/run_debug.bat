@@ -5,7 +5,7 @@ echo 启动 UGIMS (Debug版本)
 echo ========================================
 echo.
 
-set EXE_PATH=build\Desktop_Qt_6_8_1_MinGW_64_bit-Debug\debug\CustomTitleBarApp.exe
+set EXE_PATH=build\Desktop_Qt_6_8_1_MinGW_64_bit-Debug\debug\UGIMS.exe
 
 if not exist "%EXE_PATH%" (
     echo ❌ 错误: 找不到可执行文件

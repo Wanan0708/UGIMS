@@ -95,7 +95,7 @@ UGIMS 诊断工具
 ========================================
 
 [1/6] 检查可执行文件...
-✅ release\CustomTitleBarApp.exe 存在
+✅ release\UGIMS.exe 存在
 
 [2/6] 收集Qt依赖...
 ✅ DLL收集完成
@@ -178,7 +178,7 @@ UGIMS 诊断工具
 
 # 2. 收集依赖
 cd release
-windeployqt CustomTitleBarApp.exe
+windeployqt UGIMS.exe
 cd ..
 
 # 3. 运行
@@ -231,7 +231,7 @@ mingw32-make
 cd release
 
 # 3. 收集所有依赖
-windeployqt CustomTitleBarApp.exe
+windeployqt UGIMS.exe
 
 # 4. 复制配置和数据
 xcopy ..\config .\config\ /E /I
@@ -258,7 +258,7 @@ REM 清理
 mingw32-make clean
 
 REM 生成Makefile (可添加自定义选项)
-qmake CustomTitleBarApp.pro -spec win32-g++ "CONFIG+=release" "DEFINES+=MY_CUSTOM_FLAG"
+qmake UGIMS.pro -spec win32-g++ "CONFIG+=release" "DEFINES+=MY_CUSTOM_FLAG"
 
 REM 编译 (调整并行数)
 mingw32-make -j8
@@ -278,7 +278,7 @@ pause
 echo Running automated tests...
 
 REM 编译测试版本
-qmake CustomTitleBarApp.pro "CONFIG+=test"
+qmake UGIMS.pro "CONFIG+=test"
 mingw32-make
 
 REM 运行测试

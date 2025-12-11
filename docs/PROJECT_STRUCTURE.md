@@ -25,7 +25,7 @@ UGIMS/
 ├── tilemap/                      # 地图瓦片缓存
 ├── logs/                         # 日志文件
 ├── build/                        # 构建输出（debug/release）
-├── CustomTitleBarApp.pro         # Qt项目文件
+├── UGIMS.pro                     # Qt项目文件
 ├── README.md                     # 项目说明
 └── .gitignore                    # Git忽略配置
 ```
@@ -361,9 +361,9 @@ logs/
 ```
 build/
 ├── debug/                        # Debug版本输出
-│   └── CustomTitleBarApp.exe
+│   └── UGIMS.exe
 └── release/                      # Release版本输出
-    └── CustomTitleBarApp.exe
+    └── UGIMS.exe
 ```
 
 **说明**:
@@ -459,20 +459,20 @@ build/
 ## 🚀 编译说明
 
 ### 使用Qt Creator
-1. 打开 `CustomTitleBarApp.pro`
+1. 打开 `UGIMS.pro`
 2. 配置构建套件（MinGW）
 3. 点击"构建"按钮
 
 ### 使用命令行
 ```bash
 # 生成Makefile
-qmake CustomTitleBarApp.pro
+qmake UGIMS.pro
 
 # 编译（多核加速）
 mingw32-make -j4
 
 # 运行
-.\release\CustomTitleBarApp.exe
+.\release\UGIMS.exe
 ```
 
 ---
@@ -481,20 +481,20 @@ mingw32-make -j4
 
 ### 1. 编译Release版本
 ```bash
-qmake CustomTitleBarApp.pro -spec win32-g++ "CONFIG+=release"
+qmake UGIMS.pro -spec win32-g++ "CONFIG+=release"
 mingw32-make -j4
 ```
 
 ### 2. 收集依赖
 ```bash
 cd release
-windeployqt CustomTitleBarApp.exe
+windeployqt UGIMS.exe
 ```
 
 ### 3. 打包发布
 ```
 发布包/
-├── CustomTitleBarApp.exe
+├── UGIMS.exe
 ├── Qt6Core.dll
 ├── Qt6Gui.dll
 ├── ... (其他DLL)
@@ -518,7 +518,7 @@ windeployqt CustomTitleBarApp.exe
 | 样式配置 | `resources/styles/style.qss` |
 | 应用配置 | `config/app.ini` |
 | 数据库结构 | `database/schema.sql` |
-| 项目配置 | `CustomTitleBarApp.pro` |
+| 项目配置 | `UGIMS.pro` |
 | 快速开始 | `docs/QUICK_START.md` |
 
 ---

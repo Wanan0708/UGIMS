@@ -4,6 +4,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
 
+# Explicit target name for the generated executable
+TARGET = UGIMS
+
 # Include paths - src作为根包含路径
 INCLUDEPATH += src
 

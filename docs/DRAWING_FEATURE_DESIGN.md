@@ -227,4 +227,4 @@ enum DrawingMode {
 - `src/ui/myform.ui` - 添加工具面板到界面
 - `src/ui/myform.h` - 添加信号槽连接
 - `src/ui/myform.cpp` - 实现绘制逻辑
-- `CustomTitleBarApp.pro` - 添加新文件到编译
+- `UGIMS.pro` - 添加新文件到编译

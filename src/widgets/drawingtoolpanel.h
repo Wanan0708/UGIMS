@@ -1,12 +1,13 @@
 #ifndef DRAWINGTOOLPANEL_H
 #define DRAWINGTOOLPANEL_H
 
-#include <QWidget>
-#include <QButtonGroup>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QSpinBox>
-#include <QComboBox>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QScrollArea>
 #include "widgets/collapsiblegroupbox.h"
 
 /**
@@ -83,8 +84,6 @@ signals:
 private slots:
     void onPipelineButtonClicked(int id);
     void onFacilityButtonClicked(int id);
-
-private:
     void setupUI();
     void setupConnections();
     QPushButton* createToolButton(const QString &text, const QString &iconPath = QString());
@@ -116,6 +115,7 @@ private:
     CollapsibleGroupBox *m_pipelineGroup;
     CollapsibleGroupBox *m_facilityGroup;
     CollapsibleGroupBox *m_styleGroup;  // 样式设置组
+    QScrollArea *m_scrollArea {nullptr};
     
     // 样式设置控件
     QComboBox *m_colorCombo;       // 颜色选择

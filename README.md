@@ -442,7 +442,7 @@ password=your_password
 ### 3. 编译项目
 
 #### 使用 Qt Creator
-1. 打开 `CustomTitleBarApp.pro`
+1. 打开 `UGIMS.pro`
 2. 配置 Qt Kit
 3. 点击 "构建" 按钮
 
@@ -450,11 +450,11 @@ password=your_password
 
 ```bash
 # Windows
-qmake CustomTitleBarApp.pro
+qmake UGIMS.pro
 nmake        # 或 mingw32-make
 
 # Linux / macOS
-qmake CustomTitleBarApp.pro
+qmake UGIMS.pro
 make -j4
 ```
 
@@ -462,10 +462,10 @@ make -j4
 
 ```bash
 # Windows
-.\release\CustomTitleBarApp.exe
+.\release\UGIMS.exe
 
 # Linux / macOS
-./CustomTitleBarApp
+./UGIMS
 ```
 
 ### 5. 初始化数据
