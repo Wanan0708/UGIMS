@@ -249,8 +249,9 @@ void TileMapManager::setCenter(double lat, double lon)
 }
 
 void TileMapManager::setZoomAtMousePosition(int zoom, double sceneX, double sceneY,
-                                            double mouseViewportX, double mouseViewportY,
-                                            int viewportWidth, int viewportHeight)
+                                           double mouseViewportX, double mouseViewportY,
+                                           int viewportWidth, int viewportHeight,
+                                           double visualScale)
 {
     Q_UNUSED(sceneX);
     Q_UNUSED(sceneY);
@@ -258,6 +259,7 @@ void TileMapManager::setZoomAtMousePosition(int zoom, double sceneX, double scen
     if (!m_scene) return;
     
     int oldZoom = m_zoom;
+    // 限制缩放范围：下限为3（或视口动态最小值），上限为10
     int newZoom = qBound(qMax(3, getDynamicMinZoom()), zoom, 10);
     
     if (m_verboseLogging) logMessage(QString("=== ZOOM %1->%2 === Mouse:(%3,%4) Viewport:%5x%6")
@@ -285,37 +287,39 @@ void TileMapManager::setZoomAtMousePosition(int zoom, double sceneX, double scen
     double centerTileY_old_precise = (1.0 - log(tan(lat_rad_old) + 1.0 / cos(lat_rad_old)) / M_PI) / 2.0 * n_old;
     
     // 步骤2：计算鼠标相对于视口中心的偏移（瓦片单位）
-    double mouseOffsetX_pixels = mouseViewportX - viewportWidth / 2.0;
-    double mouseOffsetY_pixels = mouseViewportY - viewportHeight / 2.0;
-    double mouseOffsetX_tiles = mouseOffsetX_pixels / m_tileSize;
-    double mouseOffsetY_tiles = mouseOffsetY_pixels / m_tileSize;
+    long double mouseOffsetX_pixels = mouseViewportX - viewportWidth / 2.0;
+    long double mouseOffsetY_pixels = mouseViewportY - viewportHeight / 2.0;
+    // 需要考虑当前视觉缩放（视觉缩放越大，同样的视口像素代表更少的场景像素）
+    long double pixelToTileScale = (visualScale <= 0) ? 1.0 : visualScale;
+    long double mouseOffsetX_tiles = mouseOffsetX_pixels / (m_tileSize * pixelToTileScale);
+    long double mouseOffsetY_tiles = mouseOffsetY_pixels / (m_tileSize * pixelToTileScale);
     
     // 步骤3：计算鼠标指向的瓦片（旧缩放级别）
-    double mouseTileX_old = centerTileX_old_precise + mouseOffsetX_tiles;
-    double mouseTileY_old = centerTileY_old_precise + mouseOffsetY_tiles;
+    long double mouseTileX_old = centerTileX_old_precise + mouseOffsetX_tiles;
+    long double mouseTileY_old = centerTileY_old_precise + mouseOffsetY_tiles;
     
     // 转换为地理坐标（验证用）
-    double mouseLon_old = mouseTileX_old / n_old * 360.0 - 180.0;
-    double lat_rad = atan(sinh(M_PI * (1.0 - 2.0 * mouseTileY_old / n_old)));
-    double mouseLat_old = lat_rad * 180.0 / M_PI;
+    long double mouseLon_old = mouseTileX_old / n_old * 360.0 - 180.0;
+    long double lat_rad = atan(sinh(M_PI * (1.0 - 2.0 * mouseTileY_old / n_old)));
+    long double mouseLat_old = lat_rad * 180.0 / M_PI;
     
     // 步骤4：缩放瓦片坐标
     m_zoom = newZoom;
     int zoomDiff = newZoom - oldZoom;
     double zoomScale = pow(2.0, zoomDiff);
     
-    double mouseTileX_new = mouseTileX_old * zoomScale;
-    double mouseTileY_new = mouseTileY_old * zoomScale;
+    long double mouseTileX_new = mouseTileX_old * zoomScale;
+    long double mouseTileY_new = mouseTileY_old * zoomScale;
     
     // 步骤5：计算新的中心瓦片
-    double centerTileX_new = mouseTileX_new - mouseOffsetX_tiles;
-    double centerTileY_new = mouseTileY_new - mouseOffsetY_tiles;
+    long double centerTileX_new = mouseTileX_new - mouseOffsetX_tiles;
+    long double centerTileY_new = mouseTileY_new - mouseOffsetY_tiles;
     
     // 步骤6：转换为地理坐标
     int n_new = 1 << newZoom;
-    m_centerLon = centerTileX_new / n_new * 360.0 - 180.0;
-    double lat_rad_new = atan(sinh(M_PI * (1.0 - 2.0 * centerTileY_new / n_new)));
-    m_centerLat = lat_rad_new * 180.0 / M_PI;
+    m_centerLon = (double)(centerTileX_new / n_new * 360.0 - 180.0);
+    long double lat_rad_new = atan(sinh(M_PI * (1.0 - 2.0 * centerTileY_new / n_new)));
+    m_centerLat = (double)(lat_rad_new * 180.0 / M_PI);
     
     if (m_verboseLogging) logMessage(QString("  Offset:(%1,%2) MouseGEO:(%3,%4) -> NewCenter:(%5,%6)")
         .arg(mouseOffsetX_tiles, 0, 'f', 3)
@@ -509,7 +513,8 @@ int TileMapManager::getDynamicMinZoom() const
 void TileMapManager::setZoom(int zoom)
 {
     int oldZoom = m_zoom;
-    m_zoom = qBound(qMax(3, getDynamicMinZoom()), zoom, 10);  // 限制为3-10
+    // 下限为3（或视口动态最小值），上限为10
+    m_zoom = qBound(qMax(3, getDynamicMinZoom()), zoom, 10);
     
     // 在设置新的缩放级别后，先清理不需要的瓦片
     cleanupTiles();
@@ -1521,4 +1526,17 @@ QPointF TileMapManager::geoToScene(double lon, double lat) const
     double sceneY = tileY * m_tileSize;
     
     return QPointF(sceneX, sceneY);
+}
+
+QPointF TileMapManager::sceneToGeo(const QPointF &scenePos, int zoom) const
+{
+    int useZoom = (zoom >= 0) ? zoom : m_zoom;
+    int n = 1 << useZoom;
+    double tileX = scenePos.x() / m_tileSize;
+    double tileY = scenePos.y() / m_tileSize;
+    
+    double lon = tileX / n * 360.0 - 180.0;
+    double latRad = atan(sinh(M_PI * (1.0 - 2.0 * tileY / n)));
+    double lat = latRad * 180.0 / M_PI;
+    return QPointF(lon, lat);
 }

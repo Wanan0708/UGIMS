@@ -141,6 +141,7 @@ private:
     QGraphicsPixmapItem *mapItem;
     qreal currentScale;
     int currentZoomLevel;  // 当前瓦片地图缩放层级 (1-10)
+    double m_visualScale = 1.0;  // 视觉连续缩放比例（不直接切换瓦片层级）
     
     // 右键拖拽相关成员
     bool isRightClickDragging;

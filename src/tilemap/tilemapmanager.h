@@ -45,7 +45,8 @@ public:
     void setZoom(int zoom);
     void setZoomAtMousePosition(int zoom, double sceneX, double sceneY, 
                                 double mouseViewportX, double mouseViewportY,
-                                int viewportWidth, int viewportHeight);  // 在鼠标位置缩放
+                                int viewportWidth, int viewportHeight,
+                                double visualScale = 1.0);  // 在鼠标位置缩放
     int getZoom() const { return m_zoom; }
     void setTileSource(const QString &urlTemplate);
     void setViewSize(int width, int height);  // 设置视图大小
@@ -75,6 +76,8 @@ public:
     
     // 坐标转换：地理坐标 -> 场景坐标（与瓦片布局一致）
     QPointF geoToScene(double lon, double lat) const;
+    // 坐标转换：场景坐标 -> 地理坐标（使用当前或指定缩放级别）
+    QPointF sceneToGeo(const QPointF &scenePos, int zoom = -1) const;
 
 private:
     QGraphicsScene *m_scene;

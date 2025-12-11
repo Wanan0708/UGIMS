@@ -46,6 +46,7 @@
 #include <QPainter>
 #include <QMainWindow>
 #include <cmath>
+#include <QtGlobal>
 #include "mapmanagerdialog.h"
 #include "tilemap/downloadscheduler.h"
 #include "tilemap/manifeststore.h"
@@ -66,6 +67,7 @@ MyForm::MyForm(QWidget *parent)
     , mapItem(nullptr)
     , currentScale(1.0)
     , currentZoomLevel(1)  // 初始化为第1层级
+    , m_visualScale(1.0)   // 初始视觉缩放比例
     , isRightClickDragging(false)  // 初始化右键拖拽状态
     , tileMapManager(nullptr)  // 初始化瓦片地图管理器
     , m_layerManager(nullptr)  // 初始化图层管理器
@@ -742,31 +744,56 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             
             // 如果瓦片地图管理器存在，使用离散的层级缩放
             if (tileMapManager) {
-                int newZoomLevel = currentZoomLevel;
+                // 平滑视觉缩放：累积 visual scale，跨阈值才切换瓦片层级
+                const bool zoomingIn = wheelEvent->angleDelta().y() > 0;
+                const double stepFactor = zoomingIn ? 1.12 : (1.0 / 1.12);
+                const double upscaleThreshold = 2.0;
+                const double downscaleThreshold = 0.5;
                 
-                if (wheelEvent->angleDelta().y() > 0) {
-                    // 放大：增加层级
-                    newZoomLevel = qMin(currentZoomLevel + 1, MAX_ZOOM_LEVEL);
-                } else {
-                    // 缩小：减少层级
-                    newZoomLevel = qMax(currentZoomLevel - 1, MIN_ZOOM_LEVEL);
+                QPointF mouseViewportPos = wheelEvent->position();          // 保留亚像素精度
+                QPointF mouseScenePos = ui->graphicsView->mapToScene(mouseViewportPos.toPoint());
+                QPointF mouseGeo;
+                if (tileMapManager) {
+                    mouseGeo = tileMapManager->sceneToGeo(mouseScenePos, currentZoomLevel);
+                }
+
+                // 边界保护：达到最小级别时不再缩小；达到最大级别时不再放大
+                if (!zoomingIn && currentZoomLevel <= MIN_ZOOM_LEVEL && m_visualScale <= 1.0) {
+                    updateStatus(QString("已到最小层级 (%1)，不能继续缩小").arg(MIN_ZOOM_LEVEL));
+                    return true;
+                }
+                if (zoomingIn && currentZoomLevel >= MAX_ZOOM_LEVEL && m_visualScale >= 1.0) {
+                    updateStatus(QString("已到最大层级 (%1)，不能继续放大").arg(MAX_ZOOM_LEVEL));
+                    return true;
                 }
                 
-                // 如果层级发生变化，更新瓦片地图
-                if (newZoomLevel != currentZoomLevel) {
-                    // 获取鼠标在视口中的位置
-                    QPoint mouseViewportPos = wheelEvent->position().toPoint();
-                    QPointF mouseScenePos = ui->graphicsView->mapToScene(mouseViewportPos);
+                // 先在视图层做连续缩放
+                m_visualScale = qBound(0.1, m_visualScale * stepFactor, 8.0); // 限制极值，避免过大/过小
+                double visualScaleForAnchor = m_visualScale; // 记录切级前的视觉缩放，用于精确锚点计算
+                ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+                ui->graphicsView->scale(stepFactor, stepFactor);
+                
+                bool zoomLevelChanged = false;
+                
+                // 向上跨阈值：切换到更高层级
+                while (m_visualScale >= upscaleThreshold && currentZoomLevel < MAX_ZOOM_LEVEL) {
+                    m_visualScale /= 2.0;
+                    currentZoomLevel++;
+                    zoomLevelChanged = true;
+                }
+                
+                // 向下跨阈值：切换到更低层级
+                while (m_visualScale <= downscaleThreshold && currentZoomLevel > MIN_ZOOM_LEVEL) {
+                    m_visualScale *= 2.0;
+                    currentZoomLevel--;
+                    zoomLevelChanged = true;
+                }
+                
+                if (zoomLevelChanged) {
+                    qDebug() << "[SmoothZoom] Switch tiles to level" << currentZoomLevel 
+                             << "visualScale reset to" << m_visualScale;
                     
-                    qDebug() << "Zoom from" << currentZoomLevel << "to" << newZoomLevel 
-                             << "at viewport:" << mouseViewportPos 
-                             << "scene:" << mouseScenePos;
-                    
-                    // 更新缩放级别
-                    currentZoomLevel = newZoomLevel;
-                    
-                    // 关键：以鼠标位置为中心进行缩放
-                    // 传递鼠标在视口中的位置（像素坐标）
+                    // 调整瓦片缩放并以鼠标为锚点
                     tileMapManager->setZoomAtMousePosition(
                         currentZoomLevel, 
                         mouseScenePos.x(), 
@@ -774,22 +801,48 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                         mouseViewportPos.x(),
                         mouseViewportPos.y(),
                         ui->graphicsView->viewport()->width(),
-                        ui->graphicsView->viewport()->height()
+                        ui->graphicsView->viewport()->height(),
+                        visualScaleForAnchor  // 使用切级前的真实视觉缩放保持锚点一致
                     );
-                // 缩放后将视图中心与新中心像素对齐，保持锚点一致
-                QPointF centerScene = tileMapManager->getCenterScenePos();
-                ui->graphicsView->centerOn(centerScene);
-                // 用对齐后的真实中心触发一次立即更新，避免缩放中心与加载中心不一致
-                tileMapManager->updateTilesForViewImmediate(centerScene.x(), centerScene.y());
                     
-                    // 同步缩放级别到管网渲染器
+                    // 同步渲染器层级
                     if (m_layerManager) {
                         m_layerManager->setZoom(currentZoomLevel);
                         qDebug() << "[Zoom] Renderer zoom updated to:" << currentZoomLevel;
                     }
                     
-                    updateStatus(QString("Tile Map Zoom Level: %1/%2").arg(currentZoomLevel).arg(MAX_ZOOM_LEVEL));
+                    // 重置视图变换为新的视觉比例，避免累乘误差
+                    ui->graphicsView->resetTransform();
+                    ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+                    ui->graphicsView->scale(m_visualScale, m_visualScale);
+
+                    // 重新对齐视图，使鼠标下的地理位置保持不变
+                    if (tileMapManager && !mouseGeo.isNull()) {
+                        QPointF targetScene = tileMapManager->geoToScene(mouseGeo.x(), mouseGeo.y());
+                        QPointF viewportCenterF = QPointF(ui->graphicsView->viewport()->rect().center());
+                        QPointF offsetViewport = mouseViewportPos - viewportCenterF;
+                        // 视口到场景的偏移（考虑当前视觉缩放）
+                        QPointF offsetScene(offsetViewport.x() / m_visualScale,
+                                            offsetViewport.y() / m_visualScale);
+                        QPointF desiredCenter = targetScene - offsetScene;
+                        ui->graphicsView->centerOn(desiredCenter);
+                        tileMapManager->updateTilesForViewImmediate(desiredCenter.x(), desiredCenter.y());
+                        // 同步瓦片管理器的中心，避免后续缩放累积偏差
+                        QPointF desiredGeo = tileMapManager->sceneToGeo(desiredCenter, currentZoomLevel);
+                        tileMapManager->setCenter(desiredGeo.y(), desiredGeo.x());
+                    } else {
+                        // 回退：按当前中心刷新
+                        QPointF centerScene = tileMapManager->getCenterScenePos();
+                        ui->graphicsView->centerOn(centerScene);
+                        tileMapManager->updateTilesForViewImmediate(centerScene.x(), centerScene.y());
+                    }
+
                 }
+                
+                updateStatus(QString("Tile Map Zoom Level: %1/%2  (visual x%3)")
+                             .arg(currentZoomLevel)
+                             .arg(MAX_ZOOM_LEVEL)
+                             .arg(m_visualScale, 0, 'f', 2));
             } else {
                 // 如果没有瓦片地图管理器，使用原来的连续缩放
                 qreal scaleFactor = 1.15;
@@ -1331,6 +1384,9 @@ void MyForm::handleLoadTileMapButtonClicked()
     logMessage("Setting zoom level to MIN_ZOOM_LEVEL");
     currentZoomLevel = MIN_ZOOM_LEVEL;
     tileMapManager->setZoom(currentZoomLevel);
+    m_visualScale = 1.0;
+    ui->graphicsView->resetTransform();
+    ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     
     // 触发中国区域级别3的瓦片地图下载
     logMessage("Calling startRegionDownload");
@@ -1360,12 +1416,23 @@ void MyForm::handleZoomInTileMapButtonClicked()
             viewportCenter.x(),
             viewportCenter.y(),
             viewportRect.width(),
-            viewportRect.height()
+            viewportRect.height(),
+            1.0  // 按钮触发时视觉缩放基线已重置
         );
         // 与滚轮缩放保持一致：对齐视图中心并立即刷新可见瓦片
         QPointF centerScene = tileMapManager->getCenterScenePos();
         ui->graphicsView->centerOn(centerScene);
         tileMapManager->updateTilesForViewImmediate(centerScene.x(), centerScene.y());
+        
+        // 重置视觉缩放基线
+        m_visualScale = 1.0;
+        ui->graphicsView->resetTransform();
+        ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+        
+        // 重置视觉缩放基线
+        m_visualScale = 1.0;
+        ui->graphicsView->resetTransform();
+        ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
         
         // 同步缩放级别到管网渲染器
         if (m_layerManager) {
@@ -1401,7 +1468,8 @@ void MyForm::handleZoomOutTileMapButtonClicked()
             viewportCenter.x(),
             viewportCenter.y(),
             viewportRect.width(),
-            viewportRect.height()
+            viewportRect.height(),
+            1.0  // 按钮触发时视觉缩放基线已重置
         );
         // 与滚轮缩放保持一致：对齐视图中心并立即刷新可见瓦片
         QPointF centerScene2 = tileMapManager->getCenterScenePos();
