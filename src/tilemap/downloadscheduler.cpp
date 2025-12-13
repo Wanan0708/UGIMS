@@ -49,20 +49,76 @@ void DownloadScheduler::enqueueTask(const DownloadTask &task)
 
 void DownloadScheduler::pauseTask(const QString &taskId)
 {
-    Q_UNUSED(taskId);
-    // 预留：后续从队列中过滤该任务的 job，并把状态置为 paused
+    if (!m_store) return;
+    
+    // 从队列中移除该任务的所有job
+    QQueue<TileJob> newQueue;
+    while (!m_queue.isEmpty()) {
+        TileJob job = m_queue.dequeue();
+        if (job.taskId != taskId) {
+            newQueue.enqueue(job);
+        }
+    }
+    m_queue = newQueue;
+    
+    // 更新任务状态
+    m_store->setStatus(taskId, "paused");
+    m_store->save();
+    
+    emit taskStatusChanged(taskId, "paused");
 }
 
 void DownloadScheduler::resumeTask(const QString &taskId)
 {
-    Q_UNUSED(taskId);
-    // 预留：把 paused 任务恢复为 pending，并在下次 buildQueueFromTasks() 重新入队
+    if (!m_store) return;
+    
+    // 检查任务是否存在且状态为paused
+    DownloadTask task = m_store->getTask(taskId);
+    if (task.id.isEmpty() || task.status != "paused") {
+        return;  // 任务不存在或不是暂停状态
+    }
+    
+    // 将状态改为pending
+    m_store->setStatus(taskId, "pending");
+    m_store->save();
+    
+    // 重新构建队列（包含该任务）
+    m_queueBuilt = false;
+    
+    emit taskStatusChanged(taskId, "pending");
 }
 
 void DownloadScheduler::cancelTask(const QString &taskId)
 {
-    Q_UNUSED(taskId);
-    // 预留：从队列移除该任务未发出的 job，并置状态 cancelled
+    if (!m_store) return;
+    
+    // 从队列中移除该任务的所有job
+    QQueue<TileJob> newQueue;
+    while (!m_queue.isEmpty()) {
+        TileJob job = m_queue.dequeue();
+        if (job.taskId != taskId) {
+            newQueue.enqueue(job);
+        }
+    }
+    m_queue = newQueue;
+    
+    // 从outstanding中移除该任务的job（如果正在下载）
+    QHash<quint64, QString> newOutstanding;
+    for (auto it = m_outstanding.begin(); it != m_outstanding.end(); ++it) {
+        if (it.value() != taskId) {
+            newOutstanding.insert(it.key(), it.value());
+        } else {
+            // 减少正在下载的数量
+            m_inflight = qMax(0, m_inflight - 1);
+        }
+    }
+    m_outstanding = newOutstanding;
+    
+    // 更新任务状态
+    m_store->setStatus(taskId, "cancelled");
+    m_store->save();
+    
+    emit taskStatusChanged(taskId, "cancelled");
 }
 
 void DownloadScheduler::onTick()
@@ -105,6 +161,11 @@ void DownloadScheduler::buildQueueFromTasks()
     if (!m_store) return;
     auto tasks = m_store->tasks();
     for (const auto &t : tasks) {
+        // 只处理pending和downloading状态的任务
+        if (t.status != "pending" && t.status != "downloading") {
+            continue;
+        }
+        
         int taskTotal = 0;
         for (int z = t.minZoom; z <= t.maxZoom; ++z) {
             int n = 1 << z;

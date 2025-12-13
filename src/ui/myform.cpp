@@ -8,6 +8,7 @@
 #include "widgets/workordermanagerdialog.h"  // 工单管理对话框
 #include "widgets/assetmanagerdialog.h"  // 资产管理对话框
 #include "widgets/healthassessmentdialog.h"  // 健康度评估对话框
+#include "widgets/settingsdialog.h"  // 系统设置对话框
 #include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
 #include "ui/pipelineeditdialog.h"  // 添加管线编辑对话框头文件
 #include "core/models/pipeline.h"  // 添加Pipeline模型头文件
@@ -3025,8 +3026,15 @@ void MyForm::onHealthAssessmentButtonClicked()
 void MyForm::onSettingsButtonClicked()
 {
     qDebug() << "[UI] Settings button clicked";
-    updateStatus("功能开发中：系统设置...");
-    QMessageBox::information(this, "提示", "系统设置功能开发中");
+    updateStatus("打开系统设置...");
+    
+    SettingsDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        updateStatus("系统设置已保存");
+        // 可以在这里重新加载配置或刷新界面
+    } else {
+        updateStatus("已取消设置");
+    }
 }
 
 void MyForm::onHelpButtonClicked()
@@ -3307,10 +3315,69 @@ void MyForm::onDeviceTreeItemDoubleClicked(const QModelIndex &index)
     qDebug() << "Device tree item double-clicked:" << name;
     updateStatus("打开设备详情: " + name);
     
-    // TODO: 打开设备详情对话框
-    QMessageBox::information(this, "设备详情", 
-                             "设备名称: " + name + "\n\n" +
-                             "详细信息功能开发中...");
+    // 判断层级
+    int level = 0;
+    QModelIndex parent = index.parent();
+    while (parent.isValid()) {
+        level++;
+        parent = parent.parent();
+    }
+    
+    // 只有第3层（具体设备）才显示详情
+    if (level == 2) {
+        // 尝试从设备名称中提取ID（例如 "DN300主干管-GS001"）
+        QString deviceId;
+        QStringList parts = name.split("-");
+        if (parts.size() >= 2) {
+            deviceId = parts.last().split(" ").first(); // 提取 "GS001"
+        }
+        
+        // 尝试查找对应的管线或设施
+        if (!deviceId.isEmpty()) {
+            PipelineDAO pipelineDao;
+            Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+            
+            if (pipeline.isValid()) {
+                // 显示管线详情
+                PipelineEditDialog dialog(this);
+                dialog.loadPipeline(pipeline);
+                dialog.exec();
+                return;
+            }
+            
+            FacilityDAO facilityDao;
+            Facility facility = facilityDao.findByFacilityId(deviceId);
+            
+            if (facility.isValid()) {
+                // 显示设施详情
+                FacilityEditDialog dialog(this, facility);
+                dialog.exec();
+                return;
+            }
+        }
+        
+        // 如果找不到对应的实体，显示基本信息
+        QMessageBox::information(this, "设备详情", 
+                                 QString("设备名称: %1\n\n"
+                                        "设备ID: %2\n\n"
+                                        "提示: 未在数据库中找到对应的实体数据。\n"
+                                        "请确保设备ID正确，或通过地图选择设备查看详情。")
+                                 .arg(name)
+                                 .arg(deviceId.isEmpty() ? "未知" : deviceId));
+    } else {
+        // 非设备层级，显示层级信息
+        QString levelName;
+        switch(level) {
+            case 0: levelName = "管网类型"; break;
+            case 1: levelName = "设施类别"; break;
+            default: levelName = "其他"; break;
+        }
+        
+        QMessageBox::information(this, "信息", 
+                                 QString("选中项: %1\n层级: %2")
+                                 .arg(name)
+                                 .arg(levelName));
+    }
 }
 
 // 搜索框文本变化事件

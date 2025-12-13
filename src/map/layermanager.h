@@ -8,6 +8,7 @@
 
 class PipelineRenderer;
 class FacilityRenderer;
+class AnnotationRenderer;
 class TileMapManager;
 
 /**
@@ -61,6 +62,7 @@ public:
     // 获取渲染器
     PipelineRenderer* getPipelineRenderer() const { return m_pipelineRenderer; }
     FacilityRenderer* getFacilityRenderer() const { return m_facilityRenderer; }
+    AnnotationRenderer* getAnnotationRenderer() const { return m_annotationRenderer; }
 
     // 设置可视区域（用于按需加载）
     void setVisibleBounds(const QRectF &bounds);
@@ -91,6 +93,7 @@ private:
     // 渲染器
     PipelineRenderer *m_pipelineRenderer;
     FacilityRenderer *m_facilityRenderer;
+    AnnotationRenderer *m_annotationRenderer;
     
     // 图层可见性状态
     QHash<LayerType, bool> m_layerVisibility;

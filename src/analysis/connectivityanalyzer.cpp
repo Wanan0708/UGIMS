@@ -9,6 +9,7 @@
 #include <QtMath>
 #include <QPair>
 #include <limits>
+#include <functional>
 
 ConnectivityAnalyzer::ConnectivityAnalyzer(QObject *parent)
     : SpatialAnalyzer(parent)
@@ -128,33 +129,103 @@ ConnectivityResult ConnectivityAnalyzer::findShortestPath(const QPointF &startPo
 
 QList<ConnectivityResult> ConnectivityAnalyzer::findAllPaths(const QPointF &startPoint, const QPointF &endPoint, int maxPaths)
 {
-    Q_UNUSED(maxPaths);
-    
     qDebug() << "[ConnectivityAnalyzer] Finding all paths from:" << startPoint << "to:" << endPoint;
     
     QList<ConnectivityResult> results;
     
-    // TODO: 实际实现需要使用图遍历算法
-    // 返回模拟数据
+    // 检查数据库连接
+    if (!DatabaseManager::instance().isConnected()) {
+        ConnectivityResult errorResult;
+        errorResult.success = false;
+        errorResult.message = "数据库未连接";
+        results.append(errorResult);
+        return results;
+    }
     
-    ConnectivityResult path1;
-    path1.type = ConnectivityType::AllPaths;
-    path1.startPoint = startPoint;
-    path1.endPoint = endPoint;
-    path1.pathNodes = {"NODE-START", "NODE-A", "NODE-B", "NODE-END"};
-    path1.totalLength = 1500.0;
-    path1.success = true;
-    results.append(path1);
+    // 1. 找到起点和终点附近的管线
+    QString startPipelineId = findPipelineAtPoint(startPoint, m_connectionTolerance * 2);
+    QString endPipelineId = findPipelineAtPoint(endPoint, m_connectionTolerance * 2);
     
-    ConnectivityResult path2;
-    path2.type = ConnectivityType::AllPaths;
-    path2.startPoint = startPoint;
-    path2.endPoint = endPoint;
-    path2.pathNodes = {"NODE-START", "NODE-C", "NODE-D", "NODE-END"};
-    path2.totalLength = 1800.0;
-    path2.success = true;
-    results.append(path2);
+    if (startPipelineId.isEmpty()) {
+        ConnectivityResult errorResult;
+        errorResult.success = false;
+        errorResult.message = "未找到起点附近的管线";
+        results.append(errorResult);
+        return results;
+    }
     
+    if (endPipelineId.isEmpty()) {
+        ConnectivityResult errorResult;
+        errorResult.success = false;
+        errorResult.message = "未找到终点附近的管线";
+        results.append(errorResult);
+        return results;
+    }
+    
+    if (startPipelineId == endPipelineId) {
+        // 起点和终点在同一管线
+        ConnectivityResult result;
+        result.type = ConnectivityType::AllPaths;
+        result.startPoint = startPoint;
+        result.endPoint = endPoint;
+        result.startNodeId = startPipelineId;
+        result.endNodeId = endPipelineId;
+        result.pathPipelines.append(startPipelineId);
+        PipelineDAO dao;
+        Pipeline pipeline = dao.findByPipelineId(startPipelineId);
+        if (pipeline.isValid()) {
+            result.totalLength = pipeline.lengthM();
+        }
+        result.nodeCount = 1;
+        result.isConnected = true;
+        result.success = true;
+        result.message = "起点和终点在同一管线";
+        results.append(result);
+        return results;
+    }
+    
+    // 2. 使用DFS查找所有路径
+    QList<QString> currentPath;
+    QSet<QString> visited;
+    QList<QList<QString>> allPaths;
+    
+    dfsFindAllPaths(startPipelineId, endPipelineId, currentPath, visited, allPaths, maxPaths);
+    
+    // 3. 转换为ConnectivityResult
+    PipelineDAO dao;
+    for (const QList<QString> &path : allPaths) {
+        ConnectivityResult result;
+        result.type = ConnectivityType::AllPaths;
+        result.startPoint = startPoint;
+        result.endPoint = endPoint;
+        result.startNodeId = startPipelineId;
+        result.endNodeId = endPipelineId;
+        result.pathPipelines = path;
+        result.nodeCount = path.size();
+        result.isConnected = !path.isEmpty();
+        result.success = true;
+        
+        // 计算总长度
+        double totalLength = 0.0;
+        for (const QString &pid : path) {
+            Pipeline p = dao.findByPipelineId(pid);
+            if (p.isValid()) {
+                totalLength += p.lengthM();
+            }
+        }
+        result.totalLength = totalLength;
+        
+        results.append(result);
+    }
+    
+    if (results.isEmpty()) {
+        ConnectivityResult errorResult;
+        errorResult.success = false;
+        errorResult.message = "未找到从起点到终点的路径";
+        results.append(errorResult);
+    }
+    
+    qDebug() << "[ConnectivityAnalyzer] Found" << results.size() << "paths";
     return results;
 }
 
@@ -165,13 +236,121 @@ ConnectivityResult ConnectivityAnalyzer::checkNetworkConnectivity()
     ConnectivityResult result;
     result.type = ConnectivityType::NetworkLoop;
     
-    // TODO: 实际实现需要遍历整个网络
-    
-    result.isConnected = true;
-    result.hasLoop = true;
-    result.nodeCount = 150;
-    result.success = true;
-    result.message = "网络连通性检查完成";
+    try {
+        PipelineDAO dao;
+        
+        // 获取所有管线（限制数量以避免性能问题）
+        QVector<Pipeline> allPipelines = dao.findByBounds(QRectF(-180, -90, 360, 180), 10000);
+        
+        if (allPipelines.isEmpty()) {
+            result.success = false;
+            result.message = "未找到管网数据";
+            return result;
+        }
+        
+        // 构建图：管线ID -> 连接的管线ID列表
+        QMap<QString, QSet<QString>> graph;
+        QSet<QString> allNodes;
+        
+        for (const Pipeline &pipeline : allPipelines) {
+            QString pid = pipeline.pipelineId();
+            allNodes.insert(pid);
+            graph[pid] = QSet<QString>();
+            
+            // 查找连接的管线
+            QPair<QPointF, QPointF> endpoints = getPipelineEndpoints(pid);
+            if (endpoints.first.isNull() || endpoints.second.isNull()) {
+                continue;
+            }
+            
+            QList<QString> connected1 = findConnectedPipelines(pid, endpoints.first, m_connectionTolerance);
+            QList<QString> connected2 = findConnectedPipelines(pid, endpoints.second, m_connectionTolerance);
+            
+            for (const QString &connected : connected1) {
+                graph[pid].insert(connected);
+            }
+            for (const QString &connected : connected2) {
+                graph[pid].insert(connected);
+            }
+        }
+        
+        // 使用DFS检查连通性
+        QSet<QString> visited;
+        QList<QString> disconnectedComponents;
+        
+        for (const QString &node : allNodes) {
+            if (!visited.contains(node)) {
+                // 新的连通分量
+                QSet<QString> component;
+                QQueue<QString> queue;
+                queue.enqueue(node);
+                visited.insert(node);
+                component.insert(node);
+                
+                while (!queue.isEmpty()) {
+                    QString current = queue.dequeue();
+                    for (const QString &neighbor : graph.value(current)) {
+                        if (!visited.contains(neighbor)) {
+                            visited.insert(neighbor);
+                            component.insert(neighbor);
+                            queue.enqueue(neighbor);
+                        }
+                    }
+                }
+                
+                if (component.size() == 1) {
+                    disconnectedComponents.append(*component.begin());
+                }
+            }
+        }
+        
+        // 检测环网：使用DFS检测回边
+        bool hasLoop = false;
+        QSet<QString> recStack;
+        QSet<QString> visitedForLoop;
+        
+        std::function<bool(const QString&)> hasCycle = [&](const QString &node) -> bool {
+            visitedForLoop.insert(node);
+            recStack.insert(node);
+            
+            for (const QString &neighbor : graph.value(node)) {
+                if (!visitedForLoop.contains(neighbor)) {
+                    if (hasCycle(neighbor)) {
+                        return true;
+                    }
+                } else if (recStack.contains(neighbor)) {
+                    return true; // 发现回边，存在环
+                }
+            }
+            
+            recStack.remove(node);
+            return false;
+        };
+        
+        for (const QString &node : allNodes) {
+            if (!visitedForLoop.contains(node)) {
+                if (hasCycle(node)) {
+                    hasLoop = true;
+                    break;
+                }
+            }
+        }
+        
+        result.isConnected = (disconnectedComponents.size() <= 1);
+        result.hasLoop = hasLoop;
+        result.nodeCount = allNodes.size();
+        result.disconnectedNodes = disconnectedComponents;
+        result.success = true;
+        result.message = QString("网络连通性检查完成：%1个节点，%2个孤立节点，%3")
+                            .arg(allNodes.size())
+                            .arg(disconnectedComponents.size())
+                            .arg(hasLoop ? "存在环网" : "无环网");
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[ConnectivityAnalyzer] Network connectivity check error:" << e.what();
+        result.success = false;
+        result.message = QString("检查失败: %1").arg(e.what());
+    }
     
     return result;
 }
@@ -182,11 +361,113 @@ QList<QList<QString>> ConnectivityAnalyzer::detectLoops()
     
     QList<QList<QString>> loops;
     
-    // TODO: 实际实现需要使用环检测算法
-    // 返回模拟数据
-    
-    loops.append({"NODE-A", "NODE-B", "NODE-C", "NODE-A"});
-    loops.append({"NODE-D", "NODE-E", "NODE-F", "NODE-D"});
+    try {
+        PipelineDAO dao;
+        
+        // 获取所有管线
+        QVector<Pipeline> allPipelines = dao.findByBounds(QRectF(-180, -90, 360, 180), 10000);
+        
+        if (allPipelines.isEmpty()) {
+            return loops;
+        }
+        
+        // 构建图
+        QMap<QString, QSet<QString>> graph;
+        QSet<QString> allNodes;
+        
+        for (const Pipeline &pipeline : allPipelines) {
+            QString pid = pipeline.pipelineId();
+            allNodes.insert(pid);
+            graph[pid] = QSet<QString>();
+            
+            QPair<QPointF, QPointF> endpoints = getPipelineEndpoints(pid);
+            if (endpoints.first.isNull() || endpoints.second.isNull()) {
+                continue;
+            }
+            
+            QList<QString> connected1 = findConnectedPipelines(pid, endpoints.first, m_connectionTolerance);
+            QList<QString> connected2 = findConnectedPipelines(pid, endpoints.second, m_connectionTolerance);
+            
+            for (const QString &connected : connected1) {
+                graph[pid].insert(connected);
+            }
+            for (const QString &connected : connected2) {
+                graph[pid].insert(connected);
+            }
+        }
+        
+        // 使用DFS查找所有环
+        QSet<QString> visited;
+        QList<QString> currentPath;
+        QSet<QPair<QString, QString>> processedEdges; // 避免重复处理边
+        
+        std::function<void(const QString&, const QString&)> findCycles = 
+            [&](const QString &node, const QString &parent) {
+                if (visited.contains(node)) {
+                    // 找到环：从node到当前路径的起点
+                    int startIdx = currentPath.indexOf(node);
+                    if (startIdx >= 0 && currentPath.size() - startIdx >= 3) {
+                        QList<QString> cycle;
+                        for (int i = startIdx; i < currentPath.size(); ++i) {
+                            cycle.append(currentPath[i]);
+                        }
+                        cycle.append(node); // 闭合环
+                        
+                        // 检查是否已存在相同的环（不同方向）
+                        bool exists = false;
+                        for (const QList<QString> &existingLoop : loops) {
+                            if (existingLoop.size() == cycle.size()) {
+                                // 检查是否是同一个环（可能是不同方向）
+                                bool same = true;
+                                for (int i = 0; i < cycle.size(); ++i) {
+                                    if (!existingLoop.contains(cycle[i])) {
+                                        same = false;
+                                        break;
+                                    }
+                                }
+                                if (same) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (!exists) {
+                            loops.append(cycle);
+                        }
+                    }
+                    return;
+                }
+                
+                visited.insert(node);
+                currentPath.append(node);
+                
+                for (const QString &neighbor : graph.value(node)) {
+                    if (neighbor != parent) {
+                        QPair<QString, QString> edge(qMin(node, neighbor), qMax(node, neighbor));
+                        if (!processedEdges.contains(edge)) {
+                            processedEdges.insert(edge);
+                            findCycles(neighbor, node);
+                        }
+                    }
+                }
+                
+                currentPath.removeLast();
+                visited.remove(node);
+            };
+        
+        // 从每个未访问的节点开始查找环
+        for (const QString &node : allNodes) {
+            if (!visited.contains(node)) {
+                findCycles(node, QString());
+            }
+        }
+        
+        qDebug() << "[ConnectivityAnalyzer] Found" << loops.size() << "loops";
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[ConnectivityAnalyzer] Loop detection error:" << e.what();
+    }
     
     return loops;
 }
@@ -198,14 +479,79 @@ QList<QList<QString>> ConnectivityAnalyzer::detectLoops()
 void ConnectivityAnalyzer::dfsTrace(const QString &nodeId, int depth, int maxDepth, 
                                      bool upstream, QList<QString> &visited, ConnectivityResult &result)
 {
-    Q_UNUSED(nodeId);
-    Q_UNUSED(depth);
-    Q_UNUSED(maxDepth);
-    Q_UNUSED(upstream);
-    Q_UNUSED(visited);
-    Q_UNUSED(result);
+    // 检查深度限制
+    if (depth > maxDepth) {
+        return;
+    }
     
-    // TODO: 实现深度优先搜索
+    // 检查是否已访问（避免环路）
+    if (visited.contains(nodeId)) {
+        return;
+    }
+    
+    // 标记为已访问
+    visited.append(nodeId);
+    result.pathPipelines.append(nodeId);
+    
+    // 获取相邻节点
+    QList<QString> adjacent = getAdjacentNodes(nodeId, upstream);
+    
+    // 递归访问相邻节点
+    for (const QString &adjNode : adjacent) {
+        if (!visited.contains(adjNode)) {
+            dfsTrace(adjNode, depth + 1, maxDepth, upstream, visited, result);
+        }
+    }
+}
+
+void ConnectivityAnalyzer::dfsFindAllPaths(const QString &current, const QString &target,
+                                            QList<QString> &currentPath, QSet<QString> &visited,
+                                            QList<QList<QString>> &allPaths, int maxPaths)
+{
+    // 如果已找到足够多的路径，停止搜索
+    if (allPaths.size() >= maxPaths) {
+        return;
+    }
+    
+    // 将当前节点加入路径
+    currentPath.append(current);
+    visited.insert(current);
+    
+    // 如果到达目标，保存路径
+    if (current == target) {
+        allPaths.append(currentPath);
+        currentPath.removeLast();
+        visited.remove(current);
+        return;
+    }
+    
+    // 获取当前管线的端点
+    QPair<QPointF, QPointF> endpoints = getPipelineEndpoints(current);
+    if (endpoints.first.isNull() || endpoints.second.isNull()) {
+        currentPath.removeLast();
+        visited.remove(current);
+        return;
+    }
+    
+    // 查找连接的管线
+    QList<QString> connected1 = findConnectedPipelines(current, endpoints.first, m_connectionTolerance);
+    QList<QString> connected2 = findConnectedPipelines(current, endpoints.second, m_connectionTolerance);
+    
+    QSet<QString> neighbors;
+    for (const QString &p : connected1) neighbors.insert(p);
+    for (const QString &p : connected2) neighbors.insert(p);
+    neighbors.remove(current); // 移除自身
+    
+    // 递归访问未访问的邻居
+    for (const QString &neighbor : neighbors) {
+        if (!visited.contains(neighbor)) {
+            dfsFindAllPaths(neighbor, target, currentPath, visited, allPaths, maxPaths);
+        }
+    }
+    
+    // 回溯：移除当前节点
+    currentPath.removeLast();
+    visited.remove(current);
 }
 
 ConnectivityResult ConnectivityAnalyzer::dijkstraShortestPath(const QString &startPipelineId, const QString &endPipelineId)
@@ -370,20 +716,65 @@ ConnectivityResult ConnectivityAnalyzer::dijkstraShortestPath(const QString &sta
 
 QList<QString> ConnectivityAnalyzer::getAdjacentNodes(const QString &nodeId, bool upstream)
 {
-    Q_UNUSED(nodeId);
-    Q_UNUSED(upstream);
+    QList<QString> adjacent;
     
-    // TODO: 实际实现需要查询数据库
-    return QList<QString>();
+    // 将nodeId视为管线ID，查找连接的管线
+    PipelineDAO dao;
+    Pipeline pipeline = dao.findByPipelineId(nodeId);
+    
+    if (!pipeline.isValid() || pipeline.coordinates().isEmpty()) {
+        return adjacent;
+    }
+    
+    QVector<QPointF> coords = pipeline.coordinates();
+    QPointF searchEndpoint = upstream ? coords.first() : coords.last();
+    
+    // 查找连接到端点的管线
+    QList<QString> connected = findConnectedPipelines(nodeId, searchEndpoint, m_connectionTolerance);
+    adjacent = connected;
+    
+    return adjacent;
 }
 
 double ConnectivityAnalyzer::getDistance(const QString &fromNodeId, const QString &toNodeId)
 {
-    Q_UNUSED(fromNodeId);
-    Q_UNUSED(toNodeId);
+    PipelineDAO dao;
+    Pipeline fromPipeline = dao.findByPipelineId(fromNodeId);
+    Pipeline toPipeline = dao.findByPipelineId(toNodeId);
     
-    // TODO: 实际实现需要查询数据库
-    return 0.0;
+    if (!fromPipeline.isValid() || !toPipeline.isValid()) {
+        return std::numeric_limits<double>::max();
+    }
+    
+    // 获取两个管线的端点
+    QPair<QPointF, QPointF> fromEndpoints = getPipelineEndpoints(fromNodeId);
+    QPair<QPointF, QPointF> toEndpoints = getPipelineEndpoints(toNodeId);
+    
+    if (fromEndpoints.first.isNull() || toEndpoints.first.isNull()) {
+        return std::numeric_limits<double>::max();
+    }
+    
+    // 计算两个管线之间的最短距离（端点之间的距离）
+    double minDist = std::numeric_limits<double>::max();
+    
+    QList<QPointF> fromPoints = {fromEndpoints.first, fromEndpoints.second};
+    QList<QPointF> toPoints = {toEndpoints.first, toEndpoints.second};
+    
+    for (const QPointF &fromPoint : fromPoints) {
+        for (const QPointF &toPoint : toPoints) {
+            double dist = calculateDistance(fromPoint.y(), fromPoint.x(), toPoint.y(), toPoint.x());
+            if (dist < minDist) {
+                minDist = dist;
+            }
+        }
+    }
+    
+    // 如果距离在容差范围内，返回管线长度之和的一半（近似）
+    if (minDist <= m_connectionTolerance) {
+        return (fromPipeline.lengthM() + toPipeline.lengthM()) / 2.0;
+    }
+    
+    return minDist;
 }
 
 QString ConnectivityAnalyzer::findPipelineAtPoint(const QPointF &point, double toleranceMeters)

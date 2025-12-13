@@ -1,4 +1,6 @@
 #include "spatialanalyzer.h"
+#include "dao/pipelinedao.h"
+#include "dao/facilitydao.h"
 #include <QtMath>
 #include <QDebug>
 #include <QLineF>
@@ -219,9 +221,56 @@ QList<QString> SpatialAnalyzer::queryByPoint(const QPointF &point, double tolera
 {
     QList<QString> results;
     
-    // TODO: 实际实现需要查询数据源
-    // 这里返回模拟数据
-    qDebug() << "Query by point:" << point << "tolerance:" << tolerance;
+    qDebug() << "[SpatialAnalyzer] Query by point:" << point << "tolerance:" << tolerance << "meters";
+    
+    try {
+        // 将容差从米转换为度（近似，适用于小范围）
+        // 1度经度 ≈ 111km，1度纬度 ≈ 111km
+        double toleranceDegrees = tolerance / 111000.0;
+        
+        // 查询管线
+        PipelineDAO pipelineDao;
+        QVector<Pipeline> pipelines = pipelineDao.findNearPoint(point.x(), point.y(), tolerance, 100);
+        for (const Pipeline &pipeline : pipelines) {
+            // 计算管线到点的实际距离
+            double minDistance = std::numeric_limits<double>::max();
+            QVector<QPointF> coords = pipeline.coordinates();
+            
+            for (int i = 0; i < coords.size() - 1; ++i) {
+                QLineF line(coords[i], coords[i + 1]);
+                double dist = pointToLineDistance(point, line);
+                // 转换为米（近似）
+                double distMeters = dist * 111000.0;
+                if (distMeters < minDistance) {
+                    minDistance = distMeters;
+                }
+            }
+            
+            // 只添加在容差范围内的管线
+            if (minDistance <= tolerance) {
+                results.append(pipeline.pipelineId());
+            }
+        }
+        
+        // 查询设施
+        FacilityDAO facilityDao;
+        QVector<Facility> facilities = facilityDao.findNearPoint(point.x(), point.y(), tolerance, 100);
+        for (const Facility &facility : facilities) {
+            QPointF facilityPos = facility.coordinate();
+            double dist = calculateDistance(point.y(), point.x(), facilityPos.y(), facilityPos.x());
+            
+            // 只添加在容差范围内的设施
+            if (dist <= tolerance) {
+                results.append(facility.facilityId());
+            }
+        }
+        
+        qDebug() << "[SpatialAnalyzer] Found" << results.size() << "entities near point";
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[SpatialAnalyzer] Query by point error:" << e.what();
+        emit analysisError(QString("点查询失败: %1").arg(e.what()));
+    }
     
     return results;
 }
@@ -230,8 +279,29 @@ QList<QString> SpatialAnalyzer::queryByBox(const QRectF &box)
 {
     QList<QString> results;
     
-    // TODO: 实际实现需要查询数据源
-    qDebug() << "Query by box:" << box;
+    qDebug() << "[SpatialAnalyzer] Query by box:" << box;
+    
+    try {
+        // 查询管线
+        PipelineDAO pipelineDao;
+        QVector<Pipeline> pipelines = pipelineDao.findByBounds(box, 1000);
+        for (const Pipeline &pipeline : pipelines) {
+            results.append(pipeline.pipelineId());
+        }
+        
+        // 查询设施
+        FacilityDAO facilityDao;
+        QVector<Facility> facilities = facilityDao.findByBounds(box, 1000);
+        for (const Facility &facility : facilities) {
+            results.append(facility.facilityId());
+        }
+        
+        qDebug() << "[SpatialAnalyzer] Found" << results.size() << "entities in box";
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[SpatialAnalyzer] Query by box error:" << e.what();
+        emit analysisError(QString("矩形查询失败: %1").arg(e.what()));
+    }
     
     return results;
 }
@@ -240,8 +310,48 @@ QList<QString> SpatialAnalyzer::queryByCircle(const QPointF &center, double radi
 {
     QList<QString> results;
     
-    // TODO: 实际实现需要查询数据源
-    qDebug() << "Query by circle: center=" << center << "radius=" << radius;
+    qDebug() << "[SpatialAnalyzer] Query by circle: center=" << center << "radius=" << radius << "meters";
+    
+    try {
+        // 查询管线
+        PipelineDAO pipelineDao;
+        QVector<Pipeline> pipelines = pipelineDao.findNearPoint(center.x(), center.y(), radius, 1000);
+        for (const Pipeline &pipeline : pipelines) {
+            // 检查管线是否与圆形区域相交
+            bool intersects = false;
+            QVector<QPointF> coords = pipeline.coordinates();
+            
+            for (const QPointF &coord : coords) {
+                double dist = calculateDistance(center.y(), center.x(), coord.y(), coord.x());
+                if (dist <= radius) {
+                    intersects = true;
+                    break;
+                }
+            }
+            
+            if (intersects) {
+                results.append(pipeline.pipelineId());
+            }
+        }
+        
+        // 查询设施
+        FacilityDAO facilityDao;
+        QVector<Facility> facilities = facilityDao.findNearPoint(center.x(), center.y(), radius, 1000);
+        for (const Facility &facility : facilities) {
+            QPointF facilityPos = facility.coordinate();
+            double dist = calculateDistance(center.y(), center.x(), facilityPos.y(), facilityPos.x());
+            
+            if (dist <= radius) {
+                results.append(facility.facilityId());
+            }
+        }
+        
+        qDebug() << "[SpatialAnalyzer] Found" << results.size() << "entities in circle";
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[SpatialAnalyzer] Query by circle error:" << e.what();
+        emit analysisError(QString("圆形查询失败: %1").arg(e.what()));
+    }
     
     return results;
 }
@@ -250,8 +360,52 @@ QList<QString> SpatialAnalyzer::queryByBuffer(const QPointF &point, double buffe
 {
     QList<QString> results;
     
-    // TODO: 实际实现需要查询数据源
-    qDebug() << "Query by buffer: point=" << point << "distance=" << bufferDistance;
+    qDebug() << "[SpatialAnalyzer] Query by buffer: point=" << point << "distance=" << bufferDistance << "meters";
+    
+    try {
+        // 缓冲区查询实际上就是圆形查询
+        // 查询管线
+        PipelineDAO pipelineDao;
+        QVector<Pipeline> pipelines = pipelineDao.findNearPoint(point.x(), point.y(), bufferDistance, 1000);
+        for (const Pipeline &pipeline : pipelines) {
+            // 计算管线到点的最小距离
+            double minDistance = std::numeric_limits<double>::max();
+            QVector<QPointF> coords = pipeline.coordinates();
+            
+            for (int i = 0; i < coords.size() - 1; ++i) {
+                QLineF line(coords[i], coords[i + 1]);
+                double dist = pointToLineDistance(point, line);
+                // 转换为米（近似）
+                double distMeters = dist * 111000.0;
+                if (distMeters < minDistance) {
+                    minDistance = distMeters;
+                }
+            }
+            
+            // 只添加在缓冲区范围内的管线
+            if (minDistance <= bufferDistance) {
+                results.append(pipeline.pipelineId());
+            }
+        }
+        
+        // 查询设施
+        FacilityDAO facilityDao;
+        QVector<Facility> facilities = facilityDao.findNearPoint(point.x(), point.y(), bufferDistance, 1000);
+        for (const Facility &facility : facilities) {
+            QPointF facilityPos = facility.coordinate();
+            double dist = calculateDistance(point.y(), point.x(), facilityPos.y(), facilityPos.x());
+            
+            if (dist <= bufferDistance) {
+                results.append(facility.facilityId());
+            }
+        }
+        
+        qDebug() << "[SpatialAnalyzer] Found" << results.size() << "entities in buffer";
+        
+    } catch (const std::exception &e) {
+        qWarning() << "[SpatialAnalyzer] Query by buffer error:" << e.what();
+        emit analysisError(QString("缓冲区查询失败: %1").arg(e.what()));
+    }
     
     return results;
 }

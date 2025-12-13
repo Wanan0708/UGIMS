@@ -39,6 +39,9 @@ public:
     // 清除所有设施
     void clear(QGraphicsScene *scene);
     
+    // 获取缓存中的图形项
+    QList<QGraphicsItem*> getCachedItems() const;
+    
     // 设置瓦片地图管理器（用于坐标转换）
     void setTileMapManager(TileMapManager *tileMapManager) { m_tileMapManager = tileMapManager; }
     

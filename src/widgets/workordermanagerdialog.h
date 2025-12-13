@@ -9,6 +9,7 @@
 #include <QDateEdit>
 #include <QLabel>
 #include "core/models/workorder.h"
+#include "core/workorder/workorderstatustransition.h"
 
 class QVBoxLayout;
 class QHBoxLayout;
@@ -35,6 +36,12 @@ private slots:
     void onFilterChanged();
     void onTableSelectionChanged();
     void onTableDoubleClicked(int row, int column);
+    
+    // 状态转换槽函数
+    void onAssignClicked();
+    void onStartClicked();
+    void onCompleteClicked();
+    void onCancelClicked();
 
 private:
     void setupUI();
@@ -67,12 +74,25 @@ private:
     QPushButton *m_deleteBtn;
     QPushButton *m_closeBtn;
     
+    // 状态转换按钮
+    QPushButton *m_assignBtn;      // 派发
+    QPushButton *m_startBtn;        // 开始
+    QPushButton *m_completeBtn;     // 完成
+    QPushButton *m_cancelBtn;       // 取消
+    
     // 工单列表
     QTableWidget *m_tableWidget;
     
     // 数据
     QVector<WorkOrder> m_workOrders;
     int m_currentSelectedRow;
+    
+    // 状态转换管理器
+    WorkOrderStatusTransition *m_statusTransition;
+    
+    // 辅助方法
+    void updateStatusTransitionButtons();
+    bool performStatusTransition(const QString &targetStatus);
 };
 
 #endif // WORKORDERMANAGERDIALOG_H

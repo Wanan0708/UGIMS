@@ -453,20 +453,35 @@ int DrawingDatabaseManager::loadPipelinesFromDatabase(QGraphicsScene *scene,
         // 创建QGraphicsPathItem
         QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
         
-        // 设置样式（从数据库读取或使用默认值）
+        // 设置样式（根据管线类型设置颜色）
         QColor color = Qt::blue;  // 默认颜色
+        QString pipelineType = pipeline.pipelineType();
+        if (pipelineType == "water_supply") {
+            color = QColor(0, 112, 192);  // 蓝色
+        } else if (pipelineType == "sewage") {
+            color = QColor(112, 48, 160);  // 紫色
+        } else if (pipelineType == "gas") {
+            color = QColor(255, 192, 0);   // 黄色
+        } else if (pipelineType == "electric") {
+            color = QColor(255, 0, 0);     // 红色
+        } else if (pipelineType == "telecom") {
+            color = QColor(0, 176, 80);    // 绿色
+        } else if (pipelineType == "heat") {
+            color = QColor(255, 128, 0);   // 橙色
+        }
+        
         int lineWidth = query.value("diameter_mm").toInt();
         if (lineWidth <= 0) lineWidth = 2;
         
         QPen pen(color, lineWidth);
         pathItem->setPen(pen);
         
-        // 设置数据
+        // 设置数据（与PipelineRenderer保持一致）
         pathItem->setData(0, "pipeline");  // 实体类型
-        pathItem->setData(1, pipeline.pipelineType());  // 管线类型
-        pathItem->setData(2, color);  // 颜色
+        pathItem->setData(1, pipeline.pipelineId());  // 管线编号
+        pathItem->setData(2, pipeline.pipelineType());  // 管线类型（用于图层控制）
         pathItem->setData(3, lineWidth);  // 线宽
-        pathItem->setData(10, pipeline.pipelineId());  // 管线ID
+        pathItem->setData(10, pipeline.id());  // 数据库ID
         pathItem->setData(100, static_cast<int>(EntityState::Unchanged));  // 实体状态：未变更
         
         // 设置工具提示
@@ -521,10 +536,10 @@ int DrawingDatabaseManager::loadFacilitiesFromDatabase(QGraphicsScene *scene)
         ellipseItem->setBrush(QBrush(color));
         ellipseItem->setPen(QPen(Qt::black, 1));
         
-        // 设置数据
+        // 设置数据（与FacilityRenderer保持一致）
         ellipseItem->setData(0, "facility");  // 实体类型
-        ellipseItem->setData(1, facilityType);  // 设施类型
-        ellipseItem->setData(2, color);  // 颜色
+        ellipseItem->setData(1, facilityId);  // 设施编号
+        ellipseItem->setData(2, facilityType);  // 设施类型（用于图层控制）
         ellipseItem->setData(10, facilityId);  // 设施ID
         ellipseItem->setData(100, static_cast<int>(EntityState::Unchanged));  // 实体状态：未变更
         

@@ -156,8 +156,15 @@ void AnalysisPanel::onDownstreamTraceClicked()
 
 void AnalysisPanel::onShortestPathClicked()
 {
-    // TODO: 需要选择两个点
-    QMessageBox::information(this, "提示", "最短路径分析需要选择起点和终点");
+    // 发出信号，让MyForm处理两点选择
+    emit requestShortestPathAnalysis();
+    
+    // 同时显示提示信息
+    m_resultText->append("<b>最短路径分析</b><br>");
+    m_resultText->append("请在地图上选择起点和终点<br>");
+    m_resultText->append("1. 左键点击选择起点<br>");
+    m_resultText->append("2. 左键点击选择终点<br>");
+    m_resultText->append("3. 右键或ESC取消<br><br>");
 }
 
 void AnalysisPanel::onBurstAnalysisFinished(const BurstAnalysisResult &result)

@@ -39,6 +39,18 @@ void FacilityRenderer::renderFacilities(QGraphicsScene *scene, const QRectF &bou
     qDebug() << "[FacilityRenderer] renderFacilities called";
     qDebug() << "[FacilityRenderer] Bounds:" << bounds;
     
+    // 如果缓存中已有项，先清除（避免重复）
+    if (!m_itemsCache.isEmpty()) {
+        qDebug() << "[FacilityRenderer] Clearing existing cache before re-rendering";
+        for (QGraphicsItem *item : m_itemsCache) {
+            if (item && scene) {
+                scene->removeItem(item);
+                delete item;
+            }
+        }
+        m_itemsCache.clear();
+    }
+    
     // 1. 从数据库加载设施数据
     QVector<Facility> facilities;
     
@@ -188,15 +200,23 @@ void FacilityRenderer::clear(QGraphicsScene *scene)
         return;
     }
     
-    // 删除所有缓存的图形项
+    // 只隐藏图形项，不删除（保留在缓存中，以便后续显示）
     for (QGraphicsItem *item : m_itemsCache) {
-        scene->removeItem(item);
-        delete item;
+        if (item) {
+            item->setVisible(false);
+        }
     }
     
-    m_itemsCache.clear();
+    // 不清除缓存，保留项以便后续显示
+    // m_itemsCache.clear();
     
-    LOG_DEBUG("Cleared all facility items");
+    LOG_DEBUG(QString("Hidden %1 facility items").arg(m_itemsCache.size()));
+    qDebug() << "[FacilityRenderer] Hidden" << m_itemsCache.size() << "facility items";
+}
+
+QList<QGraphicsItem*> FacilityRenderer::getCachedItems() const
+{
+    return m_itemsCache;
 }
 
 void FacilityRenderer::updateTileSize()

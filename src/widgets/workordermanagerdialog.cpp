@@ -7,16 +7,31 @@
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <QDebug>
 
 WorkOrderManagerDialog::WorkOrderManagerDialog(QWidget *parent)
     : QDialog(parent)
     , m_currentSelectedRow(-1)
+    , m_statusTransition(new WorkOrderStatusTransition(this))
 {
     setWindowTitle("工单管理");
     setMinimumSize(1000, 600);
     setupUI();
     loadWorkOrders();
+    
+    // 连接状态转换信号
+    connect(m_statusTransition, &WorkOrderStatusTransition::statusChanged,
+            this, [this](const QString &orderId, const QString &fromStatus, 
+                        const QString &toStatus, const QString &operatorName) {
+        QMessageBox::information(this, "状态转换成功", 
+            QString("工单 %1 状态已从 '%2' 转换为 '%3'\n操作人: %4")
+            .arg(orderId)
+            .arg(getStatusDisplayName(fromStatus))
+            .arg(getStatusDisplayName(toStatus))
+            .arg(operatorName));
+        loadWorkOrders();  // 刷新列表
+    });
 }
 
 WorkOrderManagerDialog::~WorkOrderManagerDialog()
@@ -36,16 +51,32 @@ void WorkOrderManagerDialog::setupUI()
     m_editBtn = new QPushButton("编辑", this);
     m_viewBtn = new QPushButton("查看详情", this);
     m_deleteBtn = new QPushButton("删除", this);
+    
+    // 状态转换按钮
+    m_assignBtn = new QPushButton("派发", this);
+    m_startBtn = new QPushButton("开始", this);
+    m_completeBtn = new QPushButton("完成", this);
+    m_cancelBtn = new QPushButton("取消", this);
+    
     m_closeBtn = new QPushButton("关闭", this);
     
     m_editBtn->setEnabled(false);
     m_viewBtn->setEnabled(false);
     m_deleteBtn->setEnabled(false);
+    m_assignBtn->setEnabled(false);
+    m_startBtn->setEnabled(false);
+    m_completeBtn->setEnabled(false);
+    m_cancelBtn->setEnabled(false);
     
     buttonLayout->addWidget(m_createBtn);
     buttonLayout->addWidget(m_editBtn);
     buttonLayout->addWidget(m_viewBtn);
     buttonLayout->addWidget(m_deleteBtn);
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(m_assignBtn);
+    buttonLayout->addWidget(m_startBtn);
+    buttonLayout->addWidget(m_completeBtn);
+    buttonLayout->addWidget(m_cancelBtn);
     buttonLayout->addStretch();
     buttonLayout->addWidget(m_closeBtn);
     
@@ -76,6 +107,12 @@ void WorkOrderManagerDialog::setupUI()
             this, &WorkOrderManagerDialog::onTableSelectionChanged);
     connect(m_tableWidget, &QTableWidget::cellDoubleClicked, 
             this, &WorkOrderManagerDialog::onTableDoubleClicked);
+    
+    // 连接状态转换按钮
+    connect(m_assignBtn, &QPushButton::clicked, this, &WorkOrderManagerDialog::onAssignClicked);
+    connect(m_startBtn, &QPushButton::clicked, this, &WorkOrderManagerDialog::onStartClicked);
+    connect(m_completeBtn, &QPushButton::clicked, this, &WorkOrderManagerDialog::onCompleteClicked);
+    connect(m_cancelBtn, &QPushButton::clicked, this, &WorkOrderManagerDialog::onCancelClicked);
 }
 
 void WorkOrderManagerDialog::setupFilterPanel()
@@ -191,18 +228,54 @@ void WorkOrderManagerDialog::refreshTable()
     
     // 更新状态栏信息
     setWindowTitle(QString("工单管理 - 共 %1 条记录").arg(row));
+    
+    // 如果之前有选中的行，尝试保持选中状态并更新按钮
+    if (m_currentSelectedRow >= 0 && m_currentSelectedRow < m_tableWidget->rowCount()) {
+        m_tableWidget->selectRow(m_currentSelectedRow);
+        updateStatusTransitionButtons();
+    } else if (m_tableWidget->rowCount() > 0) {
+        // 如果没有选中，但表格有数据，选中第一行
+        m_tableWidget->selectRow(0);
+        m_currentSelectedRow = 0;
+        updateStatusTransitionButtons();
+    } else {
+        // 表格为空，禁用所有按钮
+        updateStatusTransitionButtons();
+    }
 }
 
 WorkOrder WorkOrderManagerDialog::getSelectedWorkOrder()
 {
     int row = m_tableWidget->currentRow();
     if (row < 0 || row >= m_tableWidget->rowCount()) {
+        qDebug() << "[WorkOrderManagerDialog] Invalid row:" << row;
         return WorkOrder();
     }
     
     QString orderId = m_tableWidget->item(row, 0)->text();
+    if (orderId.isEmpty()) {
+        qDebug() << "[WorkOrderManagerDialog] Empty order ID at row:" << row;
+        return WorkOrder();
+    }
+    
+    // 先从内存中的工单列表查找（更快）
+    for (const WorkOrder &wo : m_workOrders) {
+        if (wo.orderId() == orderId) {
+            qDebug() << "[WorkOrderManagerDialog] Found work order in memory:" << orderId << "status:" << wo.status();
+            return wo;
+        }
+    }
+    
+    // 如果内存中没有，从数据库查询
+    qDebug() << "[WorkOrderManagerDialog] Work order not in memory, querying database:" << orderId;
     WorkOrderDAO dao;
-    return dao.findByOrderId(orderId);
+    WorkOrder wo = dao.findByOrderId(orderId);
+    if (wo.isValid()) {
+        qDebug() << "[WorkOrderManagerDialog] Found work order in database:" << orderId << "status:" << wo.status();
+    } else {
+        qDebug() << "[WorkOrderManagerDialog] Work order not found in database:" << orderId;
+    }
+    return wo;
 }
 
 QString WorkOrderManagerDialog::getStatusDisplayName(const QString &status)
@@ -374,6 +447,15 @@ void WorkOrderManagerDialog::onTableSelectionChanged()
     m_editBtn->setEnabled(hasSelection);
     m_viewBtn->setEnabled(hasSelection);
     m_deleteBtn->setEnabled(hasSelection);
+    
+    if (hasSelection) {
+        m_currentSelectedRow = m_tableWidget->currentRow();
+    } else {
+        m_currentSelectedRow = -1;
+    }
+    
+    // 更新状态转换按钮
+    updateStatusTransitionButtons();
 }
 
 void WorkOrderManagerDialog::onTableDoubleClicked(int row, int column)
@@ -381,6 +463,133 @@ void WorkOrderManagerDialog::onTableDoubleClicked(int row, int column)
     Q_UNUSED(column);
     if (row >= 0) {
         onViewClicked();
+    }
+}
+
+void WorkOrderManagerDialog::updateStatusTransitionButtons()
+{
+    WorkOrder wo = getSelectedWorkOrder();
+    if (!wo.isValid()) {
+        qDebug() << "[WorkOrderManagerDialog] No valid work order selected";
+        m_assignBtn->setEnabled(false);
+        m_startBtn->setEnabled(false);
+        m_completeBtn->setEnabled(false);
+        m_cancelBtn->setEnabled(false);
+        return;
+    }
+    
+    QString currentStatus = wo.status();
+    qDebug() << "[WorkOrderManagerDialog] Current work order status:" << currentStatus 
+             << "orderId:" << wo.orderId();
+    
+    // 根据当前状态启用/禁用按钮
+    bool canAssign = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_ASSIGNED);
+    bool canStart = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_IN_PROGRESS);
+    bool canComplete = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_COMPLETED);
+    bool canCancel = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_CANCELLED);
+    
+    qDebug() << "[WorkOrderManagerDialog] Button states - Assign:" << canAssign 
+             << "Start:" << canStart << "Complete:" << canComplete << "Cancel:" << canCancel;
+    
+    m_assignBtn->setEnabled(canAssign);
+    m_startBtn->setEnabled(canStart);
+    m_completeBtn->setEnabled(canComplete);
+    m_cancelBtn->setEnabled(canCancel);
+}
+
+bool WorkOrderManagerDialog::performStatusTransition(const QString &targetStatus)
+{
+    WorkOrder wo = getSelectedWorkOrder();
+    if (!wo.isValid()) {
+        QMessageBox::warning(this, "提示", "请先选择要操作的工单");
+        return false;
+    }
+    
+    // 验证转换
+    QString error = m_statusTransition->validateTransition(wo, targetStatus);
+    if (!error.isEmpty()) {
+        QMessageBox::warning(this, "状态转换失败", error);
+        return false;
+    }
+    
+    // 执行转换
+    QString operatorName = "系统管理员";  // TODO: 从用户系统获取当前用户
+    if (!m_statusTransition->performTransition(wo, targetStatus, operatorName)) {
+        QMessageBox::warning(this, "错误", "状态转换失败");
+        return false;
+    }
+    
+    // 保存到数据库
+    WorkOrderDAO dao;
+    if (!dao.update(wo)) {
+        QMessageBox::warning(this, "错误", QString("保存工单状态失败"));
+        return false;
+    }
+    
+    return true;
+}
+
+void WorkOrderManagerDialog::onAssignClicked()
+{
+    if (performStatusTransition(WorkOrder::STATUS_ASSIGNED)) {
+        loadWorkOrders();
+    }
+}
+
+void WorkOrderManagerDialog::onStartClicked()
+{
+    if (performStatusTransition(WorkOrder::STATUS_IN_PROGRESS)) {
+        loadWorkOrders();
+    }
+}
+
+void WorkOrderManagerDialog::onCompleteClicked()
+{
+    // 完成工单需要填写工作结果
+    WorkOrder wo = getSelectedWorkOrder();
+    if (!wo.isValid()) {
+        QMessageBox::warning(this, "提示", "请先选择要操作的工单");
+        return;
+    }
+    
+    if (wo.workResult().isEmpty()) {
+        // 提示用户填写工作结果
+        bool ok;
+        QString result = QInputDialog::getMultiLineText(this, "完成工单", 
+            "请输入工作结果:", wo.workResult(), &ok);
+        if (!ok) {
+            return;
+        }
+        if (result.isEmpty()) {
+            QMessageBox::warning(this, "提示", "完成工单需要填写工作结果");
+            return;
+        }
+        wo.setWorkResult(result);
+        
+        // 先更新工作结果
+        WorkOrderDAO dao;
+        wo.setId(getSelectedWorkOrder().id());
+        if (!dao.update(wo)) {
+            QMessageBox::warning(this, "错误", "保存工作结果失败");
+            return;
+        }
+    }
+    
+    if (performStatusTransition(WorkOrder::STATUS_COMPLETED)) {
+        loadWorkOrders();
+    }
+}
+
+void WorkOrderManagerDialog::onCancelClicked()
+{
+    int ret = QMessageBox::question(this, "确认取消", 
+        "确定要取消此工单吗？取消后工单将无法恢复。",
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (ret == QMessageBox::Yes) {
+        if (performStatusTransition(WorkOrder::STATUS_CANCELLED)) {
+            loadWorkOrders();
+        }
     }
 }
 

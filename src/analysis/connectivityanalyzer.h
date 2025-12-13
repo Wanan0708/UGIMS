@@ -110,6 +110,13 @@ private:
                   bool upstream, QList<QString> &visited, ConnectivityResult &result);
     
     /**
+     * @brief 使用DFS查找所有路径（用于findAllPaths）
+     */
+    void dfsFindAllPaths(const QString &current, const QString &target,
+                         QList<QString> &currentPath, QSet<QString> &visited,
+                         QList<QList<QString>> &allPaths, int maxPaths);
+    
+    /**
      * @brief 使用Dijkstra算法查找最短路径
      */
     ConnectivityResult dijkstraShortestPath(const QString &startNodeId, const QString &endNodeId);

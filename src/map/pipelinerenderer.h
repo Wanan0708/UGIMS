@@ -37,6 +37,9 @@ public:
     // 清除指定类型的管线
     void clear(QGraphicsScene *scene, LayerManager::LayerType type);
     
+    // 获取缓存中的图形项
+    QList<QGraphicsItem*> getCachedItems(LayerManager::LayerType type) const;
+    
     // 设置瓦片地图管理器（用于坐标转换）
     void setTileMapManager(TileMapManager *tileMapManager) { m_tileMapManager = tileMapManager; }
     

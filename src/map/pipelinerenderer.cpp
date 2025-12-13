@@ -63,6 +63,19 @@ void PipelineRenderer::renderPipelines(QGraphicsScene *scene,
     int rendered = 0;
     LayerManager::LayerType layerType = getLayerTypeFromPipelineType(pipelineType);
     
+    // 如果缓存中已有该项，先清除（避免重复）
+    if (!m_itemsCache[layerType].isEmpty()) {
+        qDebug() << "[PipelineRenderer] Clearing existing cache for layer type" << layerType << "before re-rendering";
+        // 从场景中移除旧项
+        for (QGraphicsItem *item : m_itemsCache[layerType]) {
+            if (item && scene) {
+                scene->removeItem(item);
+                delete item;
+            }
+        }
+        m_itemsCache[layerType].clear();
+    }
+    
     for (int i = 0; i < pipelines.size(); i++) {
         const Pipeline &pipeline = pipelines[i];
         
@@ -164,16 +177,24 @@ void PipelineRenderer::clear(QGraphicsScene *scene, LayerManager::LayerType type
         return;
     }
     
-    // 从缓存中删除图形项
+    // 只隐藏图形项，不删除（保留在缓存中，以便后续显示）
     QList<QGraphicsItem*> items = m_itemsCache.value(type);
     for (QGraphicsItem *item : items) {
-        scene->removeItem(item);
-        delete item;
+        if (item) {
+            item->setVisible(false);
+        }
     }
     
-    m_itemsCache[type].clear();
+    // 不清除缓存，保留项以便后续显示
+    // m_itemsCache[type].clear();
     
-    LOG_DEBUG(QString("Cleared %1 pipeline items").arg(items.size()));
+    LOG_DEBUG(QString("Hidden %1 pipeline items for layer type %2").arg(items.size()).arg(type));
+    qDebug() << "[PipelineRenderer] Hidden" << items.size() << "items for layer type" << type;
+}
+
+QList<QGraphicsItem*> PipelineRenderer::getCachedItems(LayerManager::LayerType type) const
+{
+    return m_itemsCache.value(type);
 }
 
 void PipelineRenderer::updateTileSize()

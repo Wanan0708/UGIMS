@@ -33,6 +33,7 @@ SOURCES += \
     src/widgets/entitypropertiesdialog.cpp \
     src/widgets/healthassessmentdialog.cpp \
     src/widgets/healthdevicelistdialog.cpp \
+    src/widgets/settingsdialog.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
     src/tilemap/manifeststore.cpp \
@@ -44,6 +45,7 @@ SOURCES += \
     src/core/models/pipeline.cpp \
     src/core/models/workorder.cpp \
     src/core/models/facility.cpp \
+    src/core/workorder/workorderstatustransition.cpp \
     src/core/commands/drawcommand.cpp \
     src/core/io/drawingdatamanager.cpp \
     src/core/io/drawingdatabasemanager.cpp \
@@ -54,6 +56,7 @@ SOURCES += \
     src/map/symbolmanager.cpp \
     src/map/pipelinerenderer.cpp \
     src/map/facilityrenderer.cpp \
+    src/map/annotationrenderer.cpp \
     src/map/mapdrawingmanager.cpp \
     src/analysis/spatialanalyzer.cpp \
     src/analysis/burstanalyzer.cpp \
@@ -78,6 +81,7 @@ HEADERS += \
     src/widgets/entitypropertiesdialog.h \
     src/widgets/healthassessmentdialog.h \
     src/widgets/healthdevicelistdialog.h \
+    src/widgets/settingsdialog.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \
     src/tilemap/manifeststore.h \
@@ -89,6 +93,7 @@ HEADERS += \
     src/core/models/pipeline.h \
     src/core/models/workorder.h \
     src/core/models/facility.h \
+    src/core/workorder/workorderstatustransition.h \
     src/core/commands/drawcommand.h \
     src/core/io/drawingdatamanager.h \
     src/core/io/drawingdatabasemanager.h \
@@ -100,6 +105,7 @@ HEADERS += \
     src/map/symbolmanager.h \
     src/map/pipelinerenderer.h \
     src/map/facilityrenderer.h \
+    src/map/annotationrenderer.h \
     src/map/mapdrawingmanager.h \
     src/analysis/spatialanalyzer.h \
     src/analysis/burstanalyzer.h \

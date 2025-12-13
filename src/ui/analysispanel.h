@@ -38,6 +38,11 @@ signals:
      * @brief 分析完成信号
      */
     void analysisCompleted(const QString &type, bool success);
+    
+    /**
+     * @brief 请求开始最短路径分析（需要选择两点）
+     */
+    void requestShortestPathAnalysis();
 
 private slots:
     /**
