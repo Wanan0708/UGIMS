@@ -4,6 +4,7 @@
 #include "dao/facilitydao.h"
 #include "tilemap/tilemapmanager.h"
 #include "core/common/logger.h"
+#include "core/common/entitystate.h"  // 实体状态枚举
 #include <QPen>
 #include <QBrush>
 #include <QtMath>
@@ -155,11 +156,12 @@ QGraphicsEllipseItem* FacilityRenderer::renderFacility(QGraphicsScene *scene,
         brush
     );
     
-    // 4. 设置数据
+    // 4. 设置数据（与 DrawingDatabaseManager 保持一致）
     item->setData(0, "facility");  // 类型标记
-    item->setData(1, facility.id());  // 数据库ID
-    item->setData(2, facility.facilityId());  // 设施编号
-    item->setData(3, facility.facilityType());  // 设施类型
+    item->setData(1, facility.facilityId());  // 设施编号（与 DrawingDatabaseManager 保持一致）
+    item->setData(2, facility.facilityType());  // 设施类型
+    item->setData(10, facility.id());  // 数据库ID（存储在 data(10)）
+    item->setData(100, static_cast<int>(EntityState::Unchanged));  // 实体状态：未变更
     
     // 5. 设置工具提示
     QString tooltip = QString("%1\n类型: %2\n规格: %3\n健康度: %4分")

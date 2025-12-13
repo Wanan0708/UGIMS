@@ -1,7 +1,9 @@
 #include "dao/facilitydao.h"
 #include "core/common/logger.h"
+#include "core/database/databasemanager.h"
 #include <QSqlQuery>
 #include <QVariant>
+#include <QDebug>
 
 FacilityDAO::FacilityDAO()
     : BaseDAO<Facility>("facilities")
@@ -315,5 +317,115 @@ QPointF FacilityDAO::parsePointWkt(const QString &wkt)
 QString FacilityDAO::toPointWkt(const QPointF &coordinate)
 {
     return QString("POINT(%1 %2)").arg(coordinate.x()).arg(coordinate.y());
+}
+
+// 转义SQL字符串值，防止SQL注入
+static QString escapeSqlString(const QString &str)
+{
+    QString escaped = str;
+    escaped.replace("'", "''");
+    return escaped;
+}
+
+bool FacilityDAO::update(const Facility &facility, int id)
+{
+    if (id <= 0) {
+        qDebug() << "[FacilityDAO] Update failed: invalid facility ID";
+        return false;
+    }
+    
+    QVariantMap data = toVariantMap(facility);
+    
+    // 完全手动构建SQL，避免PostGIS函数与参数绑定冲突
+    QStringList setParts;
+    
+    // 更新字段
+    if (!data.value("facility_name").toString().isEmpty()) {
+        setParts.append(QString("facility_name = '%1'").arg(escapeSqlString(data.value("facility_name").toString())));
+    }
+    
+    if (!data.value("facility_type").toString().isEmpty()) {
+        setParts.append(QString("facility_type = '%1'").arg(escapeSqlString(data.value("facility_type").toString())));
+    }
+    
+    if (data.value("elevation_m").toDouble() != 0.0) {
+        setParts.append(QString("elevation_m = %1").arg(data.value("elevation_m").toDouble(), 0, 'f', 2));
+    }
+    
+    if (!data.value("spec").toString().isEmpty()) {
+        setParts.append(QString("spec = '%1'").arg(escapeSqlString(data.value("spec").toString())));
+    }
+    
+    if (!data.value("material").toString().isEmpty()) {
+        setParts.append(QString("material = '%1'").arg(escapeSqlString(data.value("material").toString())));
+    }
+    
+    if (!data.value("pipeline_id").toString().isEmpty()) {
+        setParts.append(QString("pipeline_id = '%1'").arg(escapeSqlString(data.value("pipeline_id").toString())));
+    }
+    
+    if (data.value("build_date").toDate().isValid() && data.value("build_date").toDate().year() > 2000) {
+        setParts.append(QString("build_date = '%1'").arg(data.value("build_date").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (!data.value("builder").toString().isEmpty()) {
+        setParts.append(QString("builder = '%1'").arg(escapeSqlString(data.value("builder").toString())));
+    }
+    
+    if (!data.value("owner").toString().isEmpty()) {
+        setParts.append(QString("owner = '%1'").arg(escapeSqlString(data.value("owner").toString())));
+    }
+    
+    if (!data.value("status").toString().isEmpty()) {
+        setParts.append(QString("status = '%1'").arg(escapeSqlString(data.value("status").toString())));
+    }
+    
+    setParts.append(QString("health_score = %1").arg(data.value("health_score").toInt()));
+    
+    if (data.value("last_maintenance").toDate().isValid() && data.value("last_maintenance").toDate().year() > 2000) {
+        setParts.append(QString("last_maintenance = '%1'").arg(data.value("last_maintenance").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (data.value("next_maintenance").toDate().isValid() && data.value("next_maintenance").toDate().year() > 2000) {
+        setParts.append(QString("next_maintenance = '%1'").arg(data.value("next_maintenance").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (!data.value("maintenance_unit").toString().isEmpty()) {
+        setParts.append(QString("maintenance_unit = '%1'").arg(escapeSqlString(data.value("maintenance_unit").toString())));
+    }
+    
+    if (!data.value("remarks").toString().isEmpty()) {
+        setParts.append(QString("remarks = '%1'").arg(escapeSqlString(data.value("remarks").toString())));
+    }
+    
+    // 处理几何字段
+    QString geomWkt = data.value("geom_wkt").toString();
+    if (!geomWkt.isEmpty()) {
+        QString escaped = geomWkt;
+        escaped.replace("'", "''");
+        setParts.append(QString("geom = ST_GeomFromText('%1', 4326)").arg(escaped));
+    }
+    
+    setParts.append("updated_at = CURRENT_TIMESTAMP");
+    
+    if (setParts.isEmpty()) {
+        qDebug() << "[FacilityDAO] No fields to update";
+        return false;
+    }
+    
+    QString sql = QString("UPDATE %1 SET %2 WHERE id = %3")
+                      .arg(m_tableName)
+                      .arg(setParts.join(", "))
+                      .arg(id);
+    
+    qDebug() << "[FacilityDAO] Update SQL:" << sql;
+    
+    // 直接执行SQL，不使用参数绑定
+    bool result = DatabaseManager::instance().executeCommand(sql);
+    if (!result) {
+        QString error = DatabaseManager::instance().lastError();
+        qDebug() << "[FacilityDAO] Update failed:" << error;
+    }
+    return result;
 }
 

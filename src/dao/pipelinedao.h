@@ -38,6 +38,10 @@ public:
 
     // 统计各类型管线数量
     QMap<QString, int> countByType();
+    
+    // 重写insert和update方法以处理PostGIS字段
+    bool insert(const Pipeline &pipeline);
+    bool update(const Pipeline &pipeline, int id);
 
 private:
     // 解析WKT格式的LINESTRING为坐标点

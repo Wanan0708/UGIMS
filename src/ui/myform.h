@@ -11,6 +11,7 @@
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QPoint>
+#include <QPointF>
 #include <QProgressBar>
 #include <QTimer>
 #include <QPointer>
@@ -29,6 +30,12 @@ class LayerControlPanel;
 class DrawingToolPanel;
 class MapDrawingManager;
 class Pipeline;  // 添加Pipeline前置声明
+class QGraphicsEllipseItem;
+class QGraphicsTextItem;
+class QGraphicsPolygonItem;
+struct BurstAnalysisResult;
+struct ConnectivityResult;
+enum class ConnectivityType;  // 前置声明
 
 namespace Ui {
 class MyForm;
@@ -87,6 +94,7 @@ private slots:
     // 空间分析模块
     void onBurstAnalysisButtonClicked();
     void onConnectivityAnalysisButtonClicked();
+    void onHealthAssessmentButtonClicked();
     
     // 工单与资产模块
     void onWorkOrderButtonClicked();
@@ -142,6 +150,28 @@ private:
     qreal currentScale;
     int currentZoomLevel;  // 当前瓦片地图缩放层级 (1-10)
     double m_visualScale = 1.0;  // 视觉连续缩放比例（不直接切换瓦片层级）
+    QPointF m_lastClickedGeo;    // 最近一次地图单击的地理坐标
+    bool m_hasBurstPoint = false; // 是否已有爆管点
+    QGraphicsEllipseItem *m_burstMarker = nullptr;
+    QGraphicsTextItem *m_burstLabel = nullptr;
+    QGraphicsPolygonItem *m_burstAreaItem = nullptr;
+    bool m_burstSelectionMode = false; // 是否处于爆管点选模式
+    QList<QGraphicsItem*> m_burstHighlights; // 高亮的管线/阀门
+    QList<QWidget*> m_disabledDuringBurst;   // 暂时禁用的控件
+    
+    // 连通性分析相关成员
+    bool m_connectivitySelectionMode = false; // 是否处于连通性分析点选模式
+    QList<QGraphicsItem*> m_connectivityHighlights; // 高亮的管线
+    QList<QWidget*> m_disabledDuringConnectivity;   // 暂时禁用的控件
+    int m_currentConnectivityType; // 当前分析类型（存储为int，避免头文件依赖）
+    
+    // 最短路径分析相关成员
+    bool m_shortestPathSelectionMode = false; // 是否处于最短路径点选模式
+    QPointF m_shortestPathStartPoint; // 起点
+    bool m_hasShortestPathStart = false; // 是否已选择起点
+    QGraphicsEllipseItem *m_startMarker = nullptr; // 起点标记
+    QGraphicsEllipseItem *m_endMarker = nullptr; // 终点标记
+    QList<QWidget*> m_disabledDuringShortestPath; // 暂时禁用的控件
     
     // 右键拖拽相关成员
     bool isRightClickDragging;
@@ -218,6 +248,7 @@ private:
     // 实体选中管理
     QGraphicsItem *m_selectedItem;         // 当前选中的图形项
     QPen m_originalPen;                    // 选中前的原始画笔（用于恢复）
+    QBrush m_originalBrush;               // 选中前的原始画刷（用于恢复设施）
     QHash<QGraphicsItem*, Pipeline> m_drawnPipelines;  // 已绘制的管线数据（用于编辑）
     int m_nextPipelineId;                  // 下一个管线ID（自增）
     
@@ -229,6 +260,31 @@ private:
     
     // 撤销/重做功能
     QUndoStack *m_undoStack;               // 撤销栈
+    
+    // 变更跟踪系统
+    enum ChangeType {
+        ChangeAdded,      // 新增
+        ChangeModified,   // 修改
+        ChangeDeleted     // 删除
+    };
+    
+    struct PendingChange {
+        ChangeType type;
+        QString entityType;  // "pipeline" 或 "facility" 或 "workorder"
+        QVariant data;       // Pipeline, Facility 或 WorkOrder 对象
+        int originalId;       // 原始ID（用于修改和删除）
+        QGraphicsItem *graphicsItem;  // 关联的图形项（用于管线/设施）
+    };
+    
+    QList<PendingChange> m_pendingChanges;  // 待保存的变更列表
+    bool m_hasUnsavedChanges;               // 是否有未保存的变更
+    
+    // 保存相关槽函数
+    void onSaveAll();                       // 保存所有变更
+    void onSaveAllTriggered();              // 保存按钮触发
+    bool savePendingChanges();              // 执行保存操作
+    void markAsModified();                  // 标记为已修改
+    void clearPendingChanges();             // 清空待保存变更
     
     void setupFunctionalArea();
     void setupDeviceTree();  // 设置设备树
@@ -257,6 +313,38 @@ private:
     // 管网可视化初始化
     void initializePipelineVisualization();
     void checkPipelineRenderResult();
+    QString resolveProjectPath(const QString &relativePath) const;
+    bool runDatabaseInitScript();
+    void promptDatabaseSetup(const QString &reason);
+    void openConfigDirectory();
+    void renderBurstPoint(const QPointF &geoLonLat);
+    void renderBurstResult(const BurstAnalysisResult &result);
+    void renderBurstHighlights(const BurstAnalysisResult &result);
+    void clearBurstHighlights();
+    void highlightPipelineById(const QString &pipelineId);
+    void highlightFacilityById(const QString &facilityId);
+    void setUiEnabledDuringBurst(bool enabled);
+    void startBurstSelectionMode();
+    void cancelBurstSelectionMode();
+    void performBurstAnalysis(const QPointF &geoLonLat);
+    
+    // 连通性分析相关函数
+    void clearConnectivityHighlights();
+    void renderConnectivityResult(const ConnectivityResult &result);
+    void highlightPipelineByIdForConnectivity(const QString &pipelineId, const QColor &color);
+    void setUiEnabledDuringConnectivity(bool enabled);
+    void startConnectivitySelectionMode(ConnectivityType type);
+    void cancelConnectivitySelectionMode();
+    void performConnectivityAnalysis(const QPointF &geoLonLat);
+    
+    // 最短路径分析相关函数
+    void clearShortestPathMarkers();
+    void renderShortestPathResult(const ConnectivityResult &result);
+    void setUiEnabledDuringShortestPath(bool enabled);
+    void startShortestPathSelectionMode();
+    void cancelShortestPathSelectionMode();
+    void handleShortestPathPointSelection(const QPointF &geoLonLat);
+    void performShortestPathAnalysis(const QPointF &startPoint, const QPointF &endPoint);
     
     // 实体选中辅助方法
     void selectItem(QGraphicsItem *item);     // 选中项

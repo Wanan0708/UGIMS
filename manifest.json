@@ -1,0 +1,20 @@
+{
+    "tasks": [
+        {
+            "completedTiles": 107,
+            "createdAt": "2025-12-12T20:13:03.300",
+            "failedTiles": 0,
+            "id": "20ad6be8-661f-49b8-b7b0-5942f3d7fde5",
+            "maxLat": 54,
+            "maxLon": 135,
+            "maxZoom": 13,
+            "minLat": 18,
+            "minLon": 73,
+            "minZoom": 3,
+            "priority": 0,
+            "status": "downloading",
+            "totalTiles": 1978409,
+            "updatedAt": "2025-12-12T20:13:17.294"
+        }
+    ]
+}

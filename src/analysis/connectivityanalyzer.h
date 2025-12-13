@@ -123,9 +123,35 @@ private:
      * @brief 计算两个节点之间的距离
      */
     double getDistance(const QString &fromNodeId, const QString &toNodeId);
+    
+    /**
+     * @brief 查找连接到指定点的管线
+     */
+    QString findPipelineAtPoint(const QPointF &point, double toleranceMeters = 10.0);
+    
+    /**
+     * @brief 查找连接到指定管线端点的其他管线
+     */
+    QList<QString> findConnectedPipelines(const QString &pipelineId, const QPointF &endpoint, double toleranceMeters = 5.0);
+    
+    /**
+     * @brief 判断两个点是否在容差范围内（米）
+     */
+    bool pointsAreClose(const QPointF &p1, const QPointF &p2, double toleranceMeters = 5.0);
+    
+    /**
+     * @brief 获取管线的起点和终点
+     */
+    QPair<QPointF, QPointF> getPipelineEndpoints(const QString &pipelineId);
+    
+    /**
+     * @brief 使用BFS进行连通性追踪
+     */
+    ConnectivityResult bfsTrace(const QPointF &startPoint, bool upstream, int maxDepth);
 
 private:
     int m_maxSearchDepth;  // 最大搜索深度
+    double m_connectionTolerance;  // 连接容差（米）
 };
 
 #endif // CONNECTIVITYANALYZER_H

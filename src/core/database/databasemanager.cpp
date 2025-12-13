@@ -166,14 +166,24 @@ QSqlQuery DatabaseManager::executeQuery(const QString &sql, const QVariantMap &p
     QMutexLocker locker(&m_mutex);
 
     QSqlQuery query(m_database);
-    query.prepare(sql);
-    bindParameters(query, params);
-
-    if (!query.exec()) {
-        m_lastError = query.lastError().text();
-        LOG_ERROR(QString("Query failed: %1\nSQL: %2").arg(m_lastError, sql));
+    
+    // 如果没有参数，直接执行（避免QPSQL驱动的prepare问题）
+    if (params.isEmpty()) {
+        if (!query.exec(sql)) {
+            m_lastError = query.lastError().text();
+            LOG_ERROR(QString("Query failed: %1\nSQL: %2").arg(m_lastError, sql));
+        } else {
+            LOG_DEBUG(QString("Query executed: %1").arg(sql));
+        }
     } else {
-        LOG_DEBUG(QString("Query executed: %1").arg(sql));
+        query.prepare(sql);
+        bindParameters(query, params);
+        if (!query.exec()) {
+            m_lastError = query.lastError().text();
+            LOG_ERROR(QString("Query failed: %1\nSQL: %2").arg(m_lastError, sql));
+        } else {
+            LOG_DEBUG(QString("Query executed: %1").arg(sql));
+        }
     }
 
     return query;
@@ -184,13 +194,22 @@ bool DatabaseManager::executeCommand(const QString &sql, const QVariantMap &para
     QMutexLocker locker(&m_mutex);
 
     QSqlQuery query(m_database);
-    query.prepare(sql);
-    bindParameters(query, params);
-
-    if (!query.exec()) {
-        m_lastError = query.lastError().text();
-        LOG_ERROR(QString("Command failed: %1\nSQL: %2").arg(m_lastError, sql));
-        return false;
+    
+    // 如果没有参数，直接执行（避免QPSQL驱动的prepare问题）
+    if (params.isEmpty()) {
+        if (!query.exec(sql)) {
+            m_lastError = query.lastError().text();
+            LOG_ERROR(QString("Command failed: %1\nSQL: %2").arg(m_lastError, sql));
+            return false;
+        }
+    } else {
+        query.prepare(sql);
+        bindParameters(query, params);
+        if (!query.exec()) {
+            m_lastError = query.lastError().text();
+            LOG_ERROR(QString("Command failed: %1\nSQL: %2").arg(m_lastError, sql));
+            return false;
+        }
     }
 
     LOG_DEBUG(QString("Command executed: %1, affected rows: %2")
@@ -255,7 +274,9 @@ QSqlDatabase DatabaseManager::database()
 void DatabaseManager::bindParameters(QSqlQuery &query, const QVariantMap &params)
 {
     for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
-        query.bindValue(it.key(), it.value());
+        // 确保占位符带冒号前缀
+        QString placeholder = it.key().startsWith(':') ? it.key() : (":" + it.key());
+        query.bindValue(placeholder, it.value());
     }
 }
 

@@ -3,6 +3,7 @@
 #include "dao/pipelinedao.h"
 #include "tilemap/tilemapmanager.h"
 #include "core/common/logger.h"
+#include "core/common/entitystate.h"  // 实体状态枚举
 #include <QPainterPath>
 #include <QtMath>
 #include <cmath>
@@ -138,9 +139,10 @@ QGraphicsPathItem* PipelineRenderer::renderPipeline(QGraphicsScene *scene,
     
     // 4. 设置数据（用于后续查询和删除）
     item->setData(0, "pipeline");  // 类型标记
-    item->setData(1, pipeline.id());  // 数据库ID
-    item->setData(2, pipeline.pipelineId());  // 管线编号
-    item->setData(3, pipeline.pipelineType());  // 管线类型
+    item->setData(1, pipeline.pipelineId());  // 管线编号（与 DrawingDatabaseManager 保持一致）
+    item->setData(2, pipeline.pipelineType());  // 管线类型
+    item->setData(10, pipeline.id());  // 数据库ID（存储在 data(10)）
+    item->setData(100, static_cast<int>(EntityState::Unchanged));  // 实体状态：未变更
     
     // 5. 设置工具提示
     QString tooltip = QString("%1\n类型: %2\n管径: DN%3\n健康度: %4分")

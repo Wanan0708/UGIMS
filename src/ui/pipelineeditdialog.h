@@ -38,6 +38,11 @@ public:
     void setGeometry(const QString &wkt);
     
     /**
+     * @brief 设置管线编号
+     */
+    void setPipelineId(const QString &id);
+    
+    /**
      * @brief 计算并设置管线长度
      */
     void calculateAndSetLength(const QVector<QPointF> &points);
