@@ -76,25 +76,9 @@
            <number>2</number>
           </property>
           <item>
-           <widget class="QToolButton" name="newButton">
+           <widget class="QToolButton" name="refreshButton">
             <property name="toolTip">
-             <string>新建</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>20</width>
-              <height>20</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="openButton">
-            <property name="toolTip">
-             <string>打开</string>
+             <string>刷新数据 (F5)</string>
             </property>
             <property name="text">
              <string/>
@@ -110,23 +94,7 @@
           <item>
            <widget class="QToolButton" name="saveButton">
             <property name="toolTip">
-             <string>保存</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>20</width>
-              <height>20</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="saveAsButton">
-            <property name="toolTip">
-             <string>另存为</string>
+             <string>保存 (Ctrl+S)</string>
             </property>
             <property name="text">
              <string/>

@@ -56,13 +56,11 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
-    // 重命名槽函数，避免Qt自动连接
-    void handleNewButtonClicked();
-    void handleOpenButtonClicked();
-    void handleSaveButtonClicked();
-    void handleSaveAsButtonClicked();
-    void handleUndoButtonClicked();
-    void handleRedoButtonClicked();
+    // 工具栏按钮槽函数
+    void handleRefreshButtonClicked();  // 刷新数据（原打开按钮）
+    void handleSaveButtonClicked();     // 保存
+    void handleUndoButtonClicked();     // 撤销
+    void handleRedoButtonClicked();     // 重做
     
     // 地图相关槽函数
     void handleLoadMapButtonClicked();
@@ -249,6 +247,7 @@ private:
     QGraphicsItem *m_selectedItem;         // 当前选中的图形项
     QPen m_originalPen;                    // 选中前的原始画笔（用于恢复）
     QBrush m_originalBrush;               // 选中前的原始画刷（用于恢复设施）
+    QPointF m_selectedItemStartPos;        // 选中项的开始位置（用于移动撤销）
     QHash<QGraphicsItem*, Pipeline> m_drawnPipelines;  // 已绘制的管线数据（用于编辑）
     int m_nextPipelineId;                  // 下一个管线ID（自增）
     

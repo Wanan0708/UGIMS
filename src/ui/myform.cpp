@@ -9,6 +9,8 @@
 #include "widgets/assetmanagerdialog.h"  // 资产管理对话框
 #include "widgets/healthassessmentdialog.h"  // 健康度评估对话框
 #include "widgets/settingsdialog.h"  // 系统设置对话框
+#include "core/auth/sessionmanager.h"  // 会话管理
+#include "core/auth/permissionmanager.h"  // 权限管理
 #include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
 #include "ui/pipelineeditdialog.h"  // 添加管线编辑对话框头文件
 #include "core/models/pipeline.h"  // 添加Pipeline模型头文件
@@ -331,10 +333,8 @@ void MyForm::setupFunctionalArea() {
     updateStatus("Ready");
 
     // 设置工具栏按钮的图标
-    ui->newButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
-    ui->openButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogOpenButton));
+    ui->refreshButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
     ui->saveButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
-    ui->saveAsButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
     ui->undoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
     ui->redoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
 
@@ -348,26 +348,20 @@ void MyForm::setupFunctionalArea() {
             "QToolButton:pressed{background:rgba(255,122,24,0.30); border-radius:4px;}"
         );
     };
-    setToolButtonStyle(ui->newButton);
-    setToolButtonStyle(ui->openButton);
+    setToolButtonStyle(ui->refreshButton);
     setToolButtonStyle(ui->saveButton);
-    setToolButtonStyle(ui->saveAsButton);
     setToolButtonStyle(ui->undoButton);
     setToolButtonStyle(ui->redoButton);
 
     // 连接工具栏按钮
-    connect(ui->newButton, &QToolButton::clicked, this, &MyForm::handleNewButtonClicked);
-    connect(ui->openButton, &QToolButton::clicked, this, &MyForm::handleOpenButtonClicked);
+    connect(ui->refreshButton, &QToolButton::clicked, this, &MyForm::handleRefreshButtonClicked);
     connect(ui->saveButton, &QToolButton::clicked, this, &MyForm::handleSaveButtonClicked);
-    connect(ui->saveAsButton, &QToolButton::clicked, this, &MyForm::handleSaveAsButtonClicked);
     connect(ui->undoButton, &QToolButton::clicked, this, &MyForm::handleUndoButtonClicked);
     connect(ui->redoButton, &QToolButton::clicked, this, &MyForm::handleRedoButtonClicked);
 
     // 设置快捷键
-    ui->newButton->setShortcut(QKeySequence::New);
-    ui->openButton->setShortcut(QKeySequence::Open);
+    ui->refreshButton->setShortcut(QKeySequence(Qt::Key_F5));
     ui->saveButton->setShortcut(QKeySequence::Save);
-    ui->saveAsButton->setShortcut(QKeySequence::SaveAs);
     ui->undoButton->setShortcut(QKeySequence::Undo);
     ui->redoButton->setShortcut(QKeySequence::Redo);
 
@@ -1305,6 +1299,25 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             }
         } else if (event->type() == QEvent::MouseButtonRelease) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            
+            // 检查选中项是否移动（用于撤销/重做）
+            if (mouseEvent->button() == Qt::LeftButton && m_selectedItem) {
+                QPointF currentPos = m_selectedItem->pos();
+                if (currentPos != m_selectedItemStartPos) {
+                    // 位置发生变化，创建移动命令
+                    MoveEntityCommand *cmd = new MoveEntityCommand(
+                        m_selectedItem,
+                        m_selectedItemStartPos,
+                        currentPos
+                    );
+                    if (m_undoStack) {
+                        m_undoStack->push(cmd);
+                    }
+                    // 更新开始位置
+                    m_selectedItemStartPos = currentPos;
+                }
+            }
+            
             // 右键释放时禁用拖拽模式
             if (mouseEvent->button() == Qt::RightButton) {
                 isRightClickDragging = false;
@@ -1586,21 +1599,90 @@ void MyForm::loadMap(const QString &mapPath) {
     }
 }
 
-void MyForm::handleNewButtonClicked()
+void MyForm::handleRefreshButtonClicked()
 {
-    qDebug() << "New button clicked";
-    currentFile.clear();
-    // 这里可以初始化一个新的文档
-    updateStatus("New document created");
-    isModified = false;
-}
-
-void MyForm::handleOpenButtonClicked()
-{
-    qDebug() << "Open button clicked";
+    qDebug() << "Refresh button clicked";
     
-    // 加载绘制数据
-    onLoadDrawingData();
+    // 检查数据库连接
+    if (!DatabaseManager::instance().isConnected()) {
+        QMessageBox::warning(this, "提示", "数据库未连接，无法刷新数据。\n\n请检查数据库配置。");
+        updateStatus("数据库未连接");
+        return;
+    }
+    
+    // 检查是否有未保存的变更
+    if (m_hasUnsavedChanges) {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this,
+            "未保存的变更",
+            "有未保存的变更，刷新数据会丢失这些变更。\n\n是否先保存再刷新？",
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+            QMessageBox::Save
+        );
+        
+        if (reply == QMessageBox::Save) {
+            onSaveAll();
+        } else if (reply == QMessageBox::Cancel) {
+            return;
+        }
+    }
+    
+    updateStatus("正在刷新数据...");
+    
+    // 重新加载数据库数据
+    if (m_layerManager) {
+        // 计算当前地图视图的地理范围
+        QRectF geoBounds;
+        if (tileMapManager && ui->graphicsView) {
+            // 获取视图的可见矩形（场景坐标）
+            QRectF viewportRect = ui->graphicsView->mapToScene(
+                ui->graphicsView->viewport()->rect()
+            ).boundingRect();
+            
+            // 将场景坐标转换为地理坐标
+            QPointF topLeft = tileMapManager->sceneToGeo(viewportRect.topLeft(), currentZoomLevel);
+            QPointF bottomRight = tileMapManager->sceneToGeo(viewportRect.bottomRight(), currentZoomLevel);
+            
+            // 计算地理范围（考虑可能的坐标翻转）
+            double minLon = qMin(topLeft.x(), bottomRight.x());
+            double maxLon = qMax(topLeft.x(), bottomRight.x());
+            double minLat = qMin(topLeft.y(), bottomRight.y());
+            double maxLat = qMax(topLeft.y(), bottomRight.y());
+            
+            geoBounds = QRectF(minLon, minLat, maxLon - minLon, maxLat - minLat);
+            
+            qDebug() << "[Refresh] Current view bounds:" << geoBounds;
+        } else {
+            // 如果没有地图管理器，使用默认范围或之前设置的范围
+            geoBounds = m_layerManager->getVisibleBounds();
+            if (geoBounds.isEmpty()) {
+                geoBounds = QRectF(116.390, 39.900, 0.030, 0.020);
+            }
+        }
+        
+        // 设置可视范围并刷新所有图层
+        m_layerManager->setVisibleBounds(geoBounds);
+        m_layerManager->refreshAllLayers();
+        
+        // 同时重新加载用户绘制的数据
+        DrawingDatabaseManager::loadFromDatabase(
+            mapScene,
+            m_drawnPipelines,
+            m_nextPipelineId
+        );
+        
+        updateStatus("数据刷新完成");
+        QMessageBox::information(this, "刷新完成", 
+            QString("已重新加载当前视图范围内的数据。\n\n范围: 经度 %1-%2, 纬度 %3-%4")
+                .arg(geoBounds.left(), 0, 'f', 4)
+                .arg(geoBounds.right(), 0, 'f', 4)
+                .arg(geoBounds.top(), 0, 'f', 4)
+                .arg(geoBounds.bottom(), 0, 'f', 4));
+    } else {
+        // 如果图层管理器未初始化，尝试初始化
+        updateStatus("正在初始化...");
+        initializePipelineVisualization();
+    }
 }
 
 void MyForm::handleSaveButtonClicked()
@@ -1611,13 +1693,6 @@ void MyForm::handleSaveButtonClicked()
     onSaveAll();
 }
 
-void MyForm::handleSaveAsButtonClicked()
-{
-    qDebug() << "Save As button clicked";
-    
-    // 保存绘制数据（与Save相同）
-    onSaveDrawingData();
-}
 
 void MyForm::handleUndoButtonClicked()
 {
@@ -2353,9 +2428,10 @@ void MyForm::initializePipelineVisualization()
             qDebug() << "[Pipeline] ✅ LayerManager connected to control panel";
         }
         
-        // 6. 延迟加载初始数据（再延迟1秒，让界面完全稳定）
-        qDebug() << "[Pipeline] Scheduling data load in 1 second...";
-        QTimer::singleShot(1000, this, &MyForm::loadPipelineData);
+        // 6. 延迟加载初始数据（延迟2秒，确保地图视图已完全初始化）
+        // 这样可以根据实际地图视图范围加载数据，而不是使用固定范围
+        qDebug() << "[Pipeline] Scheduling data load in 2 seconds (waiting for map view to be ready)...";
+        QTimer::singleShot(100, this, &MyForm::loadPipelineData);
         
         LOG_INFO("=== Pipeline visualization initialized successfully ===");
         qDebug() << "[Pipeline] ✅ Initialization complete";
@@ -2384,14 +2460,39 @@ void MyForm::loadPipelineData()
     updateStatus("正在加载管网数据...");
     qDebug() << "[Pipeline] ========== Starting pipeline data load ==========";
     
-    // 使用测试数据的坐标范围（北京天安门区域）
-    // 测试数据范围: 经度 116.39-116.42, 纬度 39.90-39.92
-    QRectF geoBounds(
-        116.390,  // 最小经度
-        39.900,   // 最小纬度
-        0.030,    // 宽度（经度跨度）
-        0.020     // 高度（纬度跨度）
-    );
+    // 计算当前地图视图的地理范围
+    QRectF geoBounds;
+    
+    if (tileMapManager && ui->graphicsView) {
+        // 获取视图的可见矩形（场景坐标）
+        QRectF viewportRect = ui->graphicsView->mapToScene(
+            ui->graphicsView->viewport()->rect()
+        ).boundingRect();
+        
+        // 将场景坐标转换为地理坐标
+        QPointF topLeft = tileMapManager->sceneToGeo(viewportRect.topLeft(), currentZoomLevel);
+        QPointF bottomRight = tileMapManager->sceneToGeo(viewportRect.bottomRight(), currentZoomLevel);
+        
+        // 计算地理范围（考虑可能的坐标翻转）
+        double minLon = qMin(topLeft.x(), bottomRight.x());
+        double maxLon = qMax(topLeft.x(), bottomRight.x());
+        double minLat = qMin(topLeft.y(), bottomRight.y());
+        double maxLat = qMax(topLeft.y(), bottomRight.y());
+        
+        geoBounds = QRectF(minLon, minLat, maxLon - minLon, maxLat - minLat);
+        
+        qDebug() << "[Pipeline] Calculated view bounds from map:" << geoBounds;
+    } else {
+        // 如果地图未初始化，使用默认范围（北京天安门区域）
+        // 或者使用一个较大的范围以加载更多数据
+        geoBounds = QRectF(
+            116.390,  // 最小经度
+            39.900,   // 最小纬度
+            0.030,    // 宽度（经度跨度）
+            0.020     // 高度（纬度跨度）
+        );
+        qDebug() << "[Pipeline] Using default bounds (map not ready):" << geoBounds;
+    }
     
     // 只用于数据库空间查询的可视范围，不改变当前地图视图和缩放
     m_layerManager->setVisibleBounds(geoBounds);
@@ -2401,7 +2502,15 @@ void MyForm::loadPipelineData()
     m_layerManager->refreshAllLayers();
     qDebug() << "[Pipeline] refreshAllLayers() called";
     
+    // 同时加载用户绘制的数据
+    DrawingDatabaseManager::loadFromDatabase(
+        mapScene,
+        m_drawnPipelines,
+        m_nextPipelineId
+    );
+    
     LOG_INFO("Pipeline layers refreshed");
+    updateStatus("管网数据加载完成");
     checkPipelineRenderResult();
 }
 
@@ -2937,6 +3046,12 @@ void MyForm::onWorkOrderButtonClicked()
 {
     qDebug() << "[UI] Work Order button clicked";
     
+    // 检查权限
+    if (!PermissionManager::canViewMap()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限访问工单管理功能。");
+        return;
+    }
+    
     // 检查数据库连接
     if (!DatabaseManager::instance().isConnected()) {
         promptDatabaseSetup("工单管理需要数据库连接。");
@@ -2956,6 +3071,12 @@ void MyForm::onWorkOrderButtonClicked()
 void MyForm::onAssetManagementButtonClicked()
 {
     qDebug() << "[UI] Asset Management button clicked";
+    
+    // 检查权限
+    if (!PermissionManager::canViewMap()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限访问资产管理功能。");
+        return;
+    }
     
     // 检查数据库连接
     if (!DatabaseManager::instance().isConnected()) {
@@ -3026,6 +3147,13 @@ void MyForm::onHealthAssessmentButtonClicked()
 void MyForm::onSettingsButtonClicked()
 {
     qDebug() << "[UI] Settings button clicked";
+    
+    // 检查权限
+    if (!PermissionManager::canAccessSettings()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限访问系统设置功能。");
+        return;
+    }
+    
     updateStatus("打开系统设置...");
     
     SettingsDialog dialog(this);
@@ -3801,6 +3929,13 @@ void MyForm::onToggleDrawingTool(bool checked)
 void MyForm::onStartDrawingPipeline(const QString &pipelineType)
 {
     qDebug() << "Start drawing pipeline:" << pipelineType;
+    
+    // 检查权限
+    if (!PermissionManager::canCreatePipeline()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限创建管线。");
+        return;
+    }
+    
     updateStatus(QString("开始绘制管线: %1 (左键添加点，右键或双击结束当前线)").arg(m_drawingToolPanel->currentTypeName()));
     
     if (m_drawingManager) {
@@ -3818,6 +3953,13 @@ void MyForm::onStartDrawingPipeline(const QString &pipelineType)
 void MyForm::onStartDrawingFacility(const QString &facilityType)
 {
     qDebug() << "Start drawing facility:" << facilityType;
+    
+    // 检查权限
+    if (!PermissionManager::canCreateFacility()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限创建设施。");
+        return;
+    }
+    
     updateStatus(QString("开始绘制设施: %1 (点击地图设置位置)").arg(m_drawingToolPanel->currentTypeName()));
     
     if (m_drawingManager) {
@@ -3980,6 +4122,17 @@ void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QStrin
             change.graphicsItem = item;
             m_pendingChanges.append(change);
             markAsModified();
+            
+            // 使用命令模式添加实体（支持撤销/重做）
+            AddEntityCommand *cmd = new AddEntityCommand(
+                mapScene,
+                item,
+                &m_drawnPipelines,
+                pipeline
+            );
+            if (m_undoStack) {
+                m_undoStack->push(cmd);
+            }
             
             qDebug() << "✅ Pipeline drawn successfully on scene (pending save)";
             qDebug() << "   Color:" << lineColor.name() << "Type:" << typeName;
@@ -4310,6 +4463,19 @@ void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QStrin
             m_pendingChanges.append(change);
             markAsModified();
             
+            // 使用命令模式添加实体（支持撤销/重做）
+            // 注意：设施不使用 pipelineHash，传入 nullptr
+            AddEntityCommand *cmd = new AddEntityCommand(
+                mapScene,
+                ellipseItem,
+                nullptr,  // 设施不使用 pipelineHash
+                Pipeline()  // 设施不使用 Pipeline 对象
+            );
+            cmd->setText("添加设施");
+            if (m_undoStack) {
+                m_undoStack->push(cmd);
+            }
+            
             qDebug() << "✅ Facility created on scene (pending save):" << typeName;
             qDebug() << "   Pending changes count:" << m_pendingChanges.size();
             
@@ -4517,6 +4683,19 @@ void MyForm::onDeleteSelectedEntity()
     QString entityType = m_selectedItem->data(0).toString();
     QString entityId = m_selectedItem->data(1).toString();
     
+    // 检查权限
+    bool hasPermission = false;
+    if (entityType == "pipeline") {
+        hasPermission = PermissionManager::canDeletePipeline();
+    } else if (entityType == "facility") {
+        hasPermission = PermissionManager::canDeleteFacility();
+    }
+    
+    if (!hasPermission) {
+        QMessageBox::warning(this, "权限不足", "您没有权限删除该实体。");
+        return;
+    }
+    
     // 确认删除
     QMessageBox::StandardButton reply = QMessageBox::question(
         this,
@@ -4691,13 +4870,77 @@ void MyForm::onEditSelectedEntity()
         onDeleteSelectedEntity();
     });
     
+    // 保存旧属性值（用于撤销）
+    QString oldName;
+    QString oldType;
+    if (entityType == "pipeline" && m_drawnPipelines.contains(m_selectedItem)) {
+        Pipeline oldPipeline = m_drawnPipelines[m_selectedItem];
+        oldName = oldPipeline.pipelineName();
+        oldType = oldPipeline.pipelineType();
+    } else {
+        oldName = m_selectedItem->data(0).toString();  // 从 data(0) 获取名称
+        oldType = m_selectedItem->data(2).toString();  // 从 data(2) 获取类型
+    }
+    
     // 连接属性变化信号
-    connect(dialog, &EntityPropertiesDialog::propertiesChanged, this, [this]() {
+    connect(dialog, &EntityPropertiesDialog::propertiesChanged, this, [this, oldName, oldType, entityType, dialog]() {
+        // 获取新属性值
+        QString newName = dialog->getName();
+        QString newType = dialog->getType();
+        
+        // 使用命令模式修改属性（支持撤销/重做）
+        if (entityType == "pipeline" && m_drawnPipelines.contains(m_selectedItem)) {
+            // 修改管线名称
+            if (oldName != newName) {
+                ChangePropertyCommand *cmd = new ChangePropertyCommand(
+                    m_selectedItem,
+                    "名称",
+                    oldName,
+                    newName,
+                    &m_drawnPipelines
+                );
+                if (m_undoStack) {
+                    m_undoStack->push(cmd);
+                }
+            }
+            
+            // 修改管线类型
+            if (oldType != newType) {
+                ChangePropertyCommand *cmd = new ChangePropertyCommand(
+                    m_selectedItem,
+                    "类型",
+                    oldType,
+                    newType,
+                    &m_drawnPipelines
+                );
+                if (m_undoStack) {
+                    m_undoStack->push(cmd);
+                }
+            }
+        } else {
+            // 修改设施名称
+            if (oldName != newName) {
+                ChangePropertyCommand *cmd = new ChangePropertyCommand(
+                    m_selectedItem,
+                    "名称",
+                    oldName,
+                    newName,
+                    nullptr
+                );
+                if (m_undoStack) {
+                    m_undoStack->push(cmd);
+                }
+            }
+        }
+        
         updateStatus("实体属性已更新");
         qDebug() << "✅ Entity properties updated";
     });
     
-    dialog->exec();
+    int result = dialog->exec();
+    
+    // 如果对话框被接受，属性已经在 propertiesChanged 信号中处理
+    // 这里只需要清理对话框
     delete dialog;
 }
 
@@ -4849,6 +5092,23 @@ void MyForm::onViewEntityProperties()
 void MyForm::clearSelection()
 {
     if (m_selectedItem) {
+        // 检查位置是否变化（用于移动撤销）
+        QPointF currentPos = m_selectedItem->pos();
+        if (currentPos != m_selectedItemStartPos) {
+            // 位置发生变化，创建移动命令
+            MoveEntityCommand *cmd = new MoveEntityCommand(
+                m_selectedItem,
+                m_selectedItemStartPos,
+                currentPos
+            );
+            if (m_undoStack) {
+                m_undoStack->push(cmd);
+            }
+        }
+        
+        // 恢复不可移动状态
+        m_selectedItem->setFlag(QGraphicsItem::ItemIsMovable, false);
+        
         unhighlightItem(m_selectedItem);
         m_selectedItem = nullptr;
         updateStatus("Ready");
@@ -4862,6 +5122,14 @@ void MyForm::selectItem(QGraphicsItem *item)
     }
     
     m_selectedItem = item;
+    m_selectedItemStartPos = item->pos();  // 记录开始位置（用于移动撤销）
+    
+    // 设置图形项为可移动（仅对设施有效，管线移动需要特殊处理）
+    QString entityType = item->data(0).toString();
+    if (entityType == "facility") {
+        item->setFlag(QGraphicsItem::ItemIsMovable, true);
+    }
+    
     highlightItem(item);
 }
 

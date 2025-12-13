@@ -23,9 +23,9 @@ public:
     void pause();
     void resume() { start(); }
     void enqueueTask(const DownloadTask &task); // 追加任务到清单并保存
-    void pauseTask(const QString &taskId); // TODO
-    void resumeTask(const QString &taskId); // TODO
-    void cancelTask(const QString &taskId); // TODO
+    void pauseTask(const QString &taskId); // 暂停指定任务
+    void resumeTask(const QString &taskId); // 恢复指定任务
+    void cancelTask(const QString &taskId); // 取消指定任务
 
 signals:
     void taskProgress(const QString &taskId, int completed, int total);

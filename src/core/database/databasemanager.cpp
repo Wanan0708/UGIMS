@@ -37,6 +37,15 @@ bool DatabaseManager::initialize()
 
     // 创建数据库连接
     if (dbType == "postgresql") {
+        // 检查PostgreSQL驱动是否可用
+        if (!QSqlDatabase::isDriverAvailable("QPSQL")) {
+            m_lastError = "PostgreSQL driver (QPSQL) is not available. "
+                         "Please ensure Qt PostgreSQL plugin is installed. "
+                         "Available drivers: " + QSqlDatabase::drivers().join(", ");
+            LOG_ERROR(m_lastError);
+            qDebug() << "[DB] Available drivers:" << QSqlDatabase::drivers();
+            return false;
+        }
         m_database = QSqlDatabase::addDatabase("QPSQL", "ugims_connection");
     } else if (dbType == "sqlite") {
         m_database = QSqlDatabase::addDatabase("QSQLITE", "ugims_connection");

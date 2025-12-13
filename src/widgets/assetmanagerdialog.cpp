@@ -6,6 +6,8 @@
 #include "core/common/logger.h"
 #include "ui/pipelineeditdialog.h"
 #include "widgets/facilityeditdialog.h"
+#include "widgets/assetstatisticsdialog.h"
+#include "core/auth/permissionmanager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
@@ -40,6 +42,7 @@ void AssetManagerDialog::setupUI()
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     m_viewBtn = new QPushButton("查看详情", this);
     m_editBtn = new QPushButton("编辑", this);
+    m_statisticsBtn = new QPushButton("统计报表", this);
     m_closeBtn = new QPushButton("关闭", this);
     
     m_viewBtn->setEnabled(false);
@@ -48,6 +51,7 @@ void AssetManagerDialog::setupUI()
     buttonLayout->addWidget(m_viewBtn);
     buttonLayout->addWidget(m_editBtn);
     buttonLayout->addStretch();
+    buttonLayout->addWidget(m_statisticsBtn);
     buttonLayout->addWidget(m_closeBtn);
     
     // 标签页和表格
@@ -61,6 +65,7 @@ void AssetManagerDialog::setupUI()
     connect(m_refreshBtn, &QPushButton::clicked, this, &AssetManagerDialog::onRefreshClicked);
     connect(m_viewBtn, &QPushButton::clicked, this, &AssetManagerDialog::onViewClicked);
     connect(m_editBtn, &QPushButton::clicked, this, &AssetManagerDialog::onEditClicked);
+    connect(m_statisticsBtn, &QPushButton::clicked, this, &AssetManagerDialog::onStatisticsClicked);
     connect(m_closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     
     connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), 
@@ -376,6 +381,19 @@ void AssetManagerDialog::onEditClicked()
         return;
     }
     
+    // 检查权限
+    bool hasPermission = false;
+    if (m_currentTabIndex == 0) {
+        hasPermission = PermissionManager::canEditPipeline();
+    } else {
+        hasPermission = PermissionManager::canEditFacility();
+    }
+    
+    if (!hasPermission) {
+        QMessageBox::warning(this, "权限不足", "您没有权限编辑该资产。");
+        return;
+    }
+    
     QString assetId = currentTable->item(row, 0)->text();
     
     if (m_currentTabIndex == 0) {
@@ -447,8 +465,18 @@ void AssetManagerDialog::onTableSelectionChanged()
 {
     QTableWidget *currentTable = (m_currentTabIndex == 0) ? m_pipelineTable : m_facilityTable;
     bool hasSelection = currentTable->currentRow() >= 0;
+    
+    // 根据权限和选择状态启用/禁用按钮
     m_viewBtn->setEnabled(hasSelection);
-    m_editBtn->setEnabled(hasSelection);
+    bool canEdit = false;
+    if (hasSelection) {
+        if (m_currentTabIndex == 0) {
+            canEdit = PermissionManager::canEditPipeline();
+        } else {
+            canEdit = PermissionManager::canEditFacility();
+        }
+    }
+    m_editBtn->setEnabled(canEdit);
 }
 
 void AssetManagerDialog::onTableDoubleClicked(int row, int column)
@@ -457,5 +485,11 @@ void AssetManagerDialog::onTableDoubleClicked(int row, int column)
     if (row >= 0) {
         onViewClicked();
     }
+}
+
+void AssetManagerDialog::onStatisticsClicked()
+{
+    AssetStatisticsDialog dialog(this);
+    dialog.exec();
 }
 

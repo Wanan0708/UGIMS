@@ -32,6 +32,7 @@ private slots:
     void onRefreshClicked();
     void onViewClicked();
     void onEditClicked();
+    void onStatisticsClicked();
     void onFilterChanged();
     void onTabChanged(int index);
     void onTableSelectionChanged();
@@ -64,6 +65,7 @@ private:
     // 操作按钮
     QPushButton *m_viewBtn;
     QPushButton *m_editBtn;
+    QPushButton *m_statisticsBtn;
     QPushButton *m_closeBtn;
     
     // 标签页和表格

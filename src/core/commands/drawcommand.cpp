@@ -205,3 +205,73 @@ bool MoveEntityCommand::mergeWith(const QUndoCommand *other)
     m_newPos = moveCommand->m_newPos;
     return true;
 }
+
+// ==========================================
+// ChangePropertyCommand 实现
+// ==========================================
+
+ChangePropertyCommand::ChangePropertyCommand(QGraphicsItem *item,
+                                             const QString &propertyName,
+                                             const QVariant &oldValue,
+                                             const QVariant &newValue,
+                                             QHash<QGraphicsItem*, Pipeline> *pipelineHash,
+                                             QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_item(item)
+    , m_propertyName(propertyName)
+    , m_oldValue(oldValue)
+    , m_newValue(newValue)
+    , m_pipelineHash(pipelineHash)
+{
+    setText(QString("修改%1").arg(propertyName));
+}
+
+void ChangePropertyCommand::undo()
+{
+    applyProperty(m_oldValue);
+}
+
+void ChangePropertyCommand::redo()
+{
+    applyProperty(m_newValue);
+}
+
+void ChangePropertyCommand::applyProperty(const QVariant &value)
+{
+    if (!m_item) {
+        return;
+    }
+    
+    QString entityType = m_item->data(0).toString();
+    
+    // 如果是管线，更新 pipelineHash 中的对象
+    if (entityType == "pipeline" && m_pipelineHash && m_pipelineHash->contains(m_item)) {
+        Pipeline &pipeline = (*m_pipelineHash)[m_item];
+        
+        if (m_propertyName == "名称" || m_propertyName == "pipelineName") {
+            pipeline.setPipelineName(value.toString());
+            m_item->setToolTip(QString("%1\n类型: %2\n管径: DN%3")
+                              .arg(pipeline.pipelineName())
+                              .arg(m_item->data(2).toString())
+                              .arg(pipeline.diameterMm()));
+        } else if (m_propertyName == "类型" || m_propertyName == "pipelineType") {
+            pipeline.setPipelineType(value.toString());
+        } else if (m_propertyName == "管径" || m_propertyName == "diameterMm") {
+            pipeline.setDiameterMm(value.toInt());
+            m_item->setToolTip(QString("%1\n类型: %2\n管径: DN%3")
+                              .arg(pipeline.pipelineName())
+                              .arg(m_item->data(2).toString())
+                              .arg(pipeline.diameterMm()));
+        }
+    }
+    
+    // 如果是设施，更新工具提示
+    if (entityType == "facility") {
+        if (m_propertyName == "名称" || m_propertyName == "facilityName") {
+            QString typeName = m_item->data(2).toString();
+            m_item->setToolTip(QString("%1\n类型: %2")
+                              .arg(value.toString())
+                              .arg(typeName));
+        }
+    }
+}

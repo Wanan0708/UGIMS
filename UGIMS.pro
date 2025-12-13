@@ -1,4 +1,4 @@
-QT       += core gui network sql concurrent
+QT       += core gui network sql concurrent printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -23,7 +23,11 @@ SOURCES += \
     src/widgets/workordermanagerdialog.cpp \
     src/widgets/workordereditdialog.cpp \
     src/widgets/assetmanagerdialog.cpp \
+    src/widgets/assetstatisticsdialog.cpp \
     src/widgets/facilityeditdialog.cpp \
+    src/widgets/logindialog.cpp \
+    src/widgets/customcombobox.cpp \
+    src/widgets/usermanagerdialog.cpp \
     src/widgets/basewindow.cpp \
     src/widgets/customtitlebar.cpp \
     src/widgets/mapmanagersettings.cpp \
@@ -45,6 +49,9 @@ SOURCES += \
     src/core/models/pipeline.cpp \
     src/core/models/workorder.cpp \
     src/core/models/facility.cpp \
+    src/core/models/user.cpp \
+    src/core/auth/sessionmanager.cpp \
+    src/core/auth/permissionmanager.cpp \
     src/core/workorder/workorderstatustransition.cpp \
     src/core/commands/drawcommand.cpp \
     src/core/io/drawingdatamanager.cpp \
@@ -52,6 +59,7 @@ SOURCES += \
     src/dao/pipelinedao.cpp \
     src/dao/workorderdao.cpp \
     src/dao/facilitydao.cpp \
+    src/dao/userdao.cpp \
     src/map/layermanager.cpp \
     src/map/symbolmanager.cpp \
     src/map/pipelinerenderer.cpp \
@@ -71,7 +79,11 @@ HEADERS += \
     src/widgets/workordermanagerdialog.h \
     src/widgets/workordereditdialog.h \
     src/widgets/assetmanagerdialog.h \
+    src/widgets/assetstatisticsdialog.h \
     src/widgets/facilityeditdialog.h \
+    src/widgets/logindialog.h \
+    src/widgets/customcombobox.h \
+    src/widgets/usermanagerdialog.h \
     src/widgets/basewindow.h \
     src/widgets/customtitlebar.h \
     src/widgets/mapmanagersettings.h \
@@ -93,6 +105,9 @@ HEADERS += \
     src/core/models/pipeline.h \
     src/core/models/workorder.h \
     src/core/models/facility.h \
+    src/core/models/user.h \
+    src/core/auth/sessionmanager.h \
+    src/core/auth/permissionmanager.h \
     src/core/workorder/workorderstatustransition.h \
     src/core/commands/drawcommand.h \
     src/core/io/drawingdatamanager.h \
@@ -101,6 +116,7 @@ HEADERS += \
     src/dao/pipelinedao.h \
     src/dao/workorderdao.h \
     src/dao/facilitydao.h \
+    src/dao/userdao.h \
     src/map/layermanager.h \
     src/map/symbolmanager.h \
     src/map/pipelinerenderer.h \

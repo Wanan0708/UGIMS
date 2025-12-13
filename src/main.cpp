@@ -5,19 +5,15 @@
 #include <QDebug>
 #include <QScreen>
 #include <QGuiApplication>
+#include <QDir>
+#include <QFileInfo>
 #include "widgets/basewindow.h"
 #include "ui/myform.h"
-
-// class MyWindow : public BaseWindow {
-// public:
-//     MyWindow() : BaseWindow() {
-//         auto label = new QLabel("Hello! This is a fully custom title bar window.\n"
-//                                 "Try resizing, dragging, maximizing, and minimizing!");
-//         label->setAlignment(Qt::AlignCenter);
-//         label->setStyleSheet("font-size: 16px;");
-//         setContentWidget(label); // 使用 setContentWidget，不是 setCentralWidget
-//     }
-// };
+#include "widgets/logindialog.h"
+#include "core/auth/sessionmanager.h"
+#include "core/common/config.h"
+#include "core/common/logger.h"
+#include "core/database/databasemanager.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
@@ -42,6 +38,65 @@ int main(int argc, char *argv[]) {
         styleFile.close();
     }
 
+    // === 初始化数据库连接（在登录前） ===
+    qDebug() << "Initializing database connection...";
+    
+    // 初始化日志
+    try {
+        QString logDir = QDir::currentPath() + "/logs";
+        if (!QDir(logDir).exists()) {
+            QDir().mkpath(logDir);
+        }
+        Logger::instance().initialize(logDir + "/app.log", Logger::Info);
+        LOG_INFO("Logger initialized");
+    } catch (...) {
+        qDebug() << "Warning: Logger initialization failed";
+    }
+    
+    // 加载配置
+    QString appConfigPath = QDir::currentPath() + "/config/app.ini";
+    QString dbConfigPath = QDir::currentPath() + "/config/database.ini";
+    
+    if (QFileInfo::exists(appConfigPath)) {
+        Config::instance().initialize(appConfigPath);
+        qDebug() << "App config loaded";
+    } else {
+        qDebug() << "Warning: app.ini not found at" << appConfigPath;
+    }
+    
+    if (QFileInfo::exists(dbConfigPath)) {
+        if (Config::instance().loadDatabaseConfig(dbConfigPath)) {
+            qDebug() << "Database config loaded";
+            
+            // 初始化并连接数据库
+            DatabaseManager &db = DatabaseManager::instance();
+            if (db.initialize()) {
+                if (db.connect()) {
+                    qDebug() << "Database connected successfully";
+                } else {
+                    qDebug() << "Warning: Database connection failed:" << db.lastError();
+                    qDebug() << "Login will still work, but some features may be unavailable";
+                }
+            } else {
+                qDebug() << "Warning: Database initialization failed";
+            }
+        } else {
+            qDebug() << "Warning: Failed to load database config";
+        }
+    } else {
+        qDebug() << "Warning: database.ini not found at" << dbConfigPath;
+        qDebug() << "Login will still work, but database features will be unavailable";
+    }
+
+    // 显示登录对话框
+    LoginDialog loginDialog;
+    if (loginDialog.exec() != QDialog::Accepted) {
+        qDebug() << "Login cancelled, exiting application";
+        return 0;  // 用户取消登录，退出应用
+    }
+    
+    qDebug() << "Login successful, user:" << SessionManager::instance().currentUsername();
+    
     BaseWindow window;
     MyForm *form = new MyForm(&window); // parent 设为 window，自动管理内存
     window.setContentWidget(form);

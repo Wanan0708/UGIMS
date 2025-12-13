@@ -107,4 +107,30 @@ private:
     QPointF m_newPos;
 };
 
+// ==========================================
+// 修改属性命令
+// ==========================================
+class ChangePropertyCommand : public QUndoCommand
+{
+public:
+    ChangePropertyCommand(QGraphicsItem *item,
+                          const QString &propertyName,
+                          const QVariant &oldValue,
+                          const QVariant &newValue,
+                          QHash<QGraphicsItem*, Pipeline> *pipelineHash = nullptr,
+                          QUndoCommand *parent = nullptr);
+    
+    void undo() override;
+    void redo() override;
+
+private:
+    QGraphicsItem *m_item;
+    QString m_propertyName;
+    QVariant m_oldValue;
+    QVariant m_newValue;
+    QHash<QGraphicsItem*, Pipeline> *m_pipelineHash;
+    
+    void applyProperty(const QVariant &value);
+};
+
 #endif // DRAWCOMMAND_H

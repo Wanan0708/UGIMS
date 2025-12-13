@@ -1,6 +1,8 @@
 #include "widgets/settingsdialog.h"
+#include "widgets/usermanagerdialog.h"
 #include "core/common/config.h"
 #include "core/common/logger.h"
+#include "core/auth/permissionmanager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -226,6 +228,18 @@ void SettingsDialog::setupUI()
     
     // 按钮
     QHBoxLayout *buttonLayout = new QHBoxLayout();
+    
+    // 用户管理按钮（仅管理员可见）
+    if (PermissionManager::canManageUsers()) {
+        QPushButton *userManageBtn = new QPushButton("用户管理", this);
+        userManageBtn->setMinimumWidth(100);
+        buttonLayout->addWidget(userManageBtn);
+        connect(userManageBtn, &QPushButton::clicked, this, [this]() {
+            UserManagerDialog dialog(this);
+            dialog.exec();
+        });
+    }
+    
     buttonLayout->addStretch();
     
     m_saveBtn = new QPushButton("保存");

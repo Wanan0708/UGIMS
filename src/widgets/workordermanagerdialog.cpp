@@ -2,6 +2,8 @@
 #include "dao/workorderdao.h"
 #include "workordereditdialog.h"
 #include "core/common/logger.h"
+#include "core/auth/sessionmanager.h"
+#include "core/auth/permissionmanager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
@@ -350,6 +352,12 @@ void WorkOrderManagerDialog::onCreateClicked()
 
 void WorkOrderManagerDialog::onEditClicked()
 {
+    // 检查权限
+    if (!PermissionManager::canEditWorkOrder()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限编辑工单。");
+        return;
+    }
+    
     WorkOrder wo = getSelectedWorkOrder();
     if (!wo.isValid()) {
         QMessageBox::warning(this, "提示", "请先选择要编辑的工单");
@@ -417,6 +425,12 @@ void WorkOrderManagerDialog::onViewClicked()
 
 void WorkOrderManagerDialog::onDeleteClicked()
 {
+    // 检查权限
+    if (!PermissionManager::canDeleteWorkOrder()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限删除工单。");
+        return;
+    }
+    
     WorkOrder wo = getSelectedWorkOrder();
     if (!wo.isValid()) {
         QMessageBox::warning(this, "提示", "请先选择要删除的工单");
@@ -444,9 +458,11 @@ void WorkOrderManagerDialog::onFilterChanged()
 void WorkOrderManagerDialog::onTableSelectionChanged()
 {
     bool hasSelection = m_tableWidget->currentRow() >= 0;
-    m_editBtn->setEnabled(hasSelection);
+    
+    // 根据权限和选择状态启用/禁用按钮
+    m_editBtn->setEnabled(hasSelection && PermissionManager::canEditWorkOrder());
     m_viewBtn->setEnabled(hasSelection);
-    m_deleteBtn->setEnabled(hasSelection);
+    m_deleteBtn->setEnabled(hasSelection && PermissionManager::canDeleteWorkOrder());
     
     if (hasSelection) {
         m_currentSelectedRow = m_tableWidget->currentRow();
@@ -482,11 +498,15 @@ void WorkOrderManagerDialog::updateStatusTransitionButtons()
     qDebug() << "[WorkOrderManagerDialog] Current work order status:" << currentStatus 
              << "orderId:" << wo.orderId();
     
-    // 根据当前状态启用/禁用按钮
-    bool canAssign = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_ASSIGNED);
-    bool canStart = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_IN_PROGRESS);
-    bool canComplete = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_COMPLETED);
-    bool canCancel = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_CANCELLED);
+    // 根据权限和状态转换规则启用/禁用按钮
+    bool canAssign = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_ASSIGNED) && 
+                     PermissionManager::canAssignWorkOrder();
+    bool canStart = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_IN_PROGRESS) && 
+                    PermissionManager::canStartWorkOrder();
+    bool canComplete = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_COMPLETED) && 
+                       PermissionManager::canCompleteWorkOrder();
+    bool canCancel = m_statusTransition->canTransition(currentStatus, WorkOrder::STATUS_CANCELLED) && 
+                     PermissionManager::canDeleteWorkOrder();  // 取消工单需要删除权限
     
     qDebug() << "[WorkOrderManagerDialog] Button states - Assign:" << canAssign 
              << "Start:" << canStart << "Complete:" << canComplete << "Cancel:" << canCancel;
@@ -513,7 +533,9 @@ bool WorkOrderManagerDialog::performStatusTransition(const QString &targetStatus
     }
     
     // 执行转换
-    QString operatorName = "系统管理员";  // TODO: 从用户系统获取当前用户
+    QString operatorName = SessionManager::instance().currentUser().realName().isEmpty() ? 
+                          SessionManager::instance().currentUsername() : 
+                          SessionManager::instance().currentUser().realName();
     if (!m_statusTransition->performTransition(wo, targetStatus, operatorName)) {
         QMessageBox::warning(this, "错误", "状态转换失败");
         return false;
@@ -531,6 +553,12 @@ bool WorkOrderManagerDialog::performStatusTransition(const QString &targetStatus
 
 void WorkOrderManagerDialog::onAssignClicked()
 {
+    // 检查权限
+    if (!PermissionManager::canAssignWorkOrder()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限派发工单。");
+        return;
+    }
+    
     if (performStatusTransition(WorkOrder::STATUS_ASSIGNED)) {
         loadWorkOrders();
     }
@@ -538,6 +566,12 @@ void WorkOrderManagerDialog::onAssignClicked()
 
 void WorkOrderManagerDialog::onStartClicked()
 {
+    // 检查权限
+    if (!PermissionManager::canStartWorkOrder()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限开始工单。");
+        return;
+    }
+    
     if (performStatusTransition(WorkOrder::STATUS_IN_PROGRESS)) {
         loadWorkOrders();
     }
@@ -545,6 +579,12 @@ void WorkOrderManagerDialog::onStartClicked()
 
 void WorkOrderManagerDialog::onCompleteClicked()
 {
+    // 检查权限
+    if (!PermissionManager::canCompleteWorkOrder()) {
+        QMessageBox::warning(this, "权限不足", "您没有权限完成工单。");
+        return;
+    }
+    
     // 完成工单需要填写工作结果
     WorkOrder wo = getSelectedWorkOrder();
     if (!wo.isValid()) {
