@@ -71,7 +71,7 @@
          <number>2</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="toolbarLayout" stretch="0,0,0,0,0,0,1">
+         <layout class="QHBoxLayout" name="toolbarLayout" stretch="0,0,0,0,1,0,0">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -146,11 +146,43 @@
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
+              <width>0</width>
               <height>20</height>
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QToolButton" name="messageButton">
+            <property name="toolTip">
+             <string>消息 (Alt+M)</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="profileButton">
+            <property name="toolTip">
+             <string>个人信息 (Alt+P)</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

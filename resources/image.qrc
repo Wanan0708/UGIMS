@@ -5,5 +5,8 @@
         <file>images/maximize.png</file>
         <file>images/minimize.png</file>
         <file>images/restore.png</file>
+        <file>images/Account.png</file>
+        <file>images/Message.png</file>
+        <file>images/NoMessage.png</file>
     </qresource>
 </RCC>

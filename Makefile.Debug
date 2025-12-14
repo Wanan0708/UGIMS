@@ -76,6 +76,8 @@ SOURCES       = src\main.cpp \
 		src\widgets\healthdevicelistdialog.cpp \
 		src\widgets\helpdialog.cpp \
 		src\widgets\settingsdialog.cpp \
+		src\widgets\messagedialog.cpp \
+		src\widgets\profiledialog.cpp \
 		src\tilemap\tilemapmanager.cpp \
 		src\tilemap\tileworker.cpp \
 		src\tilemap\manifeststore.cpp \
@@ -133,6 +135,8 @@ SOURCES       = src\main.cpp \
 		debug\moc_healthdevicelistdialog.cpp \
 		debug\moc_helpdialog.cpp \
 		debug\moc_settingsdialog.cpp \
+		debug\moc_messagedialog.cpp \
+		debug\moc_profiledialog.cpp \
 		debug\moc_tilemapmanager.cpp \
 		debug\moc_tileworker.cpp \
 		debug\moc_downloadscheduler.cpp \
@@ -175,6 +179,8 @@ OBJECTS       = debug/main.o \
 		debug/healthdevicelistdialog.o \
 		debug/helpdialog.o \
 		debug/settingsdialog.o \
+		debug/messagedialog.o \
+		debug/profiledialog.o \
 		debug/tilemapmanager.o \
 		debug/tileworker.o \
 		debug/manifeststore.o \
@@ -233,6 +239,8 @@ OBJECTS       = debug/main.o \
 		debug/moc_healthdevicelistdialog.o \
 		debug/moc_helpdialog.o \
 		debug/moc_settingsdialog.o \
+		debug/moc_messagedialog.o \
+		debug/moc_profiledialog.o \
 		debug/moc_tilemapmanager.o \
 		debug/moc_tileworker.o \
 		debug/moc_downloadscheduler.o \
@@ -275,6 +283,8 @@ DIST          =  src\ui\myform.h \
 		src\widgets\healthdevicelistdialog.h \
 		src\widgets\helpdialog.h \
 		src\widgets\settingsdialog.h \
+		src\widgets\messagedialog.h \
+		src\widgets\profiledialog.h \
 		src\tilemap\tilemapmanager.h \
 		src\tilemap\tileworker.h \
 		src\tilemap\manifeststore.h \
@@ -333,6 +343,8 @@ DIST          =  src\ui\myform.h \
 		src\widgets\healthdevicelistdialog.cpp \
 		src\widgets\helpdialog.cpp \
 		src\widgets\settingsdialog.cpp \
+		src\widgets\messagedialog.cpp \
+		src\widgets\profiledialog.cpp \
 		src\tilemap\tilemapmanager.cpp \
 		src\tilemap\tileworker.cpp \
 		src\tilemap\manifeststore.cpp \
@@ -384,11 +396,11 @@ qmake: FORCE
 qmake_all: FORCE
 
 dist:
-	$(ZIP) UGIMS.zip $(SOURCES) $(DIST) UGIMS.pro ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\spec_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\device_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\sanitize.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\gcc-base.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\g++-base.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\windows_vulkan_sdk.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\windows-vulkan.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\g++-win32.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\windows-desktop.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\qconfig.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_freetype.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_libjpeg.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_libpng.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_openxr_loader.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3danimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3danimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dcore.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dcore_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dextras.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dextras_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dinput.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dinput_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dlogic.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dlogic_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickanimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickanimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickextras.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickextras_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickinput.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickinput_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickrender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickrender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene2d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene2d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene3d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene3d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3drender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3drender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_activeqt.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_activeqt_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axbase_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axcontainer.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axcontainer_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axserver.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bluetooth.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bluetooth_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bodymovin_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_charts.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_charts_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_chartsqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_chartsqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_concurrent.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_concurrent_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core5compat.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core5compat_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualization.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualization_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualizationqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualizationqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_dbus.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_dbus_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designer.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designer_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designercomponents_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_devicediscovery_support_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_entrypoint_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_example_icons_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_examples_asset_downloader_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_fb_support_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_freetype_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphs.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphs_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphswidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphswidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpc.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpcquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpcquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_gui.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_gui_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_harfbuzz_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_help.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_help_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_httpserver.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_httpserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_jpeg_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_jsonrpc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsanimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsanimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsfolderlistmodel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsfolderlistmodel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsplatform.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsplatform_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsqmlmodels.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsqmlmodels_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssettings.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssharedimage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssharedimage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labswavefrontmesh.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labswavefrontmesh_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_languageserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_linguist.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_location.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_location_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimedia.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimedia_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediaquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediatestlibprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediawidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediawidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_network.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_network_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_networkauth.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_networkauth_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_nfc.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_nfc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_opengl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_opengl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_openglwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_openglwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_packetprotocol_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_png_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioning.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioning_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioningquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioningquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_printsupport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_printsupport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobuf.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobuf_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtcoretypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtcoretypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtguitypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtguitypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufwellknowntypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufwellknowntypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatch_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatchconversions_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatchgenerators_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlassetdownloader.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlassetdownloader_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcompiler.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcompiler_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcore.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcore_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmldebug_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmldom_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlintegration.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlintegration_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmllocalstorage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmllocalstorage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlls_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmeta.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmeta_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmodels.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmodels_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlnetwork.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlnetwork_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltest.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltest_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltoolingsettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltyperegistrar_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlworkerscript.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlworkerscript_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlxmllistmodel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlxmllistmodel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetimport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetimport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetutils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetutils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3deffects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3deffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dglslparser_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpers.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpers_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpersimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpersimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3diblbaker.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3diblbaker_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticleeffects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticleeffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticles.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticles_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysics.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysics_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysicshelpers.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysicshelpers_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3druntimerender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3druntimerender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dspatialaudio_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dutils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dutils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dxr.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dxr_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basic.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basic_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basicstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basicstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fluentwinui3styleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fluentwinui3styleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusion.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusion_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusionstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusionstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imagine.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imagine_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imaginestyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imaginestyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2impl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2impl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2material.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2material_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2materialstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2materialstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universal.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universal_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universalstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universalstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2windowsstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2windowsstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrolstestutilsprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2quickimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2quickimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2utils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2utils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickeffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicklayouts.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicklayouts_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickparticles_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickshapes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktemplates2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktemplates2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktestutilsprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimeline.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimeline_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimelineblendtrees.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimelineblendtrees_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimagegenerator_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjectsqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjectsqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_repparser.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_repparser_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxmlqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxmlqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensors.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensors_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensorsquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensorsquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialbus.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialbus_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_shadertools.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_shadertools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_spatialaudio.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_spatialaudio_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sql.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sql_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachine.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachine_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachineqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachineqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svg.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svg_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svgwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svgwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_testlib.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_testlib_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_texttospeech.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_texttospeech_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_tools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uiplugin.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uitools.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uitools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboard.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboard_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboardsettings.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboardsettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannelquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannelquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_websockets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_websockets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webview.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webview_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webviewquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webviewquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_widgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_widgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_xml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_xml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_zlib_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt_functions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\win32-g++\qmake.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\spec_post.prf .qmake.stash ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exclusive_builds.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\toolchain.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\default_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\default_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resolve_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exclusive_builds_post.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\default_post.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\build_pass.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\precompile_header.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\warn_on.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\permissions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resources_functions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resources.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\moc.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\opengl.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\uic.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qmake_use.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\file_copies.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\windows.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\testcase_targets.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exceptions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\yacc.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\lex.prf UGIMS.pro resources\image.qrc resources\style.qrc ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6PrintSupport.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Widgets.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Gui.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Network.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Sql.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Concurrent.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Core.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6EntryPoint.prl   resources\image.qrc resources\style.qrc ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\data\dummy.cpp src\ui\myform.h src\ui\mapmanagerdialog.h src\ui\analysispanel.h src\ui\pipelineeditdialog.h src\widgets\workordermanagerdialog.h src\widgets\workordereditdialog.h src\widgets\assetmanagerdialog.h src\widgets\assetstatisticsdialog.h src\widgets\facilityeditdialog.h src\widgets\logindialog.h src\widgets\customcombobox.h src\widgets\customcheckbox.h src\widgets\usermanagerdialog.h src\widgets\basewindow.h src\widgets\customtitlebar.h src\widgets\mapmanagersettings.h src\widgets\drawingtoolpanel.h src\widgets\layercontrolpanel.h src\widgets\collapsiblegroupbox.h src\widgets\entitypropertiesdialog.h src\widgets\entityviewdialog.h src\widgets\healthassessmentdialog.h src\widgets\healthdevicelistdialog.h src\widgets\helpdialog.h src\widgets\settingsdialog.h src\tilemap\tilemapmanager.h src\tilemap\tileworker.h src\tilemap\manifeststore.h src\tilemap\downloadscheduler.h src\core\common\logger.h src\core\common\config.h src\core\utils\idgenerator.h src\core\database\databasemanager.h src\core\models\pipeline.h src\core\models\workorder.h src\core\models\facility.h src\core\models\user.h src\core\auth\sessionmanager.h src\core\auth\permissionmanager.h src\core\workorder\workorderstatustransition.h src\core\commands\drawcommand.h src\core\io\drawingdatamanager.h src\core\io\drawingdatabasemanager.h src\dao\basedao.h src\dao\pipelinedao.h src\dao\workorderdao.h src\dao\facilitydao.h src\dao\userdao.h src\map\layermanager.h src\map\symbolmanager.h src\map\pipelinerenderer.h src\map\facilityrenderer.h src\map\annotationrenderer.h src\map\mapdrawingmanager.h src\analysis\spatialanalyzer.h src\analysis\burstanalyzer.h src\analysis\connectivityanalyzer.h src\analysis\healthassessmentanalyzer.h  src\main.cpp src\ui\myform.cpp src\ui\mapmanagerdialog.cpp src\ui\analysispanel.cpp src\ui\pipelineeditdialog.cpp src\widgets\workordermanagerdialog.cpp src\widgets\workordereditdialog.cpp src\widgets\assetmanagerdialog.cpp src\widgets\assetstatisticsdialog.cpp src\widgets\facilityeditdialog.cpp src\widgets\logindialog.cpp src\widgets\customcombobox.cpp src\widgets\customcheckbox.cpp src\widgets\usermanagerdialog.cpp src\widgets\basewindow.cpp src\widgets\customtitlebar.cpp src\widgets\mapmanagersettings.cpp src\widgets\drawingtoolpanel.cpp src\widgets\layercontrolpanel.cpp src\widgets\collapsiblegroupbox.cpp src\widgets\entitypropertiesdialog.cpp src\widgets\entityviewdialog.cpp src\widgets\healthassessmentdialog.cpp src\widgets\healthdevicelistdialog.cpp src\widgets\helpdialog.cpp src\widgets\settingsdialog.cpp src\tilemap\tilemapmanager.cpp src\tilemap\tileworker.cpp src\tilemap\manifeststore.cpp src\tilemap\downloadscheduler.cpp src\core\common\logger.cpp src\core\common\config.cpp src\core\utils\idgenerator.cpp src\core\database\databasemanager.cpp src\core\models\pipeline.cpp src\core\models\workorder.cpp src\core\models\facility.cpp src\core\models\user.cpp src\core\auth\sessionmanager.cpp src\core\auth\permissionmanager.cpp src\core\workorder\workorderstatustransition.cpp src\core\commands\drawcommand.cpp src\core\io\drawingdatamanager.cpp src\core\io\drawingdatabasemanager.cpp src\dao\pipelinedao.cpp src\dao\workorderdao.cpp src\dao\facilitydao.cpp src\dao\userdao.cpp src\map\layermanager.cpp src\map\symbolmanager.cpp src\map\pipelinerenderer.cpp src\map\facilityrenderer.cpp src\map\annotationrenderer.cpp src\map\mapdrawingmanager.cpp src\analysis\spatialanalyzer.cpp src\analysis\burstanalyzer.cpp src\analysis\connectivityanalyzer.cpp src\analysis\healthassessmentanalyzer.cpp src\ui\myform.ui    
+	$(ZIP) UGIMS.zip $(SOURCES) $(DIST) UGIMS.pro ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\spec_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\device_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\sanitize.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\gcc-base.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\g++-base.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\windows_vulkan_sdk.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\windows-vulkan.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\g++-win32.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\common\windows-desktop.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\qconfig.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_freetype.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_libjpeg.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_libpng.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_ext_openxr_loader.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3danimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3danimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dcore.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dcore_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dextras.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dextras_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dinput.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dinput_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dlogic.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dlogic_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickanimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickanimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickextras.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickextras_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickinput.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickinput_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickrender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickrender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene2d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene2d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene3d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3dquickscene3d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3drender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_3drender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_activeqt.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_activeqt_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axbase_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axcontainer.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axcontainer_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axserver.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_axserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bluetooth.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bluetooth_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_bodymovin_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_charts.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_charts_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_chartsqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_chartsqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_concurrent.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_concurrent_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core5compat.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core5compat_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_core_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualization.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualization_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualizationqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_datavisualizationqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_dbus.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_dbus_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designer.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designer_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_designercomponents_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_devicediscovery_support_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_entrypoint_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_example_icons_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_examples_asset_downloader_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_fb_support_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_freetype_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphs.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphs_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphswidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_graphswidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpc.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpcquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_grpcquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_gui.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_gui_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_harfbuzz_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_help.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_help_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_httpserver.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_httpserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_jpeg_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_jsonrpc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsanimation.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsanimation_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsfolderlistmodel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsfolderlistmodel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsplatform.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsplatform_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsqmlmodels.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labsqmlmodels_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssettings.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssharedimage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labssharedimage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labswavefrontmesh.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_labswavefrontmesh_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_languageserver_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_linguist.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_location.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_location_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimedia.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimedia_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediaquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediatestlibprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediawidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_multimediawidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_network.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_network_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_networkauth.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_networkauth_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_nfc.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_nfc_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_opengl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_opengl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_openglwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_openglwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_packetprotocol_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_png_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioning.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioning_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioningquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_positioningquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_printsupport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_printsupport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobuf.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobuf_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtcoretypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtcoretypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtguitypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufqtguitypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufwellknowntypes.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_protobufwellknowntypes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatch_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatchconversions_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qdoccatchgenerators_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlassetdownloader.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlassetdownloader_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcompiler.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcompiler_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcore.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlcore_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmldebug_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmldom_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlintegration.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlintegration_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmllocalstorage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmllocalstorage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlls_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmeta.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmeta_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmodels.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlmodels_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlnetwork.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlnetwork_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltest.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltest_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltoolingsettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmltyperegistrar_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlworkerscript.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlworkerscript_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlxmllistmodel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_qmlxmllistmodel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3d.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3d_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetimport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetimport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetutils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dassetutils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3deffects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3deffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dglslparser_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpers.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpers_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpersimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dhelpersimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3diblbaker.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3diblbaker_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticleeffects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticleeffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticles.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dparticles_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysics.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysics_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysicshelpers.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dphysicshelpers_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3druntimerender.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3druntimerender_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dspatialaudio_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dutils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dutils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dxr.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick3dxr_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basic.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basic_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basicstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2basicstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fluentwinui3styleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fluentwinui3styleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusion.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusion_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusionstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2fusionstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imagine.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imagine_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imaginestyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2imaginestyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2impl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2impl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2material.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2material_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2materialstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2materialstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universal.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universal_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universalstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2universalstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2windowsstyleimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrols2windowsstyleimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickcontrolstestutilsprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2quickimpl.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2quickimpl_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2utils.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickdialogs2utils_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickeffects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicklayouts.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicklayouts_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickparticles_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickshapes_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktemplates2.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktemplates2_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktestutilsprivate_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimeline.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimeline_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimelineblendtrees.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quicktimelineblendtrees_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimage.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimage_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickvectorimagegenerator_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_quickwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjects.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjects_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjectsqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_remoteobjectsqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_repparser.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_repparser_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxmlqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_scxmlqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensors.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensors_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensorsquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sensorsquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialbus.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialbus_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialport.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_serialport_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_shadertools.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_shadertools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_spatialaudio.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_spatialaudio_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sql.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_sql_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachine.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachine_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachineqml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_statemachineqml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svg.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svg_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svgwidgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_svgwidgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_testlib.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_testlib_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_texttospeech.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_texttospeech_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_tools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uiplugin.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uitools.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_uitools_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboard.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboard_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboardsettings.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_virtualkeyboardsettings_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannel.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannel_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannelquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webchannelquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_websockets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_websockets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webview.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webview_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webviewquick.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_webviewquick_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_widgets.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_widgets_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_xml.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_xml_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\modules\qt_lib_zlib_private.pri ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt_functions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\win32-g++\qmake.conf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\spec_post.prf .qmake.stash ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exclusive_builds.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\toolchain.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\default_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\default_pre.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resolve_config.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exclusive_builds_post.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\default_post.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\build_pass.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\precompile_header.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\warn_on.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\permissions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qt.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resources_functions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\resources.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\moc.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\opengl.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\uic.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\qmake_use.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\file_copies.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\win32\windows.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\testcase_targets.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\exceptions.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\yacc.prf ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\lex.prf UGIMS.pro resources\image.qrc resources\style.qrc ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6PrintSupport.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Widgets.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Gui.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Network.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Sql.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Concurrent.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6Core.prl ..\..\..\Softwore\Qt\6.8.1\mingw_64\lib\Qt6EntryPoint.prl   resources\image.qrc resources\style.qrc ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\data\dummy.cpp src\ui\myform.h src\ui\mapmanagerdialog.h src\ui\analysispanel.h src\ui\pipelineeditdialog.h src\widgets\workordermanagerdialog.h src\widgets\workordereditdialog.h src\widgets\assetmanagerdialog.h src\widgets\assetstatisticsdialog.h src\widgets\facilityeditdialog.h src\widgets\logindialog.h src\widgets\customcombobox.h src\widgets\customcheckbox.h src\widgets\usermanagerdialog.h src\widgets\basewindow.h src\widgets\customtitlebar.h src\widgets\mapmanagersettings.h src\widgets\drawingtoolpanel.h src\widgets\layercontrolpanel.h src\widgets\collapsiblegroupbox.h src\widgets\entitypropertiesdialog.h src\widgets\entityviewdialog.h src\widgets\healthassessmentdialog.h src\widgets\healthdevicelistdialog.h src\widgets\helpdialog.h src\widgets\settingsdialog.h src\widgets\messagedialog.h src\widgets\profiledialog.h src\tilemap\tilemapmanager.h src\tilemap\tileworker.h src\tilemap\manifeststore.h src\tilemap\downloadscheduler.h src\core\common\logger.h src\core\common\config.h src\core\utils\idgenerator.h src\core\database\databasemanager.h src\core\models\pipeline.h src\core\models\workorder.h src\core\models\facility.h src\core\models\user.h src\core\auth\sessionmanager.h src\core\auth\permissionmanager.h src\core\workorder\workorderstatustransition.h src\core\commands\drawcommand.h src\core\io\drawingdatamanager.h src\core\io\drawingdatabasemanager.h src\dao\basedao.h src\dao\pipelinedao.h src\dao\workorderdao.h src\dao\facilitydao.h src\dao\userdao.h src\map\layermanager.h src\map\symbolmanager.h src\map\pipelinerenderer.h src\map\facilityrenderer.h src\map\annotationrenderer.h src\map\mapdrawingmanager.h src\analysis\spatialanalyzer.h src\analysis\burstanalyzer.h src\analysis\connectivityanalyzer.h src\analysis\healthassessmentanalyzer.h  src\main.cpp src\ui\myform.cpp src\ui\mapmanagerdialog.cpp src\ui\analysispanel.cpp src\ui\pipelineeditdialog.cpp src\widgets\workordermanagerdialog.cpp src\widgets\workordereditdialog.cpp src\widgets\assetmanagerdialog.cpp src\widgets\assetstatisticsdialog.cpp src\widgets\facilityeditdialog.cpp src\widgets\logindialog.cpp src\widgets\customcombobox.cpp src\widgets\customcheckbox.cpp src\widgets\usermanagerdialog.cpp src\widgets\basewindow.cpp src\widgets\customtitlebar.cpp src\widgets\mapmanagersettings.cpp src\widgets\drawingtoolpanel.cpp src\widgets\layercontrolpanel.cpp src\widgets\collapsiblegroupbox.cpp src\widgets\entitypropertiesdialog.cpp src\widgets\entityviewdialog.cpp src\widgets\healthassessmentdialog.cpp src\widgets\healthdevicelistdialog.cpp src\widgets\helpdialog.cpp src\widgets\settingsdialog.cpp src\widgets\messagedialog.cpp src\widgets\profiledialog.cpp src\tilemap\tilemapmanager.cpp src\tilemap\tileworker.cpp src\tilemap\manifeststore.cpp src\tilemap\downloadscheduler.cpp src\core\common\logger.cpp src\core\common\config.cpp src\core\utils\idgenerator.cpp src\core\database\databasemanager.cpp src\core\models\pipeline.cpp src\core\models\workorder.cpp src\core\models\facility.cpp src\core\models\user.cpp src\core\auth\sessionmanager.cpp src\core\auth\permissionmanager.cpp src\core\workorder\workorderstatustransition.cpp src\core\commands\drawcommand.cpp src\core\io\drawingdatamanager.cpp src\core\io\drawingdatabasemanager.cpp src\dao\pipelinedao.cpp src\dao\workorderdao.cpp src\dao\facilitydao.cpp src\dao\userdao.cpp src\map\layermanager.cpp src\map\symbolmanager.cpp src\map\pipelinerenderer.cpp src\map\facilityrenderer.cpp src\map\annotationrenderer.cpp src\map\mapdrawingmanager.cpp src\analysis\spatialanalyzer.cpp src\analysis\burstanalyzer.cpp src\analysis\connectivityanalyzer.cpp src\analysis\healthassessmentanalyzer.cpp src\ui\myform.ui    
 
 clean: compiler_clean 
-	-$(DEL_FILE) debug\main.o debug\myform.o debug\mapmanagerdialog.o debug\analysispanel.o debug\pipelineeditdialog.o debug\workordermanagerdialog.o debug\workordereditdialog.o debug\assetmanagerdialog.o debug\assetstatisticsdialog.o debug\facilityeditdialog.o debug\logindialog.o debug\customcombobox.o debug\customcheckbox.o debug\usermanagerdialog.o debug\basewindow.o debug\customtitlebar.o debug\mapmanagersettings.o debug\drawingtoolpanel.o debug\layercontrolpanel.o debug\collapsiblegroupbox.o debug\entitypropertiesdialog.o debug\entityviewdialog.o debug\healthassessmentdialog.o debug\healthdevicelistdialog.o debug\helpdialog.o debug\settingsdialog.o debug\tilemapmanager.o debug\tileworker.o debug\manifeststore.o debug\downloadscheduler.o debug\logger.o debug\config.o debug\idgenerator.o debug\databasemanager.o debug\pipeline.o debug\workorder.o debug\facility.o debug\user.o debug\sessionmanager.o debug\permissionmanager.o debug\workorderstatustransition.o debug\drawcommand.o debug\drawingdatamanager.o debug\drawingdatabasemanager.o debug\pipelinedao.o debug\workorderdao.o debug\facilitydao.o debug\userdao.o debug\layermanager.o debug\symbolmanager.o debug\pipelinerenderer.o debug\facilityrenderer.o debug\annotationrenderer.o debug\mapdrawingmanager.o debug\spatialanalyzer.o debug\burstanalyzer.o debug\connectivityanalyzer.o debug\healthassessmentanalyzer.o debug\qrc_image.o debug\qrc_style.o debug\moc_myform.o debug\moc_mapmanagerdialog.o debug\moc_analysispanel.o debug\moc_pipelineeditdialog.o debug\moc_workordermanagerdialog.o debug\moc_workordereditdialog.o debug\moc_assetmanagerdialog.o debug\moc_assetstatisticsdialog.o debug\moc_facilityeditdialog.o debug\moc_logindialog.o debug\moc_customcombobox.o debug\moc_customcheckbox.o debug\moc_usermanagerdialog.o debug\moc_basewindow.o debug\moc_customtitlebar.o debug\moc_drawingtoolpanel.o debug\moc_layercontrolpanel.o debug\moc_collapsiblegroupbox.o debug\moc_entitypropertiesdialog.o debug\moc_entityviewdialog.o debug\moc_healthassessmentdialog.o
-	-$(DEL_FILE) debug\moc_healthdevicelistdialog.o debug\moc_helpdialog.o debug\moc_settingsdialog.o debug\moc_tilemapmanager.o debug\moc_tileworker.o debug\moc_downloadscheduler.o debug\moc_sessionmanager.o debug\moc_permissionmanager.o debug\moc_workorderstatustransition.o debug\moc_layermanager.o debug\moc_symbolmanager.o debug\moc_pipelinerenderer.o debug\moc_facilityrenderer.o debug\moc_annotationrenderer.o debug\moc_mapdrawingmanager.o debug\moc_spatialanalyzer.o debug\moc_burstanalyzer.o debug\moc_connectivityanalyzer.o debug\moc_healthassessmentanalyzer.o
+	-$(DEL_FILE) debug\main.o debug\myform.o debug\mapmanagerdialog.o debug\analysispanel.o debug\pipelineeditdialog.o debug\workordermanagerdialog.o debug\workordereditdialog.o debug\assetmanagerdialog.o debug\assetstatisticsdialog.o debug\facilityeditdialog.o debug\logindialog.o debug\customcombobox.o debug\customcheckbox.o debug\usermanagerdialog.o debug\basewindow.o debug\customtitlebar.o debug\mapmanagersettings.o debug\drawingtoolpanel.o debug\layercontrolpanel.o debug\collapsiblegroupbox.o debug\entitypropertiesdialog.o debug\entityviewdialog.o debug\healthassessmentdialog.o debug\healthdevicelistdialog.o debug\helpdialog.o debug\settingsdialog.o debug\messagedialog.o debug\profiledialog.o debug\tilemapmanager.o debug\tileworker.o debug\manifeststore.o debug\downloadscheduler.o debug\logger.o debug\config.o debug\idgenerator.o debug\databasemanager.o debug\pipeline.o debug\workorder.o debug\facility.o debug\user.o debug\sessionmanager.o debug\permissionmanager.o debug\workorderstatustransition.o debug\drawcommand.o debug\drawingdatamanager.o debug\drawingdatabasemanager.o debug\pipelinedao.o debug\workorderdao.o debug\facilitydao.o debug\userdao.o debug\layermanager.o debug\symbolmanager.o debug\pipelinerenderer.o debug\facilityrenderer.o debug\annotationrenderer.o debug\mapdrawingmanager.o debug\spatialanalyzer.o debug\burstanalyzer.o debug\connectivityanalyzer.o debug\healthassessmentanalyzer.o debug\qrc_image.o debug\qrc_style.o debug\moc_myform.o debug\moc_mapmanagerdialog.o debug\moc_analysispanel.o debug\moc_pipelineeditdialog.o debug\moc_workordermanagerdialog.o debug\moc_workordereditdialog.o debug\moc_assetmanagerdialog.o debug\moc_assetstatisticsdialog.o debug\moc_facilityeditdialog.o debug\moc_logindialog.o debug\moc_customcombobox.o debug\moc_customcheckbox.o debug\moc_usermanagerdialog.o debug\moc_basewindow.o debug\moc_customtitlebar.o debug\moc_drawingtoolpanel.o debug\moc_layercontrolpanel.o debug\moc_collapsiblegroupbox.o debug\moc_entitypropertiesdialog.o debug\moc_entityviewdialog.o
+	-$(DEL_FILE) debug\moc_healthassessmentdialog.o debug\moc_healthdevicelistdialog.o debug\moc_helpdialog.o debug\moc_settingsdialog.o debug\moc_messagedialog.o debug\moc_profiledialog.o debug\moc_tilemapmanager.o debug\moc_tileworker.o debug\moc_downloadscheduler.o debug\moc_sessionmanager.o debug\moc_permissionmanager.o debug\moc_workorderstatustransition.o debug\moc_layermanager.o debug\moc_symbolmanager.o debug\moc_pipelinerenderer.o debug\moc_facilityrenderer.o debug\moc_annotationrenderer.o debug\moc_mapdrawingmanager.o debug\moc_spatialanalyzer.o debug\moc_burstanalyzer.o debug\moc_connectivityanalyzer.o debug\moc_healthassessmentanalyzer.o
 
 distclean: clean 
 	-$(DEL_FILE) .qmake.stash
@@ -411,6 +423,9 @@ compiler_rcc_clean:
 debug/qrc_image.cpp: resources/image.qrc \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/rcc.exe \
 		resources/images/maximize.png \
+		resources/images/Message.png \
+		resources/images/NoMessage.png \
+		resources/images/Account.png \
 		resources/images/minimize.png \
 		resources/images/restore.png \
 		resources/images/OrangeCat.png \
@@ -428,9 +443,9 @@ compiler_moc_predefs_clean:
 debug/moc_predefs.h: ../../../Softwore/Qt/6.8.1/mingw_64/mkspecs/features/data/dummy.cpp
 	g++ -fno-keep-inline-dllexport -g -std=gnu++1z -Wall -Wextra -Wextra -dM -E -o debug\moc_predefs.h ..\..\..\Softwore\Qt\6.8.1\mingw_64\mkspecs\features\data\dummy.cpp
 
-compiler_moc_header_make_all: debug/moc_myform.cpp debug/moc_mapmanagerdialog.cpp debug/moc_analysispanel.cpp debug/moc_pipelineeditdialog.cpp debug/moc_workordermanagerdialog.cpp debug/moc_workordereditdialog.cpp debug/moc_assetmanagerdialog.cpp debug/moc_assetstatisticsdialog.cpp debug/moc_facilityeditdialog.cpp debug/moc_logindialog.cpp debug/moc_customcombobox.cpp debug/moc_customcheckbox.cpp debug/moc_usermanagerdialog.cpp debug/moc_basewindow.cpp debug/moc_customtitlebar.cpp debug/moc_drawingtoolpanel.cpp debug/moc_layercontrolpanel.cpp debug/moc_collapsiblegroupbox.cpp debug/moc_entitypropertiesdialog.cpp debug/moc_entityviewdialog.cpp debug/moc_healthassessmentdialog.cpp debug/moc_healthdevicelistdialog.cpp debug/moc_helpdialog.cpp debug/moc_settingsdialog.cpp debug/moc_tilemapmanager.cpp debug/moc_tileworker.cpp debug/moc_downloadscheduler.cpp debug/moc_sessionmanager.cpp debug/moc_permissionmanager.cpp debug/moc_workorderstatustransition.cpp debug/moc_layermanager.cpp debug/moc_symbolmanager.cpp debug/moc_pipelinerenderer.cpp debug/moc_facilityrenderer.cpp debug/moc_annotationrenderer.cpp debug/moc_mapdrawingmanager.cpp debug/moc_spatialanalyzer.cpp debug/moc_burstanalyzer.cpp debug/moc_connectivityanalyzer.cpp debug/moc_healthassessmentanalyzer.cpp
+compiler_moc_header_make_all: debug/moc_myform.cpp debug/moc_mapmanagerdialog.cpp debug/moc_analysispanel.cpp debug/moc_pipelineeditdialog.cpp debug/moc_workordermanagerdialog.cpp debug/moc_workordereditdialog.cpp debug/moc_assetmanagerdialog.cpp debug/moc_assetstatisticsdialog.cpp debug/moc_facilityeditdialog.cpp debug/moc_logindialog.cpp debug/moc_customcombobox.cpp debug/moc_customcheckbox.cpp debug/moc_usermanagerdialog.cpp debug/moc_basewindow.cpp debug/moc_customtitlebar.cpp debug/moc_drawingtoolpanel.cpp debug/moc_layercontrolpanel.cpp debug/moc_collapsiblegroupbox.cpp debug/moc_entitypropertiesdialog.cpp debug/moc_entityviewdialog.cpp debug/moc_healthassessmentdialog.cpp debug/moc_healthdevicelistdialog.cpp debug/moc_helpdialog.cpp debug/moc_settingsdialog.cpp debug/moc_messagedialog.cpp debug/moc_profiledialog.cpp debug/moc_tilemapmanager.cpp debug/moc_tileworker.cpp debug/moc_downloadscheduler.cpp debug/moc_sessionmanager.cpp debug/moc_permissionmanager.cpp debug/moc_workorderstatustransition.cpp debug/moc_layermanager.cpp debug/moc_symbolmanager.cpp debug/moc_pipelinerenderer.cpp debug/moc_facilityrenderer.cpp debug/moc_annotationrenderer.cpp debug/moc_mapdrawingmanager.cpp debug/moc_spatialanalyzer.cpp debug/moc_burstanalyzer.cpp debug/moc_connectivityanalyzer.cpp debug/moc_healthassessmentanalyzer.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) debug\moc_myform.cpp debug\moc_mapmanagerdialog.cpp debug\moc_analysispanel.cpp debug\moc_pipelineeditdialog.cpp debug\moc_workordermanagerdialog.cpp debug\moc_workordereditdialog.cpp debug\moc_assetmanagerdialog.cpp debug\moc_assetstatisticsdialog.cpp debug\moc_facilityeditdialog.cpp debug\moc_logindialog.cpp debug\moc_customcombobox.cpp debug\moc_customcheckbox.cpp debug\moc_usermanagerdialog.cpp debug\moc_basewindow.cpp debug\moc_customtitlebar.cpp debug\moc_drawingtoolpanel.cpp debug\moc_layercontrolpanel.cpp debug\moc_collapsiblegroupbox.cpp debug\moc_entitypropertiesdialog.cpp debug\moc_entityviewdialog.cpp debug\moc_healthassessmentdialog.cpp debug\moc_healthdevicelistdialog.cpp debug\moc_helpdialog.cpp debug\moc_settingsdialog.cpp debug\moc_tilemapmanager.cpp debug\moc_tileworker.cpp debug\moc_downloadscheduler.cpp debug\moc_sessionmanager.cpp debug\moc_permissionmanager.cpp debug\moc_workorderstatustransition.cpp debug\moc_layermanager.cpp debug\moc_symbolmanager.cpp debug\moc_pipelinerenderer.cpp debug\moc_facilityrenderer.cpp debug\moc_annotationrenderer.cpp debug\moc_mapdrawingmanager.cpp debug\moc_spatialanalyzer.cpp debug\moc_burstanalyzer.cpp debug\moc_connectivityanalyzer.cpp debug\moc_healthassessmentanalyzer.cpp
+	-$(DEL_FILE) debug\moc_myform.cpp debug\moc_mapmanagerdialog.cpp debug\moc_analysispanel.cpp debug\moc_pipelineeditdialog.cpp debug\moc_workordermanagerdialog.cpp debug\moc_workordereditdialog.cpp debug\moc_assetmanagerdialog.cpp debug\moc_assetstatisticsdialog.cpp debug\moc_facilityeditdialog.cpp debug\moc_logindialog.cpp debug\moc_customcombobox.cpp debug\moc_customcheckbox.cpp debug\moc_usermanagerdialog.cpp debug\moc_basewindow.cpp debug\moc_customtitlebar.cpp debug\moc_drawingtoolpanel.cpp debug\moc_layercontrolpanel.cpp debug\moc_collapsiblegroupbox.cpp debug\moc_entitypropertiesdialog.cpp debug\moc_entityviewdialog.cpp debug\moc_healthassessmentdialog.cpp debug\moc_healthdevicelistdialog.cpp debug\moc_helpdialog.cpp debug\moc_settingsdialog.cpp debug\moc_messagedialog.cpp debug\moc_profiledialog.cpp debug\moc_tilemapmanager.cpp debug\moc_tileworker.cpp debug\moc_downloadscheduler.cpp debug\moc_sessionmanager.cpp debug\moc_permissionmanager.cpp debug\moc_workorderstatustransition.cpp debug\moc_layermanager.cpp debug\moc_symbolmanager.cpp debug\moc_pipelinerenderer.cpp debug\moc_facilityrenderer.cpp debug\moc_annotationrenderer.cpp debug\moc_mapdrawingmanager.cpp debug\moc_spatialanalyzer.cpp debug\moc_burstanalyzer.cpp debug\moc_connectivityanalyzer.cpp debug\moc_healthassessmentanalyzer.cpp
 debug/moc_myform.cpp: src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QWidget \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidget.h \
@@ -5755,6 +5770,438 @@ debug/moc_settingsdialog.cpp: src/widgets/settingsdialog.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
 	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/debug/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtPrintSupport -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\settingsdialog.h -o debug\moc_settingsdialog.cpp
 
+debug/moc_messagedialog.cpp: src/widgets/messagedialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversionchecks.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfiginclude.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconfig.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcore-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfigmacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationdefinitions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcoreexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompilerdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qprocessordetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsystemdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationmarkers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtclasshelpermacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtpreprocessorsupport.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qassert.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtnoop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypes.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypeinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsysinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlogging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qflags.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasicatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic_cxx11.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qgenericatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qyieldcpu.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconstructormacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdarwinhelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexceptionhandling.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qforeach.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttypetraits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobalstatic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmalloc.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qminmax.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnumeric.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qoverload.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qswap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtenvironmentvariables.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtresource.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttranslation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qversiontagging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtgui-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgets-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnamespace.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcomparehelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20type_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtmetamacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionaltools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs_win.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstring.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qchar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrefcount.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpair.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydatapointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydataops.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainertools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qxptype_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20functional.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20memory.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringliteral.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlatin1stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qanystringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qutf8stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringtokenizer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringbuilder.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter_base.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhashfunctions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearraylist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringmatcher.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetatype.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatastream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevicebase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfloat16.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmath.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetacontainer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtaggedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopeguard.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbindingstorage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmargins.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q23utility.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qaction.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qkeysequence.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qicon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsize.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpaintdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrect.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcolor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgb.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgba64.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qimage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixelformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtransform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpolygon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qregion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qspan.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20iterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qline.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariant.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdebug.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtextstream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontiguouscache.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qset.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpalette.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbrush.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfont.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qendian.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontmetrics.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbitmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qurl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qeventpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvector2d.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvectornd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpointingdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QList \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRect \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSize \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSizeF \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QTransform \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnativeinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeventloop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfutureinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qresultstore.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthreadpool.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthread.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrunnable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexception.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpromise.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputmethod.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListWidget \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractitemmodel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qitemselectionmodel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qstyleoption.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractspinbox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvalidator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qregularexpression.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qslider.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractslider.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qstyle.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabbar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qrubberband.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QPushButton \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qpushbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLabel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlabel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
+		debug/moc_predefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/debug/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtPrintSupport -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\messagedialog.h -o debug\moc_messagedialog.cpp
+
+debug/moc_profiledialog.cpp: src/widgets/profiledialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversionchecks.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfiginclude.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconfig.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcore-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfigmacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationdefinitions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcoreexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompilerdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qprocessordetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsystemdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationmarkers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtclasshelpermacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtpreprocessorsupport.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qassert.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtnoop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypes.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypeinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsysinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlogging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qflags.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasicatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic_cxx11.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qgenericatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qyieldcpu.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconstructormacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdarwinhelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexceptionhandling.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qforeach.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttypetraits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobalstatic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmalloc.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qminmax.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnumeric.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qoverload.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qswap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtenvironmentvariables.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtresource.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttranslation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qversiontagging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtgui-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgets-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnamespace.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcomparehelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20type_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtmetamacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionaltools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs_win.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstring.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qchar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrefcount.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpair.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydatapointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydataops.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainertools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qxptype_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20functional.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20memory.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringliteral.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlatin1stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qanystringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qutf8stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringtokenizer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringbuilder.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter_base.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhashfunctions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearraylist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringmatcher.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetatype.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatastream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevicebase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfloat16.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmath.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetacontainer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtaggedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopeguard.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbindingstorage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmargins.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q23utility.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qaction.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qkeysequence.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qicon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsize.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpaintdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrect.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcolor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgb.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgba64.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qimage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixelformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtransform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpolygon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qregion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qspan.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20iterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qline.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariant.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdebug.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtextstream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontiguouscache.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qset.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpalette.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbrush.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfont.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qendian.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontmetrics.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbitmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qurl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qeventpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvector2d.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvectornd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpointingdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QList \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRect \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSize \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSizeF \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QTransform \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnativeinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeventloop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfutureinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qresultstore.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthreadpool.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthread.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrunnable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexception.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpromise.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputmethod.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLineEdit \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlineedit.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextoption.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QPushButton \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qpushbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLabel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlabel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGroupBox \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgroupbox.h \
+		debug/moc_predefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/bin/moc.exe
+	E:\Softwore\Qt\6.8.1\mingw_64\bin\moc.exe $(DEFINES) --include E:/Project/CursorProject/UGIMS/debug/moc_predefs.h -IE:/Softwore/Qt/6.8.1/mingw_64/mkspecs/win32-g++ -IE:/Project/CursorProject/UGIMS -IE:/Project/CursorProject/UGIMS/src -IE:/Softwore/Qt/6.8.1/mingw_64/include -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtPrintSupport -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtWidgets -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtGui -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtNetwork -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtSql -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtConcurrent -IE:/Softwore/Qt/6.8.1/mingw_64/include/QtCore -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IE:/Softwore/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IE:/Softwore/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include src\widgets\profiledialog.h -o debug\moc_profiledialog.cpp
+
 debug/moc_tilemapmanager.cpp: src/tilemap/tilemapmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
@@ -8844,6 +9291,11 @@ debug/myform.o: src/ui/myform.cpp src/ui/myform.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontdatabase.h \
 		src/widgets/helpdialog.h \
 		src/widgets/entityviewdialog.h \
+		src/widgets/messagedialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListWidget \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		src/widgets/profiledialog.h \
 		src/core/auth/sessionmanager.h \
 		src/core/models/user.h \
 		src/core/auth/permissionmanager.h \
@@ -14941,6 +15393,501 @@ debug/settingsdialog.o: src/widgets/settingsdialog.cpp src/widgets/settingsdialo
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\settingsdialog.o src\widgets\settingsdialog.cpp
 
+debug/messagedialog.o: src/widgets/messagedialog.cpp src/widgets/messagedialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversionchecks.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfiginclude.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconfig.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcore-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfigmacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationdefinitions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcoreexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompilerdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qprocessordetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsystemdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationmarkers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtclasshelpermacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtpreprocessorsupport.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qassert.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtnoop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypes.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypeinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsysinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlogging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qflags.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasicatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic_cxx11.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qgenericatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qyieldcpu.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconstructormacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdarwinhelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexceptionhandling.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qforeach.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttypetraits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobalstatic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmalloc.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qminmax.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnumeric.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qoverload.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qswap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtenvironmentvariables.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtresource.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttranslation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qversiontagging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtgui-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgets-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnamespace.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcomparehelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20type_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtmetamacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionaltools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs_win.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstring.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qchar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrefcount.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpair.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydatapointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydataops.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainertools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qxptype_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20functional.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20memory.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringliteral.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlatin1stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qanystringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qutf8stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringtokenizer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringbuilder.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter_base.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhashfunctions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearraylist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringmatcher.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetatype.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatastream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevicebase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfloat16.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmath.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetacontainer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtaggedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopeguard.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbindingstorage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmargins.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q23utility.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qaction.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qkeysequence.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qicon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsize.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpaintdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrect.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcolor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgb.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgba64.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qimage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixelformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtransform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpolygon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qregion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qspan.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20iterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qline.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariant.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdebug.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtextstream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontiguouscache.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qset.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpalette.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbrush.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfont.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qendian.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontmetrics.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbitmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qurl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qeventpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvector2d.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvectornd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpointingdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QList \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRect \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSize \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSizeF \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QTransform \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnativeinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeventloop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfutureinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qresultstore.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthreadpool.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthread.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrunnable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexception.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpromise.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputmethod.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListWidget \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlistview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qabstractitemmodel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qitemselectionmodel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qstyleoption.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractspinbox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvalidator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qregularexpression.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qslider.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractslider.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qstyle.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabbar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtabwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qrubberband.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QPushButton \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qpushbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLabel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlabel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
+		src/core/auth/sessionmanager.h \
+		src/core/models/user.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QString \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDateTime \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatetime.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcalendar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QStringList \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QVBoxLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qboxlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgridlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QHBoxLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QListWidgetItem \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QButtonGroup \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qbuttongroup.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QMessageBox \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qmessagebox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialogbuttonbox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDebug \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QIcon \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QFont
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\messagedialog.o src\widgets\messagedialog.cpp
+
+debug/profiledialog.o: src/widgets/profiledialog.cpp src/widgets/profiledialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QDialog \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialog.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversionchecks.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfiginclude.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconfig.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcore-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtconfigmacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationdefinitions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtcoreexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompilerdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qprocessordetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsystemdetection.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtdeprecationmarkers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtclasshelpermacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtpreprocessorsupport.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qassert.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtnoop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypes.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtversion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtypeinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsysinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlogging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qflags.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbasicatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qatomic_cxx11.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qgenericatomic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qyieldcpu.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qconstructormacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdarwinhelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexceptionhandling.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qforeach.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttypetraits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qglobalstatic.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmalloc.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qminmax.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnumeric.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qoverload.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qswap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtenvironmentvariables.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtresource.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qttranslation.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qversiontagging.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtgui-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtguiexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgets-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qtwidgetsexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qwidget.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnamespace.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcompare.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcomparehelpers.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20type_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtmetamacros.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfunctionaltools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qwindowdefs_win.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstring.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qchar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrefcount.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpair.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydatapointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qarraydataops.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainertools_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qxptype_traits.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20functional.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20memory.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearrayview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringfwd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringliteral.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlatin1stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qanystringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qutf8stringview.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringtokenizer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringbuilder.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringconverter_base.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhashfunctions.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbytearraylist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringlist.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qalgorithms.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qstringmatcher.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetatype.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatastream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevicebase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfloat16.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmath.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiterable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetacontainer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontainerinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtaggedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qscopeguard.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qbindingstorage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmargins.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q23utility.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qaction.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qkeysequence.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qicon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsize.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpaintdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrect.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcolor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgb.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qrgba64.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qimage.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpixelformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtransform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpolygon.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qregion.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qspan.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/q20iterator.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qline.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariant.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdebug.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtextstream.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcontiguouscache.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qshareddata_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qset.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qhash.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvarlengtharray.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpalette.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbrush.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfont.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qendian.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontmetrics.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qfontinfo.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qbitmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qevent.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qiodevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qurl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qeventpoint.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvector2d.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvectornd.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpointingdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputdevice.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QList \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRect \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSize \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QSizeF \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QTransform \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qnativeinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qscreen_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qelapsedtimer.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qeventloop.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfutureinterface.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmutex.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qtsan_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qresultstore.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qfuture_impl.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthreadpool.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qthread.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qrunnable.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qexception.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qpromise.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qinputmethod.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qlocale.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLineEdit \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlineedit.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qframe.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextcursor.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextdocument.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextformat.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpen.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qtextoption.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QPushButton \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qpushbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLabel \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlabel.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qpicture.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QGroupBox \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgroupbox.h \
+		src/core/auth/sessionmanager.h \
+		src/core/models/user.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QString \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDateTime \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qdatetime.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcalendar.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QStringList \
+		src/dao/userdao.h \
+		src/dao/basedao.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVariantMap \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvariantmap.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QMap \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVariant \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlQuery \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqlquery.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsqlglobal.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsql-config.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qtsqlexports.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqldatabase.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qmetaobject.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QVector \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qvector.h \
+		src/core/database/databasemanager.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlDatabase \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/QSqlError \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtSql/qsqlerror.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QMutex \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QVBoxLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qboxlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qlayoutitem.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qgridlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QFormLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qformlayout.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QLayout \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/QMessageBox \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qmessagebox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtWidgets/qdialogbuttonbox.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QDebug \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QCryptographicHash \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qcryptographichash.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QRegularExpression \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qregularexpression.h \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/QRegularExpressionValidator \
+		../../../Softwore/Qt/6.8.1/mingw_64/include/QtGui/qvalidator.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\profiledialog.o src\widgets\profiledialog.cpp
+
 debug/tilemapmanager.o: src/tilemap/tilemapmanager.cpp src/tilemap/tilemapmanager.h \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/QObject \
 		../../../Softwore/Qt/6.8.1/mingw_64/include/QtCore/qobject.h \
@@ -20617,6 +21564,12 @@ debug/moc_helpdialog.o: debug/moc_helpdialog.cpp
 
 debug/moc_settingsdialog.o: debug/moc_settingsdialog.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\moc_settingsdialog.o debug\moc_settingsdialog.cpp
+
+debug/moc_messagedialog.o: debug/moc_messagedialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\moc_messagedialog.o debug\moc_messagedialog.cpp
+
+debug/moc_profiledialog.o: debug/moc_profiledialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\moc_profiledialog.o debug\moc_profiledialog.cpp
 
 debug/moc_tilemapmanager.o: debug/moc_tilemapmanager.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\moc_tilemapmanager.o debug\moc_tilemapmanager.cpp

@@ -37,6 +37,7 @@ class QGraphicsPolygonItem;
 struct BurstAnalysisResult;
 struct ConnectivityResult;
 enum class ConnectivityType;  // 前置声明
+class MessageDialog;  // 消息对话框前向声明
 
 namespace Ui {
 class MyForm;
@@ -62,6 +63,9 @@ private slots:
     void handleSaveButtonClicked();     // 保存
     void handleUndoButtonClicked();     // 撤销
     void handleRedoButtonClicked();     // 重做
+    void handleMessageButtonClicked();  // 消息
+    void handleProfileButtonClicked();  // 个人信息
+    void onUnreadCountChanged(int count);  // 未读消息数量变化
     void handleUndoForPendingChanges(); // 处理撤销操作对待保存变更列表的影响
     void handleRedoForPendingChanges(); // 处理重做操作对待保存变更列表的影响
     
@@ -302,6 +306,9 @@ private:
     QPushButton *m_panelCloseBtn;          // 面板关闭按钮
     QString m_currentPanel;                // 当前显示的面板（"drawing" / "layer" / ""）
     
+    // 消息和个人信息对话框
+    MessageDialog *m_messageDialog;        // 消息对话框（单例，延迟创建）
+    
     // 实体选中管理
     QGraphicsItem *m_selectedItem;         // 当前选中的图形项
     QPen m_originalPen;                    // 选中前的原始画笔（用于恢复）
@@ -371,6 +378,7 @@ private:
     void setupSplitter();
     void updateStatus(const QString &message);
     void updateUndoRedoButtonStates();    // 更新撤销/重做按钮状态
+    void updateMessageButtonIcon(bool hasMessage);  // 更新消息按钮图标（有消息/无消息）
     void createFloatingStatusBar();       // 创建浮动状态栏
     void positionFloatingStatusBar();      // 定位浮动状态栏
     void updateFloatingProgressBar(int current, int total); // 更新浮动进度条

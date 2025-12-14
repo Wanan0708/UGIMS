@@ -11,6 +11,8 @@
 #include "widgets/settingsdialog.h"  // 系统设置对话框
 #include "widgets/helpdialog.h"  // 帮助对话框
 #include "widgets/entityviewdialog.h"  // 实体属性查看对话框
+#include "widgets/messagedialog.h"  // 消息对话框
+#include "widgets/profiledialog.h"  // 个人信息对话框
 #include "core/auth/sessionmanager.h"  // 会话管理
 #include "core/auth/permissionmanager.h"  // 权限管理
 #include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
@@ -124,6 +126,7 @@ MyForm::MyForm(QWidget *parent)
     , m_panelLayerBtn(nullptr)  // 初始化面板图层按钮
     , m_panelCloseBtn(nullptr)  // 初始化面板关闭按钮
     , m_currentPanel("")  // 初始为空，没有面板展开
+    , m_messageDialog(nullptr)  // 初始化消息对话框
     , m_selectedItem(nullptr)  // 初始化选中项
     , m_nextPipelineId(1)  // 从ID=1开始
     , m_copiedItem(nullptr)  // 初始化复制项
@@ -430,6 +433,10 @@ void MyForm::setupFunctionalArea() {
     ui->saveButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
     ui->undoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
     ui->redoButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
+    // 使用自定义图标：消息按钮（默认无消息状态）
+    ui->messageButton->setIcon(QIcon(":/new/prefix1/images/NoMessage.png"));
+    // 使用自定义图标：个人信息按钮
+    ui->profileButton->setIcon(QIcon(":/new/prefix1/images/Account.png"));
 
     // 设置工具栏按钮的样式
     auto setToolButtonStyle = [](QToolButton *btn) {
@@ -445,18 +452,24 @@ void MyForm::setupFunctionalArea() {
     setToolButtonStyle(ui->saveButton);
     setToolButtonStyle(ui->undoButton);
     setToolButtonStyle(ui->redoButton);
+    setToolButtonStyle(ui->messageButton);
+    setToolButtonStyle(ui->profileButton);
 
     // 连接工具栏按钮
     connect(ui->refreshButton, &QToolButton::clicked, this, &MyForm::handleRefreshButtonClicked);
     connect(ui->saveButton, &QToolButton::clicked, this, &MyForm::handleSaveButtonClicked);
     connect(ui->undoButton, &QToolButton::clicked, this, &MyForm::handleUndoButtonClicked);
     connect(ui->redoButton, &QToolButton::clicked, this, &MyForm::handleRedoButtonClicked);
+    connect(ui->messageButton, &QToolButton::clicked, this, &MyForm::handleMessageButtonClicked);
+    connect(ui->profileButton, &QToolButton::clicked, this, &MyForm::handleProfileButtonClicked);
 
     // 设置快捷键
     ui->refreshButton->setShortcut(QKeySequence(Qt::Key_F5));
     ui->saveButton->setShortcut(QKeySequence::Save);
     ui->undoButton->setShortcut(QKeySequence::Undo);
     ui->redoButton->setShortcut(QKeySequence::Redo);
+    ui->messageButton->setShortcut(QKeySequence(Qt::ALT | Qt::Key_M));
+    ui->profileButton->setShortcut(QKeySequence(Qt::ALT | Qt::Key_P));
     
     // 初始化按钮状态
     updateUndoRedoButtonStates();
@@ -2665,6 +2678,42 @@ void MyForm::handleRedoButtonClicked()
     }
 }
 
+void MyForm::handleMessageButtonClicked()
+{
+    qDebug() << "Message button clicked";
+    updateStatus("打开消息中心");
+    
+    // 创建或显示消息对话框
+    if (!m_messageDialog) {
+        m_messageDialog = new MessageDialog(this);
+        connect(m_messageDialog, &MessageDialog::unreadCountChanged, 
+                this, &MyForm::onUnreadCountChanged);
+    }
+    
+    m_messageDialog->refreshMessages();
+    m_messageDialog->show();
+    m_messageDialog->raise();
+    m_messageDialog->activateWindow();
+}
+
+void MyForm::handleProfileButtonClicked()
+{
+    qDebug() << "Profile button clicked";
+    updateStatus("打开个人信息");
+    
+    // 创建并显示个人信息对话框
+    ProfileDialog *dialog = new ProfileDialog(this);
+    dialog->exec();
+    delete dialog;
+}
+
+void MyForm::onUnreadCountChanged(int count)
+{
+    qDebug() << "Unread message count changed:" << count;
+    // 更新消息按钮图标
+    updateMessageButtonIcon(count > 0);
+}
+
 // 更新撤销/重做按钮状态
 void MyForm::updateUndoRedoButtonStates()
 {
@@ -2696,6 +2745,17 @@ void MyForm::updateUndoRedoButtonStates()
             ui->redoButton->setToolTip(QString("重做: %1 (Ctrl+Y)").arg(redoText));
         } else {
             ui->redoButton->setToolTip("重做 (Ctrl+Y) - 已重做到最新状态");
+        }
+    }
+}
+
+void MyForm::updateMessageButtonIcon(bool hasMessage)
+{
+    if (ui->messageButton) {
+        if (hasMessage) {
+            ui->messageButton->setIcon(QIcon(":/new/prefix1/images/Message.png"));
+        } else {
+            ui->messageButton->setIcon(QIcon(":/new/prefix1/images/NoMessage.png"));
         }
     }
 }

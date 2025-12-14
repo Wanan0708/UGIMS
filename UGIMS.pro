@@ -41,6 +41,8 @@ SOURCES += \
     src/widgets/healthdevicelistdialog.cpp \
     src/widgets/helpdialog.cpp \
     src/widgets/settingsdialog.cpp \
+    src/widgets/messagedialog.cpp \
+    src/widgets/profiledialog.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
     src/tilemap/manifeststore.cpp \
@@ -100,6 +102,8 @@ HEADERS += \
     src/widgets/healthdevicelistdialog.h \
     src/widgets/helpdialog.h \
     src/widgets/settingsdialog.h \
+    src/widgets/messagedialog.h \
+    src/widgets/profiledialog.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \
     src/tilemap/manifeststore.h \
