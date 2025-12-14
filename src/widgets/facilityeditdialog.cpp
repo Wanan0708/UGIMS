@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QMessageBox>
+#include <QScrollArea>
+#include <QWidget>
 #include <QDebug>
 
 FacilityEditDialog::FacilityEditDialog(QWidget *parent, const Facility &facility)
@@ -14,7 +16,8 @@ FacilityEditDialog::FacilityEditDialog(QWidget *parent, const Facility &facility
     , m_facility(facility)
 {
     setWindowTitle(facility.isValid() ? tr("编辑设施") : tr("新建设施"));
-    setMinimumSize(500, 600);
+    setMinimumSize(550, 650);
+    resize(600, 750);
     setupUI();
     populateFields(facility);
 }
@@ -26,21 +29,35 @@ FacilityEditDialog::~FacilityEditDialog()
 void FacilityEditDialog::setupUI()
 {
     auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(15, 15, 15, 15);
+    
+    // 创建滚动区域
+    QScrollArea *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    
+    // 创建滚动区域的内容widget
+    QWidget *scrollContent = new QWidget();
+    auto *scrollLayout = new QVBoxLayout(scrollContent);
+    scrollLayout->setSpacing(15);
+    scrollLayout->setContentsMargins(10, 10, 10, 10);
     
     // 基本信息组
     auto *basicGroup = new QGroupBox(tr("基本信息"), this);
     auto *basicLayout = new QFormLayout(basicGroup);
+    basicLayout->setSpacing(10);
+    basicLayout->setContentsMargins(15, 15, 15, 15);
     
     m_facilityIdEdit = new QLineEdit(this);
     m_facilityIdEdit->setReadOnly(true);
     m_facilityIdEdit->setPlaceholderText(tr("自动生成"));
-    basicLayout->addRow(tr("设施编号"), m_facilityIdEdit);
+    basicLayout->addRow(tr("设施编号:"), m_facilityIdEdit);
     
     m_facilityNameEdit = new QLineEdit(this);
     m_facilityNameEdit->setPlaceholderText(tr("请输入设施名称"));
-    basicLayout->addRow(tr("设施名称*"), m_facilityNameEdit);
+    basicLayout->addRow(tr("设施名称*:"), m_facilityNameEdit);
     
     m_typeCombo = new QComboBox(this);
     m_typeCombo->addItem(tr("阀门"), "valve");
@@ -49,115 +66,140 @@ void FacilityEditDialog::setupUI()
     m_typeCombo->addItem(tr("调压站"), "pressure_station");
     m_typeCombo->addItem(tr("变压器"), "transformer");
     m_typeCombo->addItem(tr("接线盒"), "junction_box");
-    basicLayout->addRow(tr("设施类型*"), m_typeCombo);
+    basicLayout->addRow(tr("设施类型*:"), m_typeCombo);
     
     // 位置信息组
     auto *locationGroup = new QGroupBox(tr("位置信息"), this);
     auto *locationLayout = new QFormLayout(locationGroup);
+    locationLayout->setSpacing(10);
+    locationLayout->setContentsMargins(15, 15, 15, 15);
     
     m_longitudeSpin = new QDoubleSpinBox(this);
     m_longitudeSpin->setRange(-180, 180);
     m_longitudeSpin->setDecimals(6);
     m_longitudeSpin->setSuffix(tr(" °"));
-    locationLayout->addRow(tr("经度*"), m_longitudeSpin);
+    locationLayout->addRow(tr("经度*:"), m_longitudeSpin);
     
     m_latitudeSpin = new QDoubleSpinBox(this);
     m_latitudeSpin->setRange(-90, 90);
     m_latitudeSpin->setDecimals(6);
     m_latitudeSpin->setSuffix(tr(" °"));
-    locationLayout->addRow(tr("纬度*"), m_latitudeSpin);
+    locationLayout->addRow(tr("纬度*:"), m_latitudeSpin);
     
     m_elevationSpin = new QDoubleSpinBox(this);
     m_elevationSpin->setRange(-1000, 10000);
     m_elevationSpin->setDecimals(2);
     m_elevationSpin->setSuffix(tr(" m"));
-    locationLayout->addRow(tr("高程"), m_elevationSpin);
+    locationLayout->addRow(tr("高程:"), m_elevationSpin);
     
     // 物理属性组
     auto *physicalGroup = new QGroupBox(tr("物理属性"), this);
     auto *physicalLayout = new QFormLayout(physicalGroup);
+    physicalLayout->setSpacing(10);
+    physicalLayout->setContentsMargins(15, 15, 15, 15);
     
     m_specEdit = new QLineEdit(this);
     m_specEdit->setPlaceholderText(tr("例如: DN200"));
-    physicalLayout->addRow(tr("规格"), m_specEdit);
+    physicalLayout->addRow(tr("规格:"), m_specEdit);
     
     m_materialCombo = new QComboBox(this);
     m_materialCombo->addItems({tr("铸铁"), tr("球墨铸铁"), tr("钢"), tr("PE"), tr("PVC"), tr("混凝土"), tr("其他")});
-    physicalLayout->addRow(tr("材质"), m_materialCombo);
+    physicalLayout->addRow(tr("材质:"), m_materialCombo);
     
     // 关联信息组
     auto *relationGroup = new QGroupBox(tr("关联信息"), this);
     auto *relationLayout = new QFormLayout(relationGroup);
+    relationLayout->setSpacing(10);
+    relationLayout->setContentsMargins(15, 15, 15, 15);
     
     m_pipelineIdEdit = new QLineEdit(this);
     m_pipelineIdEdit->setPlaceholderText(tr("关联的管线编号"));
-    relationLayout->addRow(tr("关联管线"), m_pipelineIdEdit);
+    relationLayout->addRow(tr("关联管线:"), m_pipelineIdEdit);
     
     // 建设信息组
     auto *constructionGroup = new QGroupBox(tr("建设信息"), this);
     auto *constructionLayout = new QFormLayout(constructionGroup);
+    constructionLayout->setSpacing(10);
+    constructionLayout->setContentsMargins(15, 15, 15, 15);
     
     m_buildDateEdit = new QDateEdit(this);
     m_buildDateEdit->setDisplayFormat("yyyy-MM-dd");
     m_buildDateEdit->setCalendarPopup(true);
-    constructionLayout->addRow(tr("建设日期"), m_buildDateEdit);
+    constructionLayout->addRow(tr("建设日期:"), m_buildDateEdit);
     
     m_builderEdit = new QLineEdit(this);
     m_builderEdit->setPlaceholderText(tr("建设单位"));
-    constructionLayout->addRow(tr("建设单位"), m_builderEdit);
+    constructionLayout->addRow(tr("建设单位:"), m_builderEdit);
     
     m_ownerEdit = new QLineEdit(this);
     m_ownerEdit->setPlaceholderText(tr("产权单位"));
-    constructionLayout->addRow(tr("产权单位"), m_ownerEdit);
+    constructionLayout->addRow(tr("产权单位:"), m_ownerEdit);
     
     // 运维信息组
     auto *maintenanceGroup = new QGroupBox(tr("运维信息"), this);
     auto *maintenanceLayout = new QFormLayout(maintenanceGroup);
+    maintenanceLayout->setSpacing(10);
+    maintenanceLayout->setContentsMargins(15, 15, 15, 15);
     
     m_statusCombo = new QComboBox(this);
     m_statusCombo->addItem(tr("运行中"), "active");
     m_statusCombo->addItem(tr("停用"), "inactive");
     m_statusCombo->addItem(tr("维修中"), "repairing");
     m_statusCombo->addItem(tr("废弃"), "abandoned");
-    maintenanceLayout->addRow(tr("运行状态"), m_statusCombo);
+    maintenanceLayout->addRow(tr("运行状态:"), m_statusCombo);
     
     m_healthScoreSpin = new QSpinBox(this);
     m_healthScoreSpin->setRange(0, 100);
     m_healthScoreSpin->setSuffix(tr(" 分"));
     m_healthScoreSpin->setValue(100);
-    maintenanceLayout->addRow(tr("健康度"), m_healthScoreSpin);
+    maintenanceLayout->addRow(tr("健康度:"), m_healthScoreSpin);
     
     m_lastInspectionEdit = new QDateEdit(this);
     m_lastInspectionEdit->setDisplayFormat("yyyy-MM-dd");
     m_lastInspectionEdit->setCalendarPopup(true);
-    maintenanceLayout->addRow(tr("上次巡检"), m_lastInspectionEdit);
+    maintenanceLayout->addRow(tr("上次巡检:"), m_lastInspectionEdit);
     
     m_maintenanceUnitEdit = new QLineEdit(this);
     m_maintenanceUnitEdit->setPlaceholderText(tr("养护单位"));
-    maintenanceLayout->addRow(tr("养护单位"), m_maintenanceUnitEdit);
+    maintenanceLayout->addRow(tr("养护单位:"), m_maintenanceUnitEdit);
     
-    // 备注
+    // 备注组
+    auto *remarksGroup = new QGroupBox(tr("备注"), this);
+    auto *remarksLayout = new QVBoxLayout(remarksGroup);
+    remarksLayout->setContentsMargins(15, 15, 15, 15);
+    
     m_remarksEdit = new QTextEdit(this);
-    m_remarksEdit->setMinimumHeight(60);
+    m_remarksEdit->setMinimumHeight(80);
     m_remarksEdit->setPlaceholderText(tr("备注信息"));
+    remarksLayout->addWidget(m_remarksEdit);
     
-    // 按钮
+    // 将所有组添加到滚动布局
+    scrollLayout->addWidget(basicGroup);
+    scrollLayout->addWidget(locationGroup);
+    scrollLayout->addWidget(physicalGroup);
+    scrollLayout->addWidget(relationGroup);
+    scrollLayout->addWidget(constructionGroup);
+    scrollLayout->addWidget(maintenanceGroup);
+    scrollLayout->addWidget(remarksGroup);
+    scrollLayout->addStretch(); // 添加弹性空间
+    
+    // 设置滚动区域的内容
+    scrollContent->setLayout(scrollLayout);
+    scrollArea->setWidget(scrollContent);
+    
+    // 按钮布局（固定在底部，不滚动）
     auto *btnLayout = new QHBoxLayout();
     btnLayout->addStretch();
     m_saveBtn = new QPushButton(tr("保存"), this);
+    m_saveBtn->setMinimumWidth(100);
     m_cancelBtn = new QPushButton(tr("取消"), this);
+    m_cancelBtn->setMinimumWidth(100);
     btnLayout->addWidget(m_saveBtn);
+    btnLayout->addSpacing(10);
     btnLayout->addWidget(m_cancelBtn);
     
     // 添加到主布局
-    mainLayout->addWidget(basicGroup);
-    mainLayout->addWidget(locationGroup);
-    mainLayout->addWidget(physicalGroup);
-    mainLayout->addWidget(relationGroup);
-    mainLayout->addWidget(constructionGroup);
-    mainLayout->addWidget(maintenanceGroup);
-    mainLayout->addWidget(new QLabel(tr("备注"), this));
-    mainLayout->addWidget(m_remarksEdit);
+    mainLayout->addWidget(scrollArea, 1); // 1表示拉伸因子，让滚动区域占据剩余空间
     mainLayout->addLayout(btnLayout);
     
     // 连接信号

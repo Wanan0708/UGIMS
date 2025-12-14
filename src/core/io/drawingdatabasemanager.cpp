@@ -543,6 +543,11 @@ int DrawingDatabaseManager::loadFacilitiesFromDatabase(QGraphicsScene *scene)
         ellipseItem->setData(10, facilityId);  // 设施ID
         ellipseItem->setData(100, static_cast<int>(EntityState::Unchanged));  // 实体状态：未变更
         
+        // 设置可选中和可交互标志（重要：使设施可以被点击选中）
+        ellipseItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+        ellipseItem->setFlag(QGraphicsItem::ItemIsFocusable, true);
+        ellipseItem->setAcceptHoverEvents(true);
+        
         // 设置工具提示
         ellipseItem->setToolTip(QString("设施: %1\nID: %2\n类型: %3")
                                .arg(facilityType)

@@ -11,7 +11,9 @@
 #include <QVector>
 #include <QPointF>
 #include <QPen>
+#include <QString>
 #include "tilemap/tilemapmanager.h"
+#include "core/models/facility.h"
 
 /**
  * @brief 地图绘制管理器
@@ -106,10 +108,12 @@ signals:
      * @param pipelineType 管线类型
      * @param wkt 几何数据（WKT格式）
      * @param points 场景坐标点列表
+     * @param connectedFacilityIds 连接的设施ID列表（起点和终点）
      */
     void pipelineDrawingFinished(const QString &pipelineType, 
                                  const QString &wkt, 
-                                 const QVector<QPointF> &points);
+                                 const QVector<QPointF> &points,
+                                 const QVector<QString> &connectedFacilityIds = QVector<QString>());
     
     /**
      * @brief 设施绘制完成信号
@@ -134,8 +138,19 @@ private:
     QString generateLineStringWKT(const QVector<QPointF> &points);
     QString generatePointWKT(const QPointF &point);
     QPointF sceneToGeo(const QPointF &scenePos);
+    QPointF geoToScene(const QPointF &geoPos);
     QCursor createPipelineCursor(const QString &pipelineType);  // 创建管线类型光标
     void updateCursor();  // 更新鼠标样式
+    
+    // 设施连接相关
+    struct NearbyFacility {
+        QString facilityId;
+        QPointF scenePos;
+        double distance;
+    };
+    NearbyFacility findNearbyFacility(const QPointF &scenePos, double tolerancePixels = 20.0);
+    void updateFacilitySnapIndicator(const QPointF &facilityPos);
+    void clearFacilitySnapIndicator();
     
     // 核心组件
     QGraphicsScene *m_scene;
@@ -151,6 +166,10 @@ private:
     QVector<QGraphicsEllipseItem*> m_pointMarkers;  // 点标记
     QGraphicsPathItem *m_previewLine;               // 预览线
     QGraphicsEllipseItem *m_previewPoint;           // 预览点
+    QGraphicsEllipseItem *m_facilitySnapIndicator;  // 设施吸附指示器
+    
+    // 设施连接信息
+    QVector<QString> m_connectedFacilityIds;  // 已连接的设施ID（按点顺序）
     
     // 样式配置
     static const int POINT_MARKER_SIZE = 8;         // 点标记大小

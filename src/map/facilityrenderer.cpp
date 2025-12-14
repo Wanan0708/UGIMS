@@ -188,7 +188,16 @@ QGraphicsEllipseItem* FacilityRenderer::renderFacility(QGraphicsScene *scene,
     
     item->setToolTip(tooltip);
     
-    // 6. 设置Z值（确保在管线之上）
+    // 6. 设置可选中和可交互标志（重要：使设施可以被点击选中）
+    item->setFlag(QGraphicsItem::ItemIsSelectable, true);
+    item->setFlag(QGraphicsItem::ItemIsFocusable, true);
+    item->setAcceptHoverEvents(true);
+    
+    // 禁用Qt默认的选中样式（虚线框），使用自定义高亮
+    // 确保不显示默认的虚线框，只使用自定义高亮
+    item->setSelected(false);
+    
+    // 7. 设置Z值（确保在管线之上）
     item->setZValue(20);
     
     return item;

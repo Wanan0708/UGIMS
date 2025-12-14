@@ -11,6 +11,7 @@ class CustomComboBox;
 class QPushButton;
 class QLabel;
 class QCheckBox;
+class CustomCheckBox;
 class QWidget;
 class QMouseEvent;
 class QPaintEvent;
@@ -67,7 +68,7 @@ private:
     QLineEdit *m_passwordEdit;
     QPushButton *m_loginBtn;
     QPushButton *m_cancelBtn;
-    QCheckBox *m_rememberCheckBox;
+    CustomCheckBox *m_rememberCheckBox;
     QLabel *m_errorLabel;
     QLabel *m_titleLabel;
     QLabel *m_subtitleLabel;

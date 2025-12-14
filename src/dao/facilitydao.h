@@ -45,6 +45,9 @@ public:
     // 统计各类型设施数量
     QMap<QString, int> countByType();
     
+    // 重写insert方法以处理PostGIS字段
+    bool insert(const Facility &facility);
+    
     // 重写update方法以处理PostGIS字段
     bool update(const Facility &facility, int id);
 

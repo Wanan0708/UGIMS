@@ -81,7 +81,7 @@ void LayerManager::initializeLayers()
     m_layerVisibility[TelecomPipeline] = true;
     m_layerVisibility[HeatPipeline] = true;
     m_layerVisibility[Facilities] = true;
-    m_layerVisibility[Labels] = false;  // 标注默认关闭
+    m_layerVisibility[Labels] = true;  // 标注默认打开
 }
 
 void LayerManager::setLayerVisible(LayerType type, bool visible)

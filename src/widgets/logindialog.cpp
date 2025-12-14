@@ -1,5 +1,6 @@
 #include "logindialog.h"
 #include "customcombobox.h"
+#include "customcheckbox.h"
 #include "core/auth/sessionmanager.h"
 #include <QString>
 #include <QVBoxLayout>
@@ -28,6 +29,10 @@
 #include <QPixmap>
 #include <QColor>
 #include <QPoint>
+#include <QPen>
+#include <QBuffer>
+#include <QIODevice>
+#include <QImage>
 
 LoginDialog::LoginDialog(QWidget *parent)
     : QDialog(parent)
@@ -36,7 +41,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     setWindowTitle("用户登录");
     setModal(true);
     // 更紧凑的尺寸，简约设计
-    setFixedSize(420, 520);
+    setFixedSize(380, 460);
     
     // 设置窗口标志 - 保持透明背景以便只显示卡片
     setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
@@ -67,7 +72,7 @@ void LoginDialog::setupUI()
     // 创建标题栏
     m_titleBar = new QWidget(m_contentWidget);
     m_titleBar->setObjectName("titleBar");
-    m_titleBar->setFixedHeight(50);
+    m_titleBar->setFixedHeight(45);
     m_titleBar->setStyleSheet(
         "#titleBar {"
         "    background-color: transparent;"
@@ -82,7 +87,7 @@ void LoginDialog::setupUI()
     
     // 左上角图标
     m_iconLabel = new QLabel(m_titleBar);
-    m_iconLabel->setFixedSize(32, 32);  // 固定正方形尺寸，防止被挤扁
+    m_iconLabel->setFixedSize(28, 28);  // 固定正方形尺寸，防止被挤扁
     m_iconLabel->setAlignment(Qt::AlignCenter);
     
     QIcon appIcon = QApplication::windowIcon();
@@ -93,17 +98,17 @@ void LoginDialog::setupUI()
             "QLabel {"
             "    background-color: #3498db;"
             "    color: white;"
-            "    border-radius: 20px;"
-            "    font-size: 14px;"
+            "    border-radius: 14px;"
+            "    font-size: 12px;"
             "    font-weight: bold;"
             "}"
         );
     } else {
         // 获取原始图标尺寸，保持宽高比
-        QPixmap iconPixmap = appIcon.pixmap(32, 32);
+        QPixmap iconPixmap = appIcon.pixmap(28, 28);
         // 使用 scaled 方法保持宽高比，而不是 setScaledContents
         if (!iconPixmap.isNull()) {
-            iconPixmap = iconPixmap.scaled(30, 30, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            iconPixmap = iconPixmap.scaled(26, 26, Qt::KeepAspectRatio, Qt::SmoothTransformation);
             m_iconLabel->setPixmap(iconPixmap);
         }
     }
@@ -113,15 +118,15 @@ void LoginDialog::setupUI()
     
     // 右上角关闭按钮
     m_closeBtn = new QPushButton(m_titleBar);
-    m_closeBtn->setFixedSize(32, 32);
+    m_closeBtn->setFixedSize(28, 28);
     m_closeBtn->setText("×");
     m_closeBtn->setStyleSheet(
         "QPushButton {"
         "    background-color: transparent;"
         "    border: none;"
-        "    border-radius: 16px;"
+        "    border-radius: 14px;"
         "    color: #7f8c8d;"
-        "    font-size: 24px;"
+        "    font-size: 20px;"
         "    font-weight: bold;"
         "}"
         "QPushButton:hover {"
@@ -141,17 +146,17 @@ void LoginDialog::setupUI()
     QWidget *bodyWidget = new QWidget(m_contentWidget);
     bodyWidget->setObjectName("bodyWidget");
     QVBoxLayout *bodyLayout = new QVBoxLayout(bodyWidget);
-    bodyLayout->setSpacing(25);
-    bodyLayout->setContentsMargins(50, 30, 50, 40);
+    bodyLayout->setSpacing(18);
+    bodyLayout->setContentsMargins(40, 25, 40, 30);
     
     // 标题区域
     QVBoxLayout *titleLayout = new QVBoxLayout;
-    titleLayout->setSpacing(8);
+    titleLayout->setSpacing(6);
     
     m_titleLabel = new QLabel("UGIMS", bodyWidget);
     m_titleLabel->setAlignment(Qt::AlignCenter);
     QFont titleFont = m_titleLabel->font();
-    titleFont.setPointSize(28);
+    titleFont.setPointSize(24);
     titleFont.setBold(true);
     titleFont.setFamily("Microsoft YaHei UI");
     m_titleLabel->setFont(titleFont);
@@ -160,7 +165,7 @@ void LoginDialog::setupUI()
     m_subtitleLabel = new QLabel("城市地下管网智能管理系统", bodyWidget);
     m_subtitleLabel->setAlignment(Qt::AlignCenter);
     QFont subtitleFont = m_subtitleLabel->font();
-    subtitleFont.setPointSize(11);
+    subtitleFont.setPointSize(10);
     subtitleFont.setFamily("Microsoft YaHei UI");
     m_subtitleLabel->setFont(subtitleFont);
     m_subtitleLabel->setStyleSheet("color: #7f8c8d;");
@@ -171,13 +176,13 @@ void LoginDialog::setupUI()
     
     // 表单区域
     QVBoxLayout *formLayout = new QVBoxLayout;
-    formLayout->setSpacing(20);
+    formLayout->setSpacing(16);
     
     // 用户名输入框（改为 ComboBox）
     QVBoxLayout *usernameLayout = new QVBoxLayout;
-    usernameLayout->setSpacing(8);
+    usernameLayout->setSpacing(6);
     QLabel *usernameLabel = new QLabel("用户名", bodyWidget);
-    usernameLabel->setStyleSheet("color: #34495e; font-size: 13px; font-weight: 500;");
+    usernameLabel->setStyleSheet("color: #34495e; font-size: 12px; font-weight: 500;");
     usernameLayout->addWidget(usernameLabel);
     
     m_usernameComboBox = new CustomComboBox(bodyWidget);
@@ -185,15 +190,15 @@ void LoginDialog::setupUI()
     m_usernameComboBox->setInsertPolicy(QComboBox::NoInsert);
     m_usernameComboBox->lineEdit()->setPlaceholderText("请输入用户名或选择已有账号");
     m_usernameComboBox->lineEdit()->setMaxLength(50);
-    m_usernameComboBox->setMinimumHeight(45);
+    m_usernameComboBox->setMinimumHeight(40);
     
     m_usernameComboBox->setStyleSheet(
         "QComboBox {"
         "    border: 2px solid #e0e0e0;"
         "    border-radius: 8px;"
-        "    padding: 10px 15px;"
-        "    padding-right: 40px;"
-        "    font-size: 14px;"
+        "    padding: 8px 12px;"
+        "    padding-right: 35px;"
+        "    font-size: 13px;"
         "    background-color: #ffffff;"
         "    color: #2c3e50;"
         "}"
@@ -208,7 +213,7 @@ void LoginDialog::setupUI()
         "    subcontrol-origin: padding;"
         "    subcontrol-position: right center;"
         "    border: none;"
-        "    width: 32px;"
+        "    width: 28px;"
         "    background-color: transparent;"
         "}"
         "QComboBox::down-arrow {"
@@ -227,12 +232,12 @@ void LoginDialog::setupUI()
         "    min-width: 200px;"
         "}"
         "QComboBox QAbstractItemView::item {"
-        "    height: 26px;"
-        "    padding: 4px 16px;"
+        "    height: 24px;"
+        "    padding: 3px 14px;"
         "    border-radius: 6px;"
         "    margin: 1px 0px;"
         "    color: #2c3e50;"
-        "    font-size: 14px;"
+        "    font-size: 13px;"
         "}"
         "QComboBox QAbstractItemView::item:hover {"
         "    background-color: #f8f9fa;"
@@ -248,9 +253,9 @@ void LoginDialog::setupUI()
     if (view) {
         view->setStyleSheet(
             "QAbstractItemView::item {"
-            "    height: 26px;"
-            "    min-height: 26px;"
-            "    max-height: 26px;"
+            "    height: 24px;"
+            "    min-height: 24px;"
+            "    max-height: 24px;"
             "}"
         );
     }
@@ -259,22 +264,22 @@ void LoginDialog::setupUI()
     
     // 密码输入框
     QVBoxLayout *passwordLayout = new QVBoxLayout;
-    passwordLayout->setSpacing(8);
+    passwordLayout->setSpacing(6);
     QLabel *passwordLabel = new QLabel("密码", bodyWidget);
-    passwordLabel->setStyleSheet("color: #34495e; font-size: 13px; font-weight: 500;");
+    passwordLabel->setStyleSheet("color: #34495e; font-size: 12px; font-weight: 500;");
     passwordLayout->addWidget(passwordLabel);
     
     m_passwordEdit = new QLineEdit(bodyWidget);
     m_passwordEdit->setPlaceholderText("请输入密码");
     m_passwordEdit->setEchoMode(QLineEdit::Password);
     m_passwordEdit->setMaxLength(100);
-    m_passwordEdit->setMinimumHeight(45);
+    m_passwordEdit->setMinimumHeight(40);
     m_passwordEdit->setStyleSheet(
         "QLineEdit {"
         "    border: 2px solid #e0e0e0;"
         "    border-radius: 8px;"
-        "    padding: 10px 15px;"
-        "    font-size: 14px;"
+        "    padding: 8px 12px;"
+        "    font-size: 13px;"
         "    background-color: #ffffff;"
         "    color: #2c3e50;"
         "}"
@@ -291,38 +296,17 @@ void LoginDialog::setupUI()
     
     bodyLayout->addLayout(formLayout);
     
-    // 记住密码选项
-    m_rememberCheckBox = new QCheckBox("记住密码", bodyWidget);
-    m_rememberCheckBox->setStyleSheet(
-        "QCheckBox {"
-        "    color: #34495e;"
-        "    font-size: 13px;"
-        "    spacing: 8px;"
-        "}"
-        "QCheckBox::indicator {"
-        "    width: 18px;"
-        "    height: 18px;"
-        "    border: 2px solid #bdc3c7;"
-        "    border-radius: 4px;"
-        "    background-color: #ffffff;"
-        "}"
-        "QCheckBox::indicator:checked {"
-        "    background-color: #3498db;"
-        "    border: 2px solid #3498db;"
-        "    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xIDQuNUw0LjUgOEwxMSAxIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4=);"
-        "}"
-        "QCheckBox::indicator:hover {"
-        "    border: 2px solid #3498db;"
-        "}"
-    );
+    // 记住密码选项 - 使用自定义复选框
+    m_rememberCheckBox = new CustomCheckBox("记住密码", bodyWidget);
+    // 样式已在CustomCheckBox构造函数中设置
     bodyLayout->addWidget(m_rememberCheckBox);
     
     // 错误提示标签
     m_errorLabel = new QLabel(bodyWidget);
     m_errorLabel->setStyleSheet(
         "color: #e74c3c;"
-        "font-size: 12px;"
-        "padding: 8px;"
+        "font-size: 11px;"
+        "padding: 6px;"
         "background-color: #fee;"
         "border-radius: 6px;"
         "border: 1px solid #fcc;"
@@ -333,21 +317,21 @@ void LoginDialog::setupUI()
     
     // 按钮区域
     QVBoxLayout *buttonLayout = new QVBoxLayout;
-    buttonLayout->setSpacing(12);
+    buttonLayout->setSpacing(10);
     
     m_loginBtn = new QPushButton("登录", bodyWidget);
     m_loginBtn->setDefault(true);
     m_loginBtn->setEnabled(false);
-    m_loginBtn->setMinimumHeight(50);
+    m_loginBtn->setMinimumHeight(45);
     m_loginBtn->setStyleSheet(
         "QPushButton {"
         "    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3498db, stop:1 #2980b9);"
         "    color: white;"
         "    border: none;"
         "    border-radius: 8px;"
-        "    font-size: 16px;"
+        "    font-size: 15px;"
         "    font-weight: bold;"
-        "    padding: 12px;"
+        "    padding: 10px;"
         "}"
         "QPushButton:hover:enabled {"
         "    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2980b9, stop:1 #1f6391);"
@@ -362,16 +346,16 @@ void LoginDialog::setupUI()
     );
     buttonLayout->addWidget(m_loginBtn);
     
-    m_cancelBtn = new QPushButton("取消", bodyWidget);
-    m_cancelBtn->setMinimumHeight(45);
+    m_cancelBtn = new QPushButton("退出", bodyWidget);
+    m_cancelBtn->setMinimumHeight(40);
     m_cancelBtn->setStyleSheet(
         "QPushButton {"
         "    background-color: #ecf0f1;"
         "    color: #34495e;"
         "    border: 2px solid #bdc3c7;"
         "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "    padding: 10px;"
+        "    font-size: 13px;"
+        "    padding: 8px;"
         "}"
         "QPushButton:hover {"
         "    background-color: #d5dbdb;"

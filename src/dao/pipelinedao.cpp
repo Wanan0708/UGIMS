@@ -99,6 +99,34 @@ QVariantMap PipelineDAO::toVariantMap(const Pipeline &pipeline)
     return map;
 }
 
+QVector<Pipeline> PipelineDAO::findAll(int limit)
+{
+    QString sql = QString("SELECT *, ST_AsText(geom) as geom_text "
+                          "FROM %1 LIMIT :limit")
+                      .arg(m_tableName);
+
+    QVariantMap params;
+    params[":limit"] = limit;
+
+    qDebug() << "[PipelineDAO] findAll called, limit:" << limit;
+
+    QVector<Pipeline> results;
+    QSqlQuery query = DatabaseManager::instance().executeQuery(sql, params);
+    
+    if (query.lastError().isValid()) {
+        qDebug() << "[PipelineDAO] Query error:" << query.lastError().text();
+        LOG_ERROR(QString("Pipeline query failed: %1").arg(query.lastError().text()));
+    }
+    
+    while (query.next()) {
+        results.append(fromQuery(query));
+    }
+
+    qDebug() << "[PipelineDAO] Found" << results.size() << "pipelines";
+    LOG_INFO(QString("Found %1 pipelines").arg(results.size()));
+    return results;
+}
+
 QVector<Pipeline> PipelineDAO::findByType(const QString &type, int limit)
 {
     QString sql = QString("SELECT *, ST_AsText(geom) as geom_text "

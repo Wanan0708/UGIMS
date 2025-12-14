@@ -122,6 +122,10 @@ public:
     
     void undo() override;
     void redo() override;
+    
+    // 合并相同实体的连续属性修改
+    bool mergeWith(const QUndoCommand *other) override;
+    int id() const override { return 2; }
 
 private:
     QGraphicsItem *m_item;

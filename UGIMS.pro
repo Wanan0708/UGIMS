@@ -27,6 +27,7 @@ SOURCES += \
     src/widgets/facilityeditdialog.cpp \
     src/widgets/logindialog.cpp \
     src/widgets/customcombobox.cpp \
+    src/widgets/customcheckbox.cpp \
     src/widgets/usermanagerdialog.cpp \
     src/widgets/basewindow.cpp \
     src/widgets/customtitlebar.cpp \
@@ -35,8 +36,10 @@ SOURCES += \
     src/widgets/layercontrolpanel.cpp \
     src/widgets/collapsiblegroupbox.cpp \
     src/widgets/entitypropertiesdialog.cpp \
+    src/widgets/entityviewdialog.cpp \
     src/widgets/healthassessmentdialog.cpp \
     src/widgets/healthdevicelistdialog.cpp \
+    src/widgets/helpdialog.cpp \
     src/widgets/settingsdialog.cpp \
     src/tilemap/tilemapmanager.cpp \
     src/tilemap/tileworker.cpp \
@@ -83,6 +86,7 @@ HEADERS += \
     src/widgets/facilityeditdialog.h \
     src/widgets/logindialog.h \
     src/widgets/customcombobox.h \
+    src/widgets/customcheckbox.h \
     src/widgets/usermanagerdialog.h \
     src/widgets/basewindow.h \
     src/widgets/customtitlebar.h \
@@ -91,8 +95,10 @@ HEADERS += \
     src/widgets/layercontrolpanel.h \
     src/widgets/collapsiblegroupbox.h \
     src/widgets/entitypropertiesdialog.h \
+    src/widgets/entityviewdialog.h \
     src/widgets/healthassessmentdialog.h \
     src/widgets/healthdevicelistdialog.h \
+    src/widgets/helpdialog.h \
     src/widgets/settingsdialog.h \
     src/tilemap/tilemapmanager.h \
     src/tilemap/tileworker.h \

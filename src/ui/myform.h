@@ -30,6 +30,7 @@ class LayerControlPanel;
 class DrawingToolPanel;
 class MapDrawingManager;
 class Pipeline;  // 添加Pipeline前置声明
+class Facility;  // 添加Facility前置声明
 class QGraphicsEllipseItem;
 class QGraphicsTextItem;
 class QGraphicsPolygonItem;
@@ -61,6 +62,8 @@ private slots:
     void handleSaveButtonClicked();     // 保存
     void handleUndoButtonClicked();     // 撤销
     void handleRedoButtonClicked();     // 重做
+    void handleUndoForPendingChanges(); // 处理撤销操作对待保存变更列表的影响
+    void handleRedoForPendingChanges(); // 处理重做操作对待保存变更列表的影响
     
     // 地图相关槽函数
     void handleLoadMapButtonClicked();
@@ -99,6 +102,11 @@ private slots:
     void onAssetManagementButtonClicked();
     
     // 工具模块
+    void onDistanceMeasureButtonClicked();
+    void onAreaMeasureButtonClicked();
+    void onClearMeasureButtonClicked();
+    
+    // 信息模块
     void onSettingsButtonClicked();
     void onHelpButtonClicked();
 
@@ -106,7 +114,24 @@ private slots:
     void onDeviceTreeItemClicked(const QModelIndex &index);
     void onDeviceTreeItemDoubleClicked(const QModelIndex &index);
     void onDeviceSearchTextChanged(const QString &text);  // 搜索框文本变化
+    void onDeviceTreeContextMenuRequested(const QPoint &pos);  // 设备树右键菜单
     void onAboutButtonClicked();  // 关于按钮点击
+    
+    // 设备树右键菜单操作
+    void onDeviceTreeRefresh();  // 刷新设备树
+    void onDeviceTreeExpandAll();  // 展开全部
+    void onDeviceTreeCollapseAll();  // 折叠全部
+    void onDeviceTreeExport();  // 导出设备数据
+    void onDeviceTreeStatistics();  // 统计信息
+    void onDeviceTreeViewInfo();  // 查看设备信息
+    void onDeviceTreeEdit();  // 编辑设备
+    void onDeviceTreeDelete();  // 删除设备
+    void onDeviceTreeCopy();  // 复制设备
+    void onDeviceTreeLocateOnMap();  // 在地图上定位
+    void onDeviceTreeViewRelated();  // 查看关联设备
+    void onDeviceTreeGenerateReport();  // 生成报告
+    void onDeviceTreeViewHistory();  // 查看历史记录
+    void onDeviceTreePrintLabel();  // 打印标签
     
     // 绘制工具相关槽函数
     void onToggleDrawingTool(bool checked);  // 切换绘制工具显示
@@ -114,7 +139,7 @@ private slots:
     void onStartDrawingFacility(const QString &facilityType);  // 开始绘制设施
     
     // 绘制完成槽函数
-    void onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &points);
+    void onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &points, const QVector<QString> &connectedFacilityIds = QVector<QString>());
     void onFacilityDrawingFinished(const QString &facilityType, const QString &wkt, const QPointF &point);
     
     // 实体交互槽函数
@@ -171,6 +196,37 @@ private:
     QGraphicsEllipseItem *m_endMarker = nullptr; // 终点标记
     QList<QWidget*> m_disabledDuringShortestPath; // 暂时禁用的控件
     
+    // 距离量算相关成员
+    struct DistanceMeasureResult {
+        QList<QPointF> points; // 测量点列表
+        QList<QGraphicsItem*> markers; // 标记点
+        QGraphicsPathItem *line = nullptr; // 距离线
+        QGraphicsTextItem *label = nullptr; // 距离标签
+        double totalDistance = 0.0; // 总距离（米）
+    };
+    
+    struct AreaMeasureResult {
+        QList<QPointF> points; // 测量点列表
+        QList<QGraphicsItem*> markers; // 标记点
+        QGraphicsPolygonItem *polygon = nullptr; // 面积多边形
+        QGraphicsTextItem *label = nullptr; // 面积标签
+        double area = 0.0; // 面积（平方米）
+    };
+    
+    bool m_distanceMeasureMode = false; // 是否处于距离量算模式
+    QList<QPointF> m_currentDistancePoints; // 当前正在绘制的点列表
+    QList<QGraphicsItem*> m_currentDistanceMarkers; // 当前正在绘制的标记
+    QGraphicsPathItem *m_currentDistanceLine = nullptr; // 当前正在绘制的距离线（临时）
+    QGraphicsPathItem *m_distancePreviewLine = nullptr; // 预览线（从最后一点到鼠标位置）
+    QList<DistanceMeasureResult> m_distanceMeasureResults; // 所有距离测量结果
+    
+    bool m_areaMeasureMode = false; // 是否处于面积量算模式
+    QList<QPointF> m_currentAreaPoints; // 当前正在绘制的点列表
+    QList<QGraphicsItem*> m_currentAreaMarkers; // 当前正在绘制的标记
+    QGraphicsPolygonItem *m_currentAreaPolygon = nullptr; // 当前正在绘制的面积多边形（临时）
+    QGraphicsPathItem *m_areaPreviewLine = nullptr; // 预览线（从最后一点到鼠标位置，用于闭合）
+    QList<AreaMeasureResult> m_areaMeasureResults; // 所有面积测量结果
+    
     // 右键拖拽相关成员
     bool isRightClickDragging;
     QPoint lastRightClickPos;
@@ -219,6 +275,9 @@ private:
     
     // 设备树相关成员
     QStandardItemModel *deviceTreeModel;  // 设备树模型
+    QModelIndex m_currentDeviceTreeIndex;  // 当前右键菜单选中的索引
+    bool m_deviceTreeMenuActive;  // 右键菜单是否正在显示
+    bool m_deviceTreeDialogActive;  // 设备详情对话框是否正在显示
     
     // 绘制工具相关成员
     QWidget *m_drawingToolContainer;       // 绘制工具容器（右侧滑出面板）
@@ -287,6 +346,17 @@ private:
     
     void setupFunctionalArea();
     void setupDeviceTree();  // 设置设备树
+    QString formatPipelineDisplayName(const Pipeline &pipeline);  // 格式化管线显示名称
+    QString formatFacilityDisplayName(const Facility &facility);  // 格式化设施显示名称
+    QString getStatusIcon(const QString &status, int healthScore);  // 获取状态图标
+    
+    // 设备树辅助函数
+    void expandAllChildren(const QModelIndex &index);  // 递归展开所有子节点
+    void collapseAllChildren(const QModelIndex &index);  // 递归折叠所有子节点
+    void countDevices(QStandardItem *item, int &pipelineCount, int &facilityCount);  // 统计设备数量
+    void collectDevicesFromItem(QStandardItem *item, QList<Pipeline> &pipelines, QList<Facility> &facilities);  // 收集设备数据
+    QPointF calculateCenter(const QVector<QPointF> &coordinates);  // 计算管线中心点
+    
     void setupDrawingToolPanel();  // 设置绘制工具面板（右侧滑出）
     void positionDrawingToolPanel();  // 定位绘制工具面板
     void setupLayerControlPanel();  // 设置图层控制面板（右侧滑出）
@@ -300,6 +370,7 @@ private:
     void setupMapArea();
     void setupSplitter();
     void updateStatus(const QString &message);
+    void updateUndoRedoButtonStates();    // 更新撤销/重做按钮状态
     void createFloatingStatusBar();       // 创建浮动状态栏
     void positionFloatingStatusBar();      // 定位浮动状态栏
     void updateFloatingProgressBar(int current, int total); // 更新浮动进度条
@@ -344,6 +415,30 @@ private:
     void cancelShortestPathSelectionMode();
     void handleShortestPathPointSelection(const QPointF &geoLonLat);
     void performShortestPathAnalysis(const QPointF &startPoint, const QPointF &endPoint);
+    
+    // 距离量算相关函数
+    void startDistanceMeasureMode();
+    void cancelDistanceMeasureMode();
+    void handleDistanceMeasurePoint(const QPointF &geoLonLat);
+    void finishCurrentDistanceMeasure(); // 完成当前距离测量
+    void updateCurrentDistanceLine(); // 更新当前正在绘制的距离线
+    void updateDistancePreview(const QPointF &mouseGeoPos); // 更新预览线
+    void clearDistancePreview(); // 清除预览线
+    void clearAllDistanceMeasures(); // 清除所有距离测量结果
+    void deleteDistanceMeasure(QGraphicsItem *item); // 删除单条距离测量结果
+    double calculateDistance(const QPointF &p1, const QPointF &p2); // 计算两点间距离（米）
+    
+    // 面积量算相关函数
+    void startAreaMeasureMode();
+    void cancelAreaMeasureMode();
+    void handleAreaMeasurePoint(const QPointF &geoLonLat);
+    void finishCurrentAreaMeasure(); // 完成当前面积测量
+    void updateCurrentAreaPolygon(); // 更新当前正在绘制的面积多边形
+    void updateAreaPreview(const QPointF &mouseGeoPos); // 更新预览线
+    void clearAreaPreview(); // 清除预览线
+    void clearAllAreaMeasures(); // 清除所有面积测量结果
+    void deleteAreaMeasure(QGraphicsItem *item); // 删除单条面积测量结果
+    double calculateArea(const QList<QPointF> &points); // 计算多边形面积（平方米）
     
     // 实体选中辅助方法
     void selectItem(QGraphicsItem *item);     // 选中项

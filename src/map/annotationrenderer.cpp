@@ -3,6 +3,7 @@
 #include "dao/pipelinedao.h"
 #include "dao/facilitydao.h"
 #include "core/common/logger.h"
+#include "core/common/entitystate.h"
 #include <QFont>
 #include <QColor>
 #include <QBrush>
@@ -99,7 +100,9 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
     
     // 从场景中查找已有的管线图形项，使用它们的场景坐标
     QList<QGraphicsItem*> allItems = m_scene->items();
-    QHash<QString, QGraphicsPathItem*> pipelineItems;  // pipelineId -> item
+    // 使用图形项指针作为key，这样可以处理pipelineId为空的情况（新绘制的管线可能还没有ID）
+    QHash<QGraphicsItem*, QGraphicsPathItem*> pipelineItemsByItem;  // item -> pathItem
+    QHash<QString, QGraphicsPathItem*> pipelineItemsById;  // pipelineId -> pathItem (用于数据库查询)
     
     for (QGraphicsItem *item : allItems) {
         if (item->data(0).toString() == "pipeline") {
@@ -113,21 +116,23 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
                     continue;
                 }
                 
+                // 无论pipelineId是否为空，都添加到列表中（新绘制的管线可能还没有ID）
+                pipelineItemsByItem[item] = pathItem;
                 if (!pipelineId.isEmpty()) {
-                    pipelineItems[pipelineId] = pathItem;
+                    pipelineItemsById[pipelineId] = pathItem;
                 }
             }
         }
     }
     
-    qDebug() << "[AnnotationRenderer] Found" << pipelineItems.size() << "pipeline items in scene to label";
+    qDebug() << "[AnnotationRenderer] Found" << pipelineItemsByItem.size() << "pipeline items in scene to label";
     
-    if (pipelineItems.isEmpty()) {
+    if (pipelineItemsByItem.isEmpty()) {
         qDebug() << "[AnnotationRenderer] No pipeline items found in scene, skipping labels";
         return;
     }
     
-    // 从数据库加载管线数据以获取名称
+    // 从数据库加载管线数据以获取名称（只加载有ID的管线）
     QVector<Pipeline> pipelines;
     if (pipelineType.isEmpty()) {
         QStringList types = {"water_supply", "sewage", "gas", "electric", "telecom", "heat"};
@@ -149,20 +154,61 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
     int skippedNoName = 0;
     
     // 遍历场景中的管线项，为每个项创建标注
-    for (auto it = pipelineItems.constBegin(); it != pipelineItems.constEnd(); ++it) {
-        QString pipelineId = it.key();
+    for (auto it = pipelineItemsByItem.constBegin(); it != pipelineItemsByItem.constEnd(); ++it) {
+        QGraphicsItem *item = it.key();
         QGraphicsPathItem *pathItem = it.value();
+        QString pipelineId = item->data(1).toString();
         
-        // 获取管线数据
-        Pipeline pipeline = pipelineMap.value(pipelineId);
-        
-        // 检查管线是否有名称或编号
-        QString labelText = pipeline.isValid() && !pipeline.pipelineName().isEmpty() ? 
-                           pipeline.pipelineName() : 
-                           pipelineId;
-        if (labelText.isEmpty()) {
-            skippedNoName++;
+        // 检查图形项是否还在场景中（可能被撤销操作移除了）
+        if (!item || !item->scene() || item->scene() != m_scene) {
+            qDebug() << "[AnnotationRenderer] Pipeline item not in scene, skipping";
             continue;
+        }
+        
+        // 优先从图形项的data(3)获取管线名称（新绘制的管线可能还没有保存到数据库）
+        QString pipelineName = item->data(3).toString();
+        
+        // 获取管线数据（优先从数据库，如果pipelineId为空则跳过数据库查询）
+        Pipeline pipeline;
+        if (!pipelineId.isEmpty()) {
+            pipeline = pipelineMap.value(pipelineId);
+        }
+        
+        // 对于新绘制的管线，优先使用图形项中的名称（因为可能还没有保存到数据库）
+        // 只有当图形项中没有名称时，才使用数据库中的名称
+        if (pipelineName.isEmpty() && pipeline.isValid() && !pipeline.pipelineName().isEmpty()) {
+            pipelineName = pipeline.pipelineName();
+        }
+        
+        // 调试信息
+        qDebug() << "[AnnotationRenderer] Pipeline ID:" << pipelineId 
+                 << "Name from item data(3):" << item->data(3).toString()
+                 << "Name from database:" << (pipeline.isValid() ? pipeline.pipelineName() : QString("N/A"))
+                 << "Final name:" << pipelineName;
+        
+        // 确定标注文本：优先使用名称，如果没有名称则使用编号，如果都没有则使用类型
+        QString labelText;
+        if (!pipelineName.isEmpty()) {
+            labelText = pipelineName;
+        } else if (!pipelineId.isEmpty()) {
+            labelText = pipelineId;
+        } else {
+            // 如果既没有名称也没有ID，尝试使用类型名称
+            QString itemPipelineType = item->data(2).toString();
+            if (!itemPipelineType.isEmpty()) {
+                // 使用类型名称作为临时标注
+                if (itemPipelineType == "water_supply") labelText = "给水";
+                else if (itemPipelineType == "sewage") labelText = "排水";
+                else if (itemPipelineType == "gas") labelText = "燃气";
+                else if (itemPipelineType == "electric") labelText = "电力";
+                else if (itemPipelineType == "telecom") labelText = "通信";
+                else if (itemPipelineType == "heat") labelText = "供热";
+                else labelText = itemPipelineType;
+            } else {
+                skippedNoName++;
+                qDebug() << "[AnnotationRenderer] Skipping pipeline with no name, id, or type";
+                continue;
+            }
         }
         
         // 获取管线的场景坐标（使用路径的中点）
@@ -173,11 +219,17 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
         qDebug() << "[AnnotationRenderer] Pipeline" << labelText << "scenePos:" << scenePos;
         
         // 创建标注
+        // 注意：对于新绘制的管线，即使pipeline.isValid()为true，也要使用图形项中的名称
+        // 因为图形项中的名称是最新的（可能用户刚刚修改过）
         QGraphicsTextItem *label = nullptr;
-        if (pipeline.isValid()) {
+        
+        // 如果图形项中有名称，或者数据库中没有数据，使用我们确定的labelText
+        // 只有当图形项中没有名称且数据库中有数据时，才使用createPipelineLabel
+        if (pipeline.isValid() && pipelineName.isEmpty() && !pipeline.pipelineName().isEmpty()) {
+            // 图形项中没有名称，但数据库中有，使用数据库中的名称
             label = createPipelineLabel(pipeline, scenePos);
         } else {
-            // 如果没有找到管线数据，创建一个简单的标注
+            // 使用我们确定的labelText（优先使用图形项中的名称）
             label = new QGraphicsTextItem(labelText);
             label->setFont(m_labelFont);
             label->setDefaultTextColor(m_labelColor);
@@ -187,7 +239,38 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
             label->setData(0, "annotation");
             label->setData(1, "pipeline");
             label->setData(2, pipelineId);
+            
+            // 添加背景（可选）
+            QGraphicsRectItem *bgItem = new QGraphicsRectItem(textRect);
+            bgItem->setPos(labelPos);
+            bgItem->setBrush(QBrush(m_labelBackgroundColor));
+            bgItem->setPen(QPen(Qt::NoPen));
+            bgItem->setZValue(label->zValue() - 0.1);
+            bgItem->setOpacity(0.8);  // 半透明背景
+            
+            // 设置Z值（确保在管线之上）
+            label->setZValue(200);
+            bgItem->setZValue(199);
+            
+            // 背景项也设置数据标记，方便查找
+            bgItem->setData(0, "annotation");
+            bgItem->setData(1, "pipeline");
+            bgItem->setData(2, pipelineId);
+            
+            // 让标注不拦截鼠标事件，这样点击会穿透到下面的管线
+            label->setAcceptHoverEvents(false);
+            label->setFlag(QGraphicsItem::ItemIsSelectable, false);
+            label->setFlag(QGraphicsItem::ItemIsFocusable, false);
+            bgItem->setAcceptHoverEvents(false);
+            bgItem->setFlag(QGraphicsItem::ItemIsSelectable, false);
+            bgItem->setFlag(QGraphicsItem::ItemIsFocusable, false);
+            
+            // 添加到场景
+            m_scene->addItem(bgItem);
             m_scene->addItem(label);
+            
+            // 将背景项作为文本项的子项，方便管理
+            bgItem->setParentItem(label);
         }
         
         if (label) {
@@ -197,7 +280,7 @@ void AnnotationRenderer::renderPipelineAnnotations(const QString &pipelineType, 
         }
     }
     
-    qDebug() << "[AnnotationRenderer] Pipeline labels summary: total=" << pipelineItems.size()
+    qDebug() << "[AnnotationRenderer] Pipeline labels summary: total=" << pipelineItemsByItem.size()
              << "rendered=" << rendered
              << "skipped(no name)=" << skippedNoName;
     
@@ -225,23 +308,26 @@ void AnnotationRenderer::renderFacilityAnnotations(const QRectF &bounds)
     
     // 从场景中查找已有的设施图形项，使用它们的场景坐标
     QList<QGraphicsItem*> allItems = m_scene->items();
-    QHash<QString, QGraphicsEllipseItem*> facilityItems;  // facilityId -> item
+    // 使用图形项指针作为key，这样可以处理facilityId为空的情况
+    QHash<QGraphicsItem*, QGraphicsEllipseItem*> facilityItemsMap;  // item -> ellipseItem
+    QHash<QString, QGraphicsEllipseItem*> facilityItemsById;  // facilityId -> item (用于数据库查询)
     
     for (QGraphicsItem *item : allItems) {
         if (item->data(0).toString() == "facility") {
             QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(item);
             if (ellipseItem) {
+                facilityItemsMap[item] = ellipseItem;
                 QString facilityId = item->data(1).toString();
                 if (!facilityId.isEmpty()) {
-                    facilityItems[facilityId] = ellipseItem;
+                    facilityItemsById[facilityId] = ellipseItem;
                 }
             }
         }
     }
     
-    qDebug() << "[AnnotationRenderer] Found" << facilityItems.size() << "facility items in scene to label";
+    qDebug() << "[AnnotationRenderer] Found" << facilityItemsMap.size() << "facility items in scene to label";
     
-    if (facilityItems.isEmpty()) {
+    if (facilityItemsMap.isEmpty()) {
         qDebug() << "[AnnotationRenderer] No facility items found in scene, skipping labels";
         return;
     }
@@ -259,19 +345,103 @@ void AnnotationRenderer::renderFacilityAnnotations(const QRectF &bounds)
     int skippedNoName = 0;
     
     // 遍历场景中的设施项，为每个项创建标注
-    for (auto it = facilityItems.constBegin(); it != facilityItems.constEnd(); ++it) {
-        QString facilityId = it.key();
+    for (auto it = facilityItemsMap.constBegin(); it != facilityItemsMap.constEnd(); ++it) {
+        QGraphicsItem *item = it.key();
         QGraphicsEllipseItem *ellipseItem = it.value();
         
-        // 获取设施数据
+        // 检查图形项是否还在场景中（可能被撤销操作移除了）
+        if (!item || !item->scene() || item->scene() != m_scene) {
+            qDebug() << "[AnnotationRenderer] Facility item not in scene, skipping";
+            continue;
+        }
+        
+        QString facilityId = item->data(1).toString();
+        
+        // 检查实体状态（用于区分新添加的设施和已删除的设施）
+        QVariant stateVariant = item->data(100);
+        EntityState entityState = EntityState::Detached;
+        if (stateVariant.isValid()) {
+            entityState = static_cast<EntityState>(stateVariant.toInt());
+        }
+        
+        // 如果实体状态是Deleted，跳过（已标记为删除）
+        if (entityState == EntityState::Deleted) {
+            qDebug() << "[AnnotationRenderer] Facility marked as deleted, skipping:" << facilityId;
+            skippedNoName++;
+            continue;
+        }
+        
+        // 如果facilityId为空，跳过（无法从数据库查询）
+        if (facilityId.isEmpty()) {
+            // 可能是新绘制的设施，还没保存到数据库，使用图形项中的名称
+            QString facilityName = item->data(3).toString();
+            if (facilityName.isEmpty()) {
+                skippedNoName++;
+                qDebug() << "[AnnotationRenderer] Skipping facility with no id/name, item:" << item;
+                continue;
+            }
+        }
+        
+        // 获取设施数据（从数据库查询）
         Facility facility = facilityMap.value(facilityId);
         
-        // 检查设施是否有名称或编号
-        QString labelText = facility.isValid() && !facility.facilityName().isEmpty() ? 
-                           facility.facilityName() : 
-                           facilityId;
+        // 如果设施不在数据库中，需要判断是新添加的还是已删除的
+        if (!facility.isValid() && !facilityId.isEmpty()) {
+            // 如果实体状态是Added，说明是新添加的，还没保存到数据库，应该显示标注
+            if (entityState == EntityState::Added) {
+                qDebug() << "[AnnotationRenderer] Facility is newly added (not yet saved), will show label:" << facilityId;
+                // 继续处理，使用图形项中的名称
+            } else if (!facilityId.startsWith("TEMP_")) {
+                // 如果状态不是Added，且不是临时ID，说明可能已被删除，跳过
+                qDebug() << "[AnnotationRenderer] Facility not found in database (deleted), skipping:" << facilityId;
+                skippedNoName++;
+                continue;
+            }
+        }
+        
+        // 优先从图形项的data(3)获取设施名称（新绘制的设施可能还没有保存到数据库）
+        QString facilityName = item->data(3).toString();
+        
+        // 如果数据库中有设施数据，优先使用数据库中的名称
+        if (facility.isValid() && !facility.facilityName().isEmpty()) {
+            facilityName = facility.facilityName();
+        }
+        
+        // 确定标注文本：优先使用名称，如果没有名称则使用编号
+        QString labelText;
+        if (!facilityName.isEmpty()) {
+            labelText = facilityName;
+        } else if (!facilityId.isEmpty()) {
+            labelText = facilityId;
+        } else {
+            // facilityId为空，尝试从tooltip获取
+            QString tooltip = item->toolTip();
+            if (!tooltip.isEmpty()) {
+                // tooltip格式通常是 "名称\n类型: xxx"
+                QStringList lines = tooltip.split('\n');
+                if (!lines.isEmpty()) {
+                    labelText = lines.first().trimmed();
+                }
+            }
+            // 如果tooltip也没有，使用设施类型
+            if (labelText.isEmpty()) {
+                QString facilityType = item->data(2).toString();
+                if (!facilityType.isEmpty()) {
+                    // 使用类型名称作为标注
+                    if (facilityType == "valve") labelText = "阀门";
+                    else if (facilityType == "manhole") labelText = "井盖";
+                    else if (facilityType == "pump_station") labelText = "泵站";
+                    else if (facilityType == "transformer") labelText = "变压器";
+                    else if (facilityType == "regulator" || facilityType == "pressure_station") labelText = "调压站";
+                    else if (facilityType == "junction_box") labelText = "接线盒";
+                    else labelText = facilityType;
+                }
+            }
+        }
+        
         if (labelText.isEmpty()) {
             skippedNoName++;
+            qDebug() << "[AnnotationRenderer] Skipping facility with no name/id, item:" << item;
             continue;
         }
         
@@ -279,14 +449,14 @@ void AnnotationRenderer::renderFacilityAnnotations(const QRectF &bounds)
         QRectF ellipseRect = ellipseItem->rect();
         QPointF scenePos = ellipseRect.center() + ellipseItem->pos();
         
-        qDebug() << "[AnnotationRenderer] Facility" << labelText << "scenePos:" << scenePos;
+        qDebug() << "[AnnotationRenderer] Facility" << labelText << "facilityId:" << facilityId << "scenePos:" << scenePos;
         
         // 创建标注
         QGraphicsTextItem *label = nullptr;
         if (facility.isValid()) {
             label = createFacilityLabel(facility, scenePos);
         } else {
-            // 如果没有找到设施数据，创建一个简单的标注
+            // 如果没有找到设施数据（可能是新绘制的，还没保存），创建一个简单的标注
             label = new QGraphicsTextItem(labelText);
             label->setFont(m_labelFont);
             label->setDefaultTextColor(m_labelColor);
@@ -295,7 +465,18 @@ void AnnotationRenderer::renderFacilityAnnotations(const QRectF &bounds)
             label->setPos(labelPos);
             label->setData(0, "annotation");
             label->setData(1, "facility");
-            label->setData(2, facilityId);
+            label->setData(2, facilityId.isEmpty() ? QString("pending_%1").arg(reinterpret_cast<quintptr>(item)) : facilityId);
+            // 存储关联的图形项指针，用于后续查找
+            label->setData(10, reinterpret_cast<quintptr>(item));
+            
+            // 让标注不拦截鼠标事件，这样点击会穿透到下面的设施
+            label->setAcceptHoverEvents(false);
+            label->setFlag(QGraphicsItem::ItemIsSelectable, false);
+            label->setFlag(QGraphicsItem::ItemIsFocusable, false);
+            
+            // 设置Z值（确保在设施之上，但不会拦截鼠标事件）
+            label->setZValue(250);
+            
             m_scene->addItem(label);
         }
         
@@ -306,11 +487,11 @@ void AnnotationRenderer::renderFacilityAnnotations(const QRectF &bounds)
         }
     }
     
-    qDebug() << "[AnnotationRenderer] Facility labels summary: total=" << facilityItems.size()
+    qDebug() << "[AnnotationRenderer] Facility labels summary: total=" << facilityItemsMap.size()
              << "rendered=" << rendered
              << "skipped(no name)=" << skippedNoName;
     
-    emit renderProgress(facilityItems.size(), facilityItems.size());
+    emit renderProgress(facilityItemsMap.size(), facilityItemsMap.size());
     emit renderComplete(rendered);
     
     LOG_INFO(QString("Rendered %1 facility labels").arg(rendered));
@@ -433,6 +614,14 @@ QGraphicsTextItem* AnnotationRenderer::createPipelineLabel(const Pipeline &pipel
     bgItem->setData(1, "pipeline");
     bgItem->setData(2, pipeline.pipelineId());
     
+    // 让标注不拦截鼠标事件，这样点击会穿透到下面的管线
+    textItem->setAcceptHoverEvents(false);
+    textItem->setFlag(QGraphicsItem::ItemIsSelectable, false);
+    textItem->setFlag(QGraphicsItem::ItemIsFocusable, false);
+    bgItem->setAcceptHoverEvents(false);
+    bgItem->setFlag(QGraphicsItem::ItemIsSelectable, false);
+    bgItem->setFlag(QGraphicsItem::ItemIsFocusable, false);
+    
     // 添加到场景
     m_scene->addItem(bgItem);
     m_scene->addItem(textItem);
@@ -489,6 +678,14 @@ QGraphicsTextItem* AnnotationRenderer::createFacilityLabel(const Facility &facil
     bgItem->setData(0, "annotation");
     bgItem->setData(1, "facility");
     bgItem->setData(2, facility.facilityId());
+    
+    // 让标注不拦截鼠标事件，这样点击会穿透到下面的设施
+    textItem->setAcceptHoverEvents(false);
+    textItem->setFlag(QGraphicsItem::ItemIsSelectable, false);
+    textItem->setFlag(QGraphicsItem::ItemIsFocusable, false);
+    bgItem->setAcceptHoverEvents(false);
+    bgItem->setFlag(QGraphicsItem::ItemIsSelectable, false);
+    bgItem->setFlag(QGraphicsItem::ItemIsFocusable, false);
     
     // 添加到场景
     m_scene->addItem(bgItem);

@@ -27,12 +27,16 @@ public:
 signals:
     void pipelineModified(const class Pipeline &pipeline, int originalId);
     void facilityModified(const class Facility &facility, int originalId);
+    void pipelineDeleted(int id, const QString &pipelineId);
+    void facilityDeleted(int id, const QString &facilityId);
 
 private slots:
     void onRefreshClicked();
     void onViewClicked();
     void onEditClicked();
+    void onDeleteClicked();
     void onStatisticsClicked();
+    void onCheckBoxStateChanged();
     void onFilterChanged();
     void onTabChanged(int index);
     void onTableSelectionChanged();
@@ -65,6 +69,7 @@ private:
     // 操作按钮
     QPushButton *m_viewBtn;
     QPushButton *m_editBtn;
+    QPushButton *m_deleteBtn;
     QPushButton *m_statisticsBtn;
     QPushButton *m_closeBtn;
     

@@ -80,7 +80,7 @@ QWidget#functionalArea QPushButton:pressed {
 }
 
 /* 不同模块的按钮颜色 */
-/* 数据与地图模块 */
+/* 数据与地图模块 - 绿色 */
 QWidget#functionalArea #loadDataButton {
     background-color: #4CAF50;
 }
@@ -95,7 +95,14 @@ QWidget#functionalArea #downloadMapButton:hover {
     background-color: #45a049;
 }
 
-/* 空间分析模块 */
+QWidget#functionalArea #mapManagerButton {
+    background-color: #4CAF50;
+}
+QWidget#functionalArea #mapManagerButton:hover {
+    background-color: #45a049;
+}
+
+/* 空间分析模块 - 橙色 */
 QWidget#functionalArea #burstAnalysisButton {
     background-color: #FF9800;
 }
@@ -110,7 +117,14 @@ QWidget#functionalArea #connectivityAnalysisButton:hover {
     background-color: #F57C00;
 }
 
-/* 工单与资产模块 */
+QWidget#functionalArea #healthAssessmentButton {
+    background-color: #FF9800;
+}
+QWidget#functionalArea #healthAssessmentButton:hover {
+    background-color: #F57C00;
+}
+
+/* 工单与资产模块 - 紫色 */
 QWidget#functionalArea #workOrderButton {
     background-color: #9C27B0;
 }
@@ -125,7 +139,7 @@ QWidget#functionalArea #assetManagementButton:hover {
     background-color: #7B1FA2;
 }
 
-/* 工具模块 */
+/* 信息模块 - 灰色 */
 QWidget#functionalArea #settingsButton {
     background-color: #607D8B;
 }
@@ -138,6 +152,35 @@ QWidget#functionalArea #helpButton {
 }
 QWidget#functionalArea #helpButton:hover {
     background-color: #455A64;
+}
+
+QWidget#functionalArea #aboutButton {
+    background-color: #607D8B;
+}
+QWidget#functionalArea #aboutButton:hover {
+    background-color: #455A64;
+}
+
+/* 工具模块 - 蓝色 */
+QWidget#functionalArea #distanceMeasureButton {
+    background-color: #2196F3;
+}
+QWidget#functionalArea #distanceMeasureButton:hover {
+    background-color: #1976D2;
+}
+
+QWidget#functionalArea #areaMeasureButton {
+    background-color: #2196F3;
+}
+QWidget#functionalArea #areaMeasureButton:hover {
+    background-color: #1976D2;
+}
+
+QWidget#functionalArea #clearMeasureButton {
+    background-color: #2196F3;
+}
+QWidget#functionalArea #clearMeasureButton:hover {
+    background-color: #1976D2;
 }
 
 /* 功能区标签样式 */

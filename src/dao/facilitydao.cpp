@@ -327,6 +327,169 @@ static QString escapeSqlString(const QString &str)
     return escaped;
 }
 
+bool FacilityDAO::insert(const Facility &facility)
+{
+    QVariantMap data = toVariantMap(facility);
+    
+    // 手动构建SQL，避免PostGIS函数与参数绑定冲突
+    QStringList columns;
+    QStringList values;
+    
+    // 转义SQL字符串值，防止SQL注入
+    auto escapeSqlString = [](const QString &str) -> QString {
+        QString escaped = str;
+        escaped.replace("'", "''");
+        return escaped;
+    };
+    
+    // 处理各个字段
+    if (data.contains("facility_id") && !data.value("facility_id").toString().isEmpty()) {
+        columns.append("facility_id");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("facility_id").toString())));
+    }
+    
+    if (data.contains("facility_name") && !data.value("facility_name").toString().isEmpty()) {
+        columns.append("facility_name");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("facility_name").toString())));
+    }
+    
+    if (data.contains("facility_type") && !data.value("facility_type").toString().isEmpty()) {
+        columns.append("facility_type");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("facility_type").toString())));
+    }
+    
+    // 处理几何字段 - 使用ST_GeomFromText
+    QString geomWkt = data.value("geom_wkt").toString();
+    if (!geomWkt.isEmpty()) {
+        columns.append("geom");
+        QString escaped = geomWkt;
+        escaped.replace("'", "''");
+        values.append(QString("ST_GeomFromText('%1', 4326)").arg(escaped));
+    }
+    
+    if (data.contains("elevation_m")) {
+        columns.append("elevation_m");
+        values.append(QString::number(data.value("elevation_m").toDouble(), 'f', 2));
+    }
+    
+    if (data.contains("spec") && !data.value("spec").toString().isEmpty()) {
+        columns.append("spec");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("spec").toString())));
+    }
+    
+    if (data.contains("material") && !data.value("material").toString().isEmpty()) {
+        columns.append("material");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("material").toString())));
+    }
+    
+    if (data.contains("size") && !data.value("size").toString().isEmpty()) {
+        columns.append("size");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("size").toString())));
+    }
+    
+    if (data.contains("pipeline_id") && !data.value("pipeline_id").toString().isEmpty()) {
+        columns.append("pipeline_id");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("pipeline_id").toString())));
+    }
+    
+    if (data.contains("build_date") && data.value("build_date").toDate().isValid() && 
+        data.value("build_date").toDate().year() > 2000) {
+        columns.append("build_date");
+        values.append(QString("'%1'").arg(data.value("build_date").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (data.contains("builder") && !data.value("builder").toString().isEmpty()) {
+        columns.append("builder");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("builder").toString())));
+    }
+    
+    if (data.contains("owner") && !data.value("owner").toString().isEmpty()) {
+        columns.append("owner");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("owner").toString())));
+    }
+    
+    if (data.contains("asset_value")) {
+        columns.append("asset_value");
+        values.append(QString::number(data.value("asset_value").toDouble(), 'f', 2));
+    }
+    
+    if (data.contains("status") && !data.value("status").toString().isEmpty()) {
+        columns.append("status");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("status").toString())));
+    }
+    
+    if (data.contains("health_score")) {
+        columns.append("health_score");
+        values.append(QString::number(data.value("health_score").toInt()));
+    }
+    
+    if (data.contains("last_maintenance") && data.value("last_maintenance").toDate().isValid() && 
+        data.value("last_maintenance").toDate().year() > 2000) {
+        columns.append("last_maintenance");
+        values.append(QString("'%1'").arg(data.value("last_maintenance").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (data.contains("next_maintenance") && data.value("next_maintenance").toDate().isValid() && 
+        data.value("next_maintenance").toDate().year() > 2000) {
+        columns.append("next_maintenance");
+        values.append(QString("'%1'").arg(data.value("next_maintenance").toDate().toString("yyyy-MM-dd")));
+    }
+    
+    if (data.contains("maintenance_unit") && !data.value("maintenance_unit").toString().isEmpty()) {
+        columns.append("maintenance_unit");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("maintenance_unit").toString())));
+    }
+    
+    if (data.contains("qrcode_url") && !data.value("qrcode_url").toString().isEmpty()) {
+        columns.append("qrcode_url");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("qrcode_url").toString())));
+    }
+    
+    if (data.contains("remarks") && !data.value("remarks").toString().isEmpty()) {
+        columns.append("remarks");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("remarks").toString())));
+    }
+    
+    if (data.contains("created_by") && !data.value("created_by").toString().isEmpty()) {
+        columns.append("created_by");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("created_by").toString())));
+    }
+    
+    if (data.contains("updated_by") && !data.value("updated_by").toString().isEmpty()) {
+        columns.append("updated_by");
+        values.append(QString("'%1'").arg(escapeSqlString(data.value("updated_by").toString())));
+    }
+    
+    // 添加时间戳
+    columns.append("created_at");
+    values.append("CURRENT_TIMESTAMP");
+    columns.append("updated_at");
+    values.append("CURRENT_TIMESTAMP");
+    
+    if (columns.isEmpty()) {
+        qDebug() << "[FacilityDAO] Insert failed: no fields to insert";
+        return false;
+    }
+    
+    QString sql = QString("INSERT INTO %1 (%2) VALUES (%3)")
+                      .arg(m_tableName)
+                      .arg(columns.join(", "))
+                      .arg(values.join(", "));
+    
+    qDebug() << "[FacilityDAO] Insert SQL:" << sql;
+    
+    // 直接执行SQL，不使用参数绑定
+    bool result = DatabaseManager::instance().executeCommand(sql);
+    if (!result) {
+        QString error = DatabaseManager::instance().lastError();
+        qDebug() << "[FacilityDAO] Insert failed:" << error;
+        LOG_ERROR(QString("Facility insert failed: %1").arg(error));
+    } else {
+        qDebug() << "[FacilityDAO] Insert successful";
+    }
+    return result;
+}
+
 bool FacilityDAO::update(const Facility &facility, int id)
 {
     if (id <= 0) {

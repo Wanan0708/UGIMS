@@ -18,6 +18,9 @@ public:
     Pipeline fromQuery(QSqlQuery &query) override;
     QVariantMap toVariantMap(const Pipeline &pipeline) override;
 
+    // 查找所有管线（重写基类方法以处理PostGIS字段）
+    QVector<Pipeline> findAll(int limit = 1000);
+    
     // 根据类型查找管线
     QVector<Pipeline> findByType(const QString &type, int limit = 1000);
 

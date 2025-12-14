@@ -275,3 +275,18 @@ void ChangePropertyCommand::applyProperty(const QVariant &value)
         }
     }
 }
+
+bool ChangePropertyCommand::mergeWith(const QUndoCommand *other)
+{
+    // 只合并相同实体和相同属性的连续修改命令
+    const ChangePropertyCommand *propertyCommand = static_cast<const ChangePropertyCommand*>(other);
+    
+    if (propertyCommand->m_item != m_item || 
+        propertyCommand->m_propertyName != m_propertyName) {
+        return false;
+    }
+    
+    // 更新新值（保留第一次的旧值，使用最后一次的新值）
+    m_newValue = propertyCommand->m_newValue;
+    return true;
+}

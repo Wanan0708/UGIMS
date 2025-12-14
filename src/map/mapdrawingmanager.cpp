@@ -1,10 +1,12 @@
 #include "map/mapdrawingmanager.h"
+#include "dao/facilitydao.h"
 #include <QPainterPath>
 #include <QDebug>
 #include <QtMath>
 #include <cmath>
 #include <QPainter>
 #include <QPixmap>
+#include <limits>
 
 MapDrawingManager::MapDrawingManager(QGraphicsScene *scene,
                                    QGraphicsView *view,
@@ -17,6 +19,7 @@ MapDrawingManager::MapDrawingManager(QGraphicsScene *scene,
     , m_mode(NoDrawing)
     , m_previewLine(nullptr)
     , m_previewPoint(nullptr)
+    , m_facilitySnapIndicator(nullptr)
     , m_drawingColor(QColor("#1890ff"))  // 默认蓝色
     , m_lineWidth(3)                      // 默认3px
 {
@@ -97,6 +100,7 @@ void MapDrawingManager::cancelDrawing()
     
     clearTemporaryGraphics();
     m_points.clear();
+    m_connectedFacilityIds.clear();
     m_mode = NoDrawing;
     m_currentType.clear();
     
@@ -118,12 +122,14 @@ void MapDrawingManager::finishDrawing()
         // 管线至少需要2个点
         if (m_points.size() >= 2) {
             QString wkt = generateLineStringWKT(m_points);
-            emit pipelineDrawingFinished(m_currentType, wkt, m_points);
+            emit pipelineDrawingFinished(m_currentType, wkt, m_points, m_connectedFacilityIds);
             qDebug() << "Pipeline drawing finished, WKT:" << wkt;
+            qDebug() << "Connected facilities:" << m_connectedFacilityIds;
             
             // 清除当前绘制的点和临时图形，但保持绘制状态
             clearTemporaryGraphics();
             m_points.clear();
+            m_connectedFacilityIds.clear();
             
             qDebug() << "✨ Ready to draw next pipeline of type:" << m_currentType;
         } else {
@@ -158,13 +164,25 @@ void MapDrawingManager::handleMouseClick(const QPointF &scenePos)
     qDebug() << "Mouse click at scene pos:" << scenePos;
     
     if (m_mode == DrawingPolyline) {
+        // 检测附近是否有设施，如果有则吸附到设施位置
+        QPointF actualPos = scenePos;
+        QString connectedFacilityId;
+        
+        NearbyFacility nearby = findNearbyFacility(scenePos, 20.0);
+        if (!nearby.facilityId.isEmpty()) {
+            actualPos = nearby.scenePos;
+            connectedFacilityId = nearby.facilityId;
+            qDebug() << "Snapped to facility:" << connectedFacilityId << "at" << actualPos;
+        }
+        
         // 绘制管线：添加点到列表
-        m_points.append(scenePos);
+        m_points.append(actualPos);
+        m_connectedFacilityIds.append(connectedFacilityId);  // 记录连接的设施ID
         
         // 创建点标记
         QGraphicsEllipseItem *marker = new QGraphicsEllipseItem(
-            scenePos.x() - POINT_MARKER_SIZE / 2,
-            scenePos.y() - POINT_MARKER_SIZE / 2,
+            actualPos.x() - POINT_MARKER_SIZE / 2,
+            actualPos.y() - POINT_MARKER_SIZE / 2,
             POINT_MARKER_SIZE,
             POINT_MARKER_SIZE
         );
@@ -174,7 +192,10 @@ void MapDrawingManager::handleMouseClick(const QPointF &scenePos)
         m_scene->addItem(marker);
         m_pointMarkers.append(marker);
         
-        qDebug() << "Added point" << m_points.size() << "at" << scenePos;
+        // 清除设施吸附指示器
+        clearFacilitySnapIndicator();
+        
+        qDebug() << "Added point" << m_points.size() << "at" << actualPos;
         
     } else if (m_mode == DrawingPoint) {
         // 绘制设施：只需要一个点，直接完成
@@ -195,8 +216,18 @@ void MapDrawingManager::handleMouseMove(const QPointF &scenePos)
     }
     
     if (m_mode == DrawingPolyline && m_points.size() > 0) {
+        // 检测附近是否有设施，如果有则吸附
+        QPointF actualPos = scenePos;
+        NearbyFacility nearby = findNearbyFacility(scenePos, 20.0);
+        if (!nearby.facilityId.isEmpty()) {
+            actualPos = nearby.scenePos;
+            updateFacilitySnapIndicator(actualPos);
+        } else {
+            clearFacilitySnapIndicator();
+        }
+        
         // 更新预览线（橡皮筋效果）
-        updatePreviewLine(scenePos);
+        updatePreviewLine(actualPos);
     } else if (m_mode == DrawingPoint) {
         // 更新预览点
         createPreviewPoint(scenePos);
@@ -271,6 +302,9 @@ void MapDrawingManager::clearTemporaryGraphics()
         delete m_previewPoint;
         m_previewPoint = nullptr;
     }
+    
+    // 清除设施吸附指示器
+    clearFacilitySnapIndicator();
 }
 
 void MapDrawingManager::updatePreviewLine(const QPointF &currentPos)
@@ -358,24 +392,88 @@ QPointF MapDrawingManager::sceneToGeo(const QPointF &scenePos)
         return scenePos;
     }
     
-    // 使用 TileMapManager 的坐标转换
-    // 场景坐标系：像素坐标（左上角为原点）
-    // 地理坐标系：经纬度（WGS84）
+    // 使用 TileMapManager 的坐标转换方法
+    return m_tileManager->sceneToGeo(scenePos);
+}
+
+QPointF MapDrawingManager::geoToScene(const QPointF &geoPos)
+{
+    if (!m_tileManager) {
+        return geoPos;
+    }
     
-    // 获取当前缩放级别
+    // 使用 TileMapManager 的坐标转换方法
+    return m_tileManager->geoToScene(geoPos.x(), geoPos.y());
+}
+
+MapDrawingManager::NearbyFacility MapDrawingManager::findNearbyFacility(const QPointF &scenePos, double tolerancePixels)
+{
+    NearbyFacility result;
+    result.facilityId = QString();
+    result.distance = std::numeric_limits<double>::max();
+    
+    if (!m_tileManager) {
+        return result;
+    }
+    
+    // 将场景坐标转换为地理坐标
+    QPointF geoPos = sceneToGeo(scenePos);
+    
+    // 将像素容差转换为米（近似）
+    // 在缩放级别z下，1像素 ≈ 156543.03392 * cos(lat) / 2^z 米
     int zoom = m_tileManager->getZoom();
+    double metersPerPixel = 156543.03392 * cos(qDegreesToRadians(geoPos.y())) / qPow(2.0, zoom);
+    double toleranceMeters = tolerancePixels * metersPerPixel;
     
-    // 将场景坐标转换为瓦片坐标
-    double tileX = scenePos.x() / 256.0;
-    double tileY = scenePos.y() / 256.0;
+    // 查找附近的设施
+    FacilityDAO facilityDao;
+    QVector<Facility> facilities = facilityDao.findNearPoint(geoPos.x(), geoPos.y(), toleranceMeters, 10);
     
-    // 瓦片坐标转地理坐标（墨卡托投影）
-    double n = qPow(2.0, zoom);
-    double lon = tileX / n * 360.0 - 180.0;
-    double lat_rad = atan(sinh(M_PI * (1 - 2 * tileY / n)));
-    double lat = qRadiansToDegrees(lat_rad);
+    if (facilities.isEmpty()) {
+        return result;
+    }
     
-    return QPointF(lon, lat);
+    // 找到最近的设施
+    for (const Facility &facility : facilities) {
+        QPointF facilityGeo = facility.coordinate();
+        QPointF facilityScene = geoToScene(facilityGeo);
+        
+        double distance = QLineF(scenePos, facilityScene).length();
+        if (distance < result.distance && distance <= tolerancePixels) {
+            result.facilityId = facility.facilityId();
+            result.scenePos = facilityScene;
+            result.distance = distance;
+        }
+    }
+    
+    return result;
+}
+
+void MapDrawingManager::updateFacilitySnapIndicator(const QPointF &facilityPos)
+{
+    // 清除旧的指示器
+    clearFacilitySnapIndicator();
+    
+    // 创建新的指示器（一个高亮的圆圈）
+    m_facilitySnapIndicator = new QGraphicsEllipseItem(
+        facilityPos.x() - 10,
+        facilityPos.y() - 10,
+        20,
+        20
+    );
+    m_facilitySnapIndicator->setBrush(QBrush(Qt::NoBrush));
+    m_facilitySnapIndicator->setPen(QPen(QColor(255, 255, 0), 3, Qt::DashLine));  // 黄色虚线
+    m_facilitySnapIndicator->setZValue(1001);  // 确保在最上层
+    m_scene->addItem(m_facilitySnapIndicator);
+}
+
+void MapDrawingManager::clearFacilitySnapIndicator()
+{
+    if (m_facilitySnapIndicator) {
+        m_scene->removeItem(m_facilitySnapIndicator);
+        delete m_facilitySnapIndicator;
+        m_facilitySnapIndicator = nullptr;
+    }
 }
 
 QCursor MapDrawingManager::createPipelineCursor(const QString &pipelineType)

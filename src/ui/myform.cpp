@@ -9,6 +9,8 @@
 #include "widgets/assetmanagerdialog.h"  // 资产管理对话框
 #include "widgets/healthassessmentdialog.h"  // 健康度评估对话框
 #include "widgets/settingsdialog.h"  // 系统设置对话框
+#include "widgets/helpdialog.h"  // 帮助对话框
+#include "widgets/entityviewdialog.h"  // 实体属性查看对话框
 #include "core/auth/sessionmanager.h"  // 会话管理
 #include "core/auth/permissionmanager.h"  // 权限管理
 #include "map/mapdrawingmanager.h"  // 添加绘制管理器头文件
@@ -59,6 +61,9 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QClipboard>
+#include <QMenu>
+#include <QStringConverter>
 #include <QStyle>
 #include <QWidgetAction>
 #include <QPushButton>
@@ -101,6 +106,8 @@ MyForm::MyForm(QWidget *parent)
     , isDownloading(false)  // 初始化下载状态
     , viewUpdateTimer(nullptr)  // 初始化更新定时器
     , deviceTreeModel(nullptr)  // 初始化设备树模型
+    , m_deviceTreeMenuActive(false)  // 初始化右键菜单标志
+    , m_deviceTreeDialogActive(false)  // 初始化对话框标志
     , m_drawingToolContainer(nullptr)  // 初始化绘制工具容器
     , m_drawingToolPanel(nullptr)  // 初始化绘制工具面板
     , m_drawingToolToggleBtn(nullptr)  // 初始化浮动切换按钮（已废弃）
@@ -125,6 +132,10 @@ MyForm::MyForm(QWidget *parent)
     , m_undoStack(nullptr)  // 初始化撤销栈
     , m_currentConnectivityType(0)  // 初始化为Upstream (0)
     , m_hasUnsavedChanges(false)  // 初始化未保存变更标志
+    , m_distanceMeasureMode(false)  // 初始化距离量算模式
+    , m_distancePreviewLine(nullptr)  // 初始化距离预览线
+    , m_areaMeasureMode(false)  // 初始化面积量算模式
+    , m_areaPreviewLine(nullptr)  // 初始化面积预览线
 {
     logMessage("=== MyForm constructor started ===");
     ui->setupUi(this);
@@ -132,6 +143,22 @@ MyForm::MyForm(QWidget *parent)
     // 创建撤销栈
     m_undoStack = new QUndoStack(this);
     m_undoStack->setUndoLimit(50);  // 限制最多50步撤销
+    
+    // 连接撤销栈信号，自动更新按钮状态
+    connect(m_undoStack, &QUndoStack::canUndoChanged, this, [this](bool canUndo) {
+        if (ui->undoButton) {
+            ui->undoButton->setEnabled(canUndo);
+        }
+    });
+    connect(m_undoStack, &QUndoStack::canRedoChanged, this, [this](bool canRedo) {
+        if (ui->redoButton) {
+            ui->redoButton->setEnabled(canRedo);
+        }
+    });
+    connect(m_undoStack, &QUndoStack::indexChanged, this, [this](int index) {
+        // 更新按钮状态和提示文本
+        updateUndoRedoButtonStates();
+    });
     
     // 初始化变更跟踪系统
     m_pendingChanges.clear();
@@ -239,10 +266,30 @@ void MyForm::showEvent(QShowEvent *event)
 
 void MyForm::keyPressEvent(QKeyEvent *event)
 {
-    // Delete 键删除选中的实体
+    // Delete 键删除选中的实体或测量线条
     if (event->key() == Qt::Key_Delete) {
         if (m_selectedItem) {
-            onDeleteSelectedEntity();
+            QString itemType = m_selectedItem->data(0).toString();
+            // 检查是否是测量线条
+            bool isMeasureItem = (itemType == "distance_measure_line" || 
+                                  itemType == "distance_measure_label" ||
+                                  itemType == "distance_measure_marker" ||
+                                  itemType == "area_measure_polygon" ||
+                                  itemType == "area_measure_label" ||
+                                  itemType == "area_measure_marker");
+            
+            if (isMeasureItem) {
+                // 删除测量线条
+                if (itemType.startsWith("distance_")) {
+                    deleteDistanceMeasure(m_selectedItem);
+                } else if (itemType.startsWith("area_")) {
+                    deleteAreaMeasure(m_selectedItem);
+                }
+                clearSelection();
+            } else {
+                // 删除实体
+                onDeleteSelectedEntity();
+            }
             event->accept();
             return;
         }
@@ -287,6 +334,52 @@ void MyForm::keyPressEvent(QKeyEvent *event)
     // Esc 退出最短路径点选模式
     if (m_shortestPathSelectionMode && event->key() == Qt::Key_Escape) {
         cancelShortestPathSelectionMode();
+        return;
+    }
+    
+    // Esc 退出距离量算模式（取消当前测量，清除当前正在绘制的点）
+    if (m_distanceMeasureMode && event->key() == Qt::Key_Escape) {
+        m_distanceMeasureMode = false;
+        // 只清除当前正在绘制的点，不清除已完成的测量结果
+        clearDistancePreview();
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentDistanceMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentDistanceMarkers.clear();
+            if (m_currentDistanceLine) {
+                mapScene->removeItem(m_currentDistanceLine);
+                delete m_currentDistanceLine;
+                m_currentDistanceLine = nullptr;
+            }
+        }
+        m_currentDistancePoints.clear();
+        ui->graphicsView->setCursor(Qt::ArrowCursor);
+        updateStatus("已取消距离量算（已完成的测量结果保留）");
+        return;
+    }
+    
+    // Esc 退出面积量算模式（取消当前测量，清除当前正在绘制的点）
+    if (m_areaMeasureMode && event->key() == Qt::Key_Escape) {
+        m_areaMeasureMode = false;
+        // 只清除当前正在绘制的点，不清除已完成的测量结果
+        clearAreaPreview();
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentAreaMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentAreaMarkers.clear();
+            if (m_currentAreaPolygon) {
+                mapScene->removeItem(m_currentAreaPolygon);
+                delete m_currentAreaPolygon;
+                m_currentAreaPolygon = nullptr;
+            }
+        }
+        m_currentAreaPoints.clear();
+        ui->graphicsView->setCursor(Qt::ArrowCursor);
+        updateStatus("已取消面积量算（已完成的测量结果保留）");
         return;
     }
 }
@@ -364,7 +457,9 @@ void MyForm::setupFunctionalArea() {
     ui->saveButton->setShortcut(QKeySequence::Save);
     ui->undoButton->setShortcut(QKeySequence::Undo);
     ui->redoButton->setShortcut(QKeySequence::Redo);
-
+    
+    // 初始化按钮状态
+    updateUndoRedoButtonStates();
 
     // 新功能区按钮的信号槽连接
     // 数据与地图模块
@@ -424,6 +519,17 @@ void MyForm::setupFunctionalArea() {
     }
     
     // 工具模块
+    if (auto distanceMeasureBtn = ui->functionalArea->findChild<QPushButton*>("distanceMeasureButton")) {
+        connect(distanceMeasureBtn, &QPushButton::clicked, this, &MyForm::onDistanceMeasureButtonClicked);
+    }
+    if (auto areaMeasureBtn = ui->functionalArea->findChild<QPushButton*>("areaMeasureButton")) {
+        connect(areaMeasureBtn, &QPushButton::clicked, this, &MyForm::onAreaMeasureButtonClicked);
+    }
+    if (auto clearMeasureBtn = ui->functionalArea->findChild<QPushButton*>("clearMeasureButton")) {
+        connect(clearMeasureBtn, &QPushButton::clicked, this, &MyForm::onClearMeasureButtonClicked);
+    }
+    
+    // 信息模块
     if (auto settingsBtn = ui->functionalArea->findChild<QPushButton*>("settingsButton")) {
         connect(settingsBtn, &QPushButton::clicked, this, &MyForm::onSettingsButtonClicked);
     }
@@ -448,6 +554,13 @@ void MyForm::setupMapArea() {
     ui->graphicsView->setDragMode(QGraphicsView::NoDrag);
     ui->graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     ui->graphicsView->setResizeAnchor(QGraphicsView::AnchorViewCenter);
+    
+    // 禁用默认的选中样式（虚线框），使用自定义高亮
+    ui->graphicsView->setStyleSheet(
+        "QGraphicsView {"
+        "  selection-background-color: transparent;"
+        "}"
+    );
     
     // 设置滚动条策略
     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -567,6 +680,26 @@ void MyForm::setupMapArea() {
     
     logMessage("Signal connected");
     
+    // 连接场景选择变化信号，完全禁用Qt默认的虚线框选择样式
+    connect(mapScene, &QGraphicsScene::selectionChanged, this, [this]() {
+        // 当场景选择状态改变时，立即取消所有项的默认选择状态
+        // 只使用自定义高亮，不使用Qt默认的虚线框
+        QList<QGraphicsItem*> selectedItems = mapScene->selectedItems();
+        for (QGraphicsItem *item : selectedItems) {
+            // 如果是实体项，取消默认选择，使用自定义高亮
+            if (isEntityItem(item)) {
+                item->setSelected(false);
+                // 如果这个项不是当前选中的项，则选中它（使用自定义高亮）
+                if (item != m_selectedItem) {
+                    onEntityClicked(item);
+                }
+            } else {
+                // 非实体项也取消默认选择
+                item->setSelected(false);
+            }
+        }
+    });
+    
     // 检查本地是否有已下载的瓦片，如果有则自动显示
     logMessage("Checking for local tiles...");
     updateStatus("Checking for local tiles...");
@@ -577,7 +710,7 @@ void MyForm::setupMapArea() {
     tileMapManager->getLocalTilesInfo();
     
     // 初始化视图大小
-    QTimer::singleShot(100, this, [this]() {
+    QTimer::singleShot(50, this, [this]() {
         // 延迟执行以确保视图已经正确初始化
         QSize viewSize = ui->graphicsView->viewport()->size();
         tileMapManager->setViewSize(viewSize.width(), viewSize.height());
@@ -967,9 +1100,133 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                 }
                 return true; // 拦截其他操作
             }
+            
+            // 距离量算模式：左键添加点，右键完成（但如果右键点击已完成的测量线条，显示菜单）
+            if (m_distanceMeasureMode) {
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                    if (tileMapManager) {
+                        QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+                        handleDistanceMeasurePoint(QPointF(geo.x(), geo.y()));
+                    }
+                } else if (mouseEvent->button() == Qt::RightButton) {
+                    // 如果正在测量过程中（有未完成的点），右键完成测量
+                    if (!m_currentDistancePoints.isEmpty()) {
+                        cancelDistanceMeasureMode();
+                    } else {
+                        // 没有正在测量，检查是否点击了已完成的距离测量线条
+                        QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                        const qreal screenPixelTolerance = 2.0;
+                        QPointF screenDelta(screenPixelTolerance, 0);
+                        QPointF sceneDelta = ui->graphicsView->mapToScene(screenDelta.toPoint()) - 
+                                             ui->graphicsView->mapToScene(QPoint(0, 0));
+                        qreal searchRadius = qAbs(sceneDelta.x());
+                        if (searchRadius <= 0 || searchRadius > 1000) {
+                            searchRadius = 2.0;
+                        }
+                        QRectF searchRect(scenePos.x() - searchRadius, 
+                                         scenePos.y() - searchRadius, 
+                                         searchRadius * 2, 
+                                         searchRadius * 2);
+                        QList<QGraphicsItem*> items = mapScene->items(searchRect, Qt::IntersectsItemShape, 
+                                                                       Qt::DescendingOrder, 
+                                                                       ui->graphicsView->transform());
+                        if (items.isEmpty()) {
+                            items = mapScene->items(scenePos, Qt::IntersectsItemShape, 
+                                                   Qt::DescendingOrder, 
+                                                   ui->graphicsView->transform());
+                        }
+                        // 查找已完成的距离测量线条
+                        QGraphicsItem *measureItem = nullptr;
+                        for (QGraphicsItem *candidate : items) {
+                            QString itemType = candidate->data(0).toString();
+                            if (itemType == "distance_measure_line" || 
+                                itemType == "distance_measure_label" ||
+                                itemType == "distance_measure_marker") {
+                                measureItem = candidate;
+                                break;
+                            }
+                        }
+                        // 如果点击的是已完成的测量线条，显示右键菜单
+                        if (measureItem) {
+                            if (measureItem != m_selectedItem) {
+                                onEntityClicked(measureItem);
+                            }
+                            onShowContextMenu(mouseEvent->pos());
+                        }
+                        // 如果点击空白处，不做任何事（保持测量模式）
+                    }
+                }
+                return true; // 拦截其他操作
+            }
+            
+            // 面积量算模式：左键添加点，右键完成（但如果右键点击已完成的测量线条，显示菜单）
+            if (m_areaMeasureMode) {
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                    if (tileMapManager) {
+                        QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+                        handleAreaMeasurePoint(QPointF(geo.x(), geo.y()));
+                    }
+                } else if (mouseEvent->button() == Qt::RightButton) {
+                    // 如果正在测量过程中（有未完成的点），右键完成测量
+                    if (!m_currentAreaPoints.isEmpty()) {
+                        cancelAreaMeasureMode();
+                    } else {
+                        // 没有正在测量，检查是否点击了已完成的面积测量线条
+                        QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                        const qreal screenPixelTolerance = 2.0;
+                        QPointF screenDelta(screenPixelTolerance, 0);
+                        QPointF sceneDelta = ui->graphicsView->mapToScene(screenDelta.toPoint()) - 
+                                             ui->graphicsView->mapToScene(QPoint(0, 0));
+                        qreal searchRadius = qAbs(sceneDelta.x());
+                        if (searchRadius <= 0 || searchRadius > 1000) {
+                            searchRadius = 2.0;
+                        }
+                        QRectF searchRect(scenePos.x() - searchRadius, 
+                                         scenePos.y() - searchRadius, 
+                                         searchRadius * 2, 
+                                         searchRadius * 2);
+                        QList<QGraphicsItem*> items = mapScene->items(searchRect, Qt::IntersectsItemShape, 
+                                                                       Qt::DescendingOrder, 
+                                                                       ui->graphicsView->transform());
+                        if (items.isEmpty()) {
+                            items = mapScene->items(scenePos, Qt::IntersectsItemShape, 
+                                                   Qt::DescendingOrder, 
+                                                   ui->graphicsView->transform());
+                        }
+                        // 查找已完成的面积测量线条
+                        QGraphicsItem *measureItem = nullptr;
+                        for (QGraphicsItem *candidate : items) {
+                            QString itemType = candidate->data(0).toString();
+                            if (itemType == "area_measure_polygon" || 
+                                itemType == "area_measure_label" ||
+                                itemType == "area_measure_marker") {
+                                measureItem = candidate;
+                                break;
+                            }
+                        }
+                        // 如果点击的是已完成的测量线条，显示右键菜单
+                        if (measureItem) {
+                            if (measureItem != m_selectedItem) {
+                                onEntityClicked(measureItem);
+                            }
+                            onShowContextMenu(mouseEvent->pos());
+                        }
+                        // 如果点击空白处，不做任何事（保持测量模式）
+                    }
+                }
+                return true; // 拦截其他操作
+            }
 
             // 非绘制模式：处理实体选中和右键菜单
+            // 注意：如果处于爆管分析、连通性分析等特殊模式，这些模式已经拦截了事件，不会执行到这里
             if (!m_drawingManager || !m_drawingManager->isDrawing()) {
+                // 如果处于爆管分析模式，不应该处理实体选中（虽然理论上不会执行到这里）
+                if (m_burstSelectionMode) {
+                    return false; // 让事件继续传播，但不会处理实体选中
+                }
+                
                 QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
                 
                 // 使用屏幕像素作为基准，转换为场景坐标
@@ -1002,25 +1259,61 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                                            ui->graphicsView->transform());
                 }
                 
-                // 收集所有实体项
+                // 在鼠标按下时立即取消所有项的选择状态，避免显示虚线框
+                // 这可以防止Qt默认选择机制在鼠标按下时触发
+                for (QGraphicsItem *candidate : items) {
+                    if (isEntityItem(candidate)) {
+                        candidate->setSelected(false);
+                    }
+                }
+                
+                // 收集所有实体项和测量线条
                 QList<QGraphicsItem*> facilityItems;
                 QList<QGraphicsItem*> pipelineItems;
+                QGraphicsItem *measureItem = nullptr;
                 
                 for (QGraphicsItem *candidate : items) {
+                    QString itemType = candidate->data(0).toString();
+                    // 检查是否是测量线条（优先）
+                    if ((itemType == "distance_measure_line" || 
+                         itemType == "distance_measure_label" ||
+                         itemType == "area_measure_polygon" ||
+                         itemType == "area_measure_label") && !measureItem) {
+                        measureItem = candidate;
+                    }
+                    // 如果点击到标注，尝试找到关联的设施（通过data(10)存储的图形项指针）
+                    if (itemType == "annotation" && candidate->data(1).toString() == "facility") {
+                        QVariant itemPtr = candidate->data(10);
+                        if (itemPtr.isValid()) {
+                            QGraphicsItem *linkedItem = reinterpret_cast<QGraphicsItem*>(itemPtr.toULongLong());
+                            if (linkedItem && isEntityItem(linkedItem) && linkedItem->data(0).toString() == "facility") {
+                                // 将关联的设施添加到列表中
+                                if (!facilityItems.contains(linkedItem)) {
+                                    facilityItems.append(linkedItem);
+                                    qDebug() << "[Click] Found facility via annotation link";
+                                }
+                            }
+                        }
+                    }
+                    // 检查是否是实体
                     if (isEntityItem(candidate)) {
                         QString entityType = candidate->data(0).toString();
                         if (entityType == "facility") {
-                            facilityItems.append(candidate);
+                            if (!facilityItems.contains(candidate)) {
+                                facilityItems.append(candidate);
+                            }
                         } else if (entityType == "pipeline") {
                             pipelineItems.append(candidate);
                         }
                     }
                 }
                 
-                // 优先选择设施（Z值更高），然后选择管线
+                // 优先选择测量线条，然后选择设施，最后选择管线
                 QGraphicsItem *item = nullptr;
                 
-                if (!facilityItems.isEmpty()) {
+                if (measureItem) {
+                    item = measureItem;
+                } else if (!facilityItems.isEmpty()) {
                     // 对于设施，也需要检查距离（虽然设施是点，但也要确保在2像素范围内）
                     qreal minDistance = std::numeric_limits<qreal>::max();
                     QGraphicsItem *nearestFacility = nullptr;
@@ -1029,12 +1322,24 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                     qreal maxAllowedDistance = searchRadius;
                     
                     for (QGraphicsItem *facility : facilityItems) {
-                        // 获取设施的位置
-                        QPointF facilityPos = facility->scenePos();
+                        // 获取设施的位置（椭圆的中心点）
+                        QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(facility);
+                        QPointF facilityPos;
+                        if (ellipseItem) {
+                            // 计算椭圆的中心点
+                            QRectF rect = ellipseItem->rect();
+                            QPointF center = rect.center();
+                            facilityPos = facility->mapToScene(center);
+                        } else {
+                            // 如果不是椭圆，使用场景位置
+                            facilityPos = facility->scenePos();
+                        }
+                        
                         qreal dist = QLineF(scenePos, facilityPos).length();
                         
-                        // 只考虑距离在允许范围内的设施
-                        if (dist <= maxAllowedDistance && dist < minDistance) {
+                        // 只考虑距离在允许范围内的设施（增加容差，因为设施是点）
+                        qreal facilityTolerance = maxAllowedDistance * 2; // 设施使用更大的容差
+                        if (dist <= facilityTolerance && dist < minDistance) {
                             minDistance = dist;
                             nearestFacility = facility;
                         }
@@ -1097,24 +1402,37 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                 }
                 
                 if (mouseEvent->button() == Qt::LeftButton) {
-                    // 左键点击：选中实体
-                    if (item && isEntityItem(item)) {
-                        onEntityClicked(item);
-                        return true;
-                    } else {
-                        // 点击空白处，清除选中
-                        clearSelection();
+                    // 左键点击：选中实体或测量线条
+                    if (item) {
+                        QString itemType = item->data(0).toString();
+                        if (isEntityItem(item) || 
+                            itemType.startsWith("distance_measure_") ||
+                            itemType.startsWith("area_measure_")) {
+                            // 立即取消Qt默认选择，避免显示虚线框
+                            item->setSelected(false);
+                            onEntityClicked(item);
+                            return true;
+                        }
                     }
+                    // 点击空白处，清除选中
+                    clearSelection();
                 } else if (mouseEvent->button() == Qt::RightButton) {
                     // 右键点击：显示菜单或拖拽
-                    if (item && isEntityItem(item)) {
-                        // 如果点击的是实体，显示菜单
-                        if (item != m_selectedItem) {
-                            onEntityClicked(item);  // 先选中
+                    if (item) {
+                        QString itemType = item->data(0).toString();
+                        if (isEntityItem(item) || 
+                            itemType.startsWith("distance_measure_") ||
+                            itemType.startsWith("area_measure_")) {
+                            // 如果点击的是实体或测量线条，显示菜单
+                            if (item != m_selectedItem) {
+                                onEntityClicked(item);  // 先选中
+                            }
+                            onShowContextMenu(mouseEvent->pos());
+                            return true;
                         }
-                        onShowContextMenu(mouseEvent->pos());
-                        return true;
-                    } else {
+                    }
+                    // 点击空白处，启用拖拽
+                    if (true) {
                         // 点击空白处，启用拖拽
                         QPoint mousePos = ui->graphicsView->mapFromGlobal(QCursor::pos());
                         QRect viewRect = ui->graphicsView->rect();
@@ -1132,6 +1450,19 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
         } else if (event->type() == QEvent::MouseButtonDblClick) {
             // 处理双击事件
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            
+            // 距离量算模式：双击完成测量
+            if (m_distanceMeasureMode && mouseEvent->button() == Qt::LeftButton) {
+                cancelDistanceMeasureMode();
+                return true; // 拦截事件
+            }
+            
+            // 面积量算模式：双击完成测量
+            if (m_areaMeasureMode && mouseEvent->button() == Qt::LeftButton) {
+                cancelAreaMeasureMode();
+                return true; // 拦截事件
+            }
+            
             if (m_drawingManager && m_drawingManager->isDrawing()) {
                 if (mouseEvent->button() == Qt::LeftButton) {
                     QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
@@ -1171,25 +1502,53 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                                            ui->graphicsView->transform());
                 }
                 
-                // 收集所有实体项
+                // 收集所有实体项和测量线条
                 QList<QGraphicsItem*> facilityItems;
                 QList<QGraphicsItem*> pipelineItems;
+                QGraphicsItem *measureItem = nullptr;
                 
                 for (QGraphicsItem *candidate : items) {
+                    QString itemType = candidate->data(0).toString();
+                    // 检查是否是测量线条（优先）
+                    if ((itemType == "distance_measure_line" || 
+                         itemType == "distance_measure_label" ||
+                         itemType == "area_measure_polygon" ||
+                         itemType == "area_measure_label") && !measureItem) {
+                        measureItem = candidate;
+                    }
+                    // 如果点击到标注，尝试找到关联的设施（通过data(10)存储的图形项指针）
+                    if (itemType == "annotation" && candidate->data(1).toString() == "facility") {
+                        QVariant itemPtr = candidate->data(10);
+                        if (itemPtr.isValid()) {
+                            QGraphicsItem *linkedItem = reinterpret_cast<QGraphicsItem*>(itemPtr.toULongLong());
+                            if (linkedItem && isEntityItem(linkedItem) && linkedItem->data(0).toString() == "facility") {
+                                // 将关联的设施添加到列表中
+                                if (!facilityItems.contains(linkedItem)) {
+                                    facilityItems.append(linkedItem);
+                                    qDebug() << "[DoubleClick] Found facility via annotation link";
+                                }
+                            }
+                        }
+                    }
+                    // 检查是否是实体
                     if (isEntityItem(candidate)) {
                         QString entityType = candidate->data(0).toString();
                         if (entityType == "facility") {
-                            facilityItems.append(candidate);
+                            if (!facilityItems.contains(candidate)) {
+                                facilityItems.append(candidate);
+                            }
                         } else if (entityType == "pipeline") {
                             pipelineItems.append(candidate);
                         }
                     }
                 }
                 
-                // 优先选择设施（Z值更高），然后选择管线
+                // 优先选择测量线条，然后选择设施，最后选择管线
                 QGraphicsItem *item = nullptr;
                 
-                if (!facilityItems.isEmpty()) {
+                if (measureItem) {
+                    item = measureItem;
+                } else if (!facilityItems.isEmpty()) {
                     // 对于设施，也需要检查距离（虽然设施是点，但也要确保在2像素范围内）
                     qreal minDistance = std::numeric_limits<qreal>::max();
                     QGraphicsItem *nearestFacility = nullptr;
@@ -1198,12 +1557,24 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
                     qreal maxAllowedDistance = searchRadius;
                     
                     for (QGraphicsItem *facility : facilityItems) {
-                        // 获取设施的位置
-                        QPointF facilityPos = facility->scenePos();
+                        // 获取设施的位置（椭圆的中心点）
+                        QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(facility);
+                        QPointF facilityPos;
+                        if (ellipseItem) {
+                            // 计算椭圆的中心点
+                            QRectF rect = ellipseItem->rect();
+                            QPointF center = rect.center();
+                            facilityPos = facility->mapToScene(center);
+                        } else {
+                            // 如果不是椭圆，使用场景位置
+                            facilityPos = facility->scenePos();
+                        }
+                        
                         qreal dist = QLineF(scenePos, facilityPos).length();
                         
-                        // 只考虑距离在允许范围内的设施
-                        if (dist <= maxAllowedDistance && dist < minDistance) {
+                        // 只考虑距离在允许范围内的设施（增加容差，因为设施是点）
+                        qreal facilityTolerance = maxAllowedDistance * 2; // 设施使用更大的容差
+                        if (dist <= facilityTolerance && dist < minDistance) {
                             minDistance = dist;
                             nearestFacility = facility;
                         }
@@ -1271,6 +1642,20 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             }
         } else if (event->type() == QEvent::MouseMove) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            
+            // 距离量算预览线更新
+            if (m_distanceMeasureMode && tileMapManager) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+                updateDistancePreview(QPointF(geo.x(), geo.y()));
+            }
+            
+            // 面积量算预览线更新
+            if (m_areaMeasureMode && tileMapManager) {
+                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+                updateAreaPreview(QPointF(geo.x(), geo.y()));
+            }
             
             // 处理绘制模式下的鼠标移动（显示预览）
             if (m_drawingManager && m_drawingManager->isDrawing()) {
@@ -1671,6 +2056,16 @@ void MyForm::handleRefreshButtonClicked()
             m_nextPipelineId
         );
         
+        // 延迟刷新标注图层，确保场景中的图形项已经渲染完成
+        if (m_layerManager && m_layerManager->isLayerVisible(LayerManager::Labels)) {
+            QTimer::singleShot(50, this, [this]() {
+                if (m_layerManager) {
+                    qDebug() << "[Refresh] Refreshing annotation layer after data refresh";
+                    m_layerManager->refreshLayer(LayerManager::Labels);
+                }
+            });
+        }
+        
         updateStatus("数据刷新完成");
         QMessageBox::information(this, "刷新完成", 
             QString("已重新加载当前视图范围内的数据。\n\n范围: 经度 %1-%2, 纬度 %3-%4")
@@ -1701,8 +2096,550 @@ void MyForm::handleUndoButtonClicked()
         m_undoStack->undo();
         qDebug() << "↩️ Undo:" << text;
         updateStatus("撤销: " + text);
+        
+        // 撤销后处理待保存变更列表
+        handleUndoForPendingChanges();
+        
+        // 撤销后刷新标注层，确保标注与图形项同步
+        QTimer::singleShot(50, this, [this]() {
+            if (m_layerManager) {
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
     } else {
-        updateStatus("无可撤销的操作");
+        updateStatus("已撤销到初始状态，无可撤销的操作");
+    }
+}
+
+// 处理撤销操作对待保存变更列表的影响
+void MyForm::handleUndoForPendingChanges()
+{
+    if (!mapScene) {
+        return;
+    }
+    
+    // 获取场景中所有图形项
+    QList<QGraphicsItem*> allSceneItems = mapScene->items();
+    QSet<QGraphicsItem*> sceneItemSet;
+    for (QGraphicsItem *item : allSceneItems) {
+        sceneItemSet.insert(item);
+    }
+    
+    bool hasChanges = false;
+    
+    // 检查待保存变更列表中的 ChangeAdded 记录
+    // 如果图形项不在场景中，说明被撤销了，需要从待保存列表中移除
+    for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+        PendingChange &change = m_pendingChanges[i];
+        
+        // 只处理 ChangeAdded 类型的变更
+        if (change.type == ChangeAdded && change.graphicsItem) {
+            // 检查图形项是否还在场景中
+            if (!sceneItemSet.contains(change.graphicsItem)) {
+                // 图形项不在场景中，说明被撤销了
+                QString entityType = change.entityType;
+                QString entityId;
+                
+                if (entityType == "pipeline") {
+                    Pipeline pipeline = change.data.value<Pipeline>();
+                    entityId = pipeline.pipelineId();
+                } else if (entityType == "facility") {
+                    Facility facility = change.data.value<Facility>();
+                    entityId = facility.facilityId();
+                }
+                
+                qDebug() << "[Undo] Removing ChangeAdded from pending changes:"
+                         << entityType << entityId;
+                m_pendingChanges.removeAt(i);
+                hasChanges = true;
+            }
+        }
+    }
+    
+    // 检查已保存到数据库的实体（通过检查图形项的数据库ID）
+    // 如果图形项不在场景中，但数据库ID存在，说明已经保存到数据库，需要标记为待删除
+    QList<QGraphicsItem*> itemsToCheck;
+    
+    // 检查管线
+    for (auto it = m_drawnPipelines.constBegin(); it != m_drawnPipelines.constEnd(); ++it) {
+        QGraphicsItem *item = it.key();
+        if (!sceneItemSet.contains(item)) {
+            // 这个管线项不在场景中，可能被撤销了
+            Pipeline pipeline = it.value();
+            
+            // 检查是否已经在待保存列表中
+            bool foundInPending = false;
+            for (const PendingChange &change : m_pendingChanges) {
+                if (change.graphicsItem == item) {
+                    foundInPending = true;
+                    break;
+                }
+            }
+            
+            // 如果不在待保存列表中，且数据库ID存在，说明已经保存到数据库
+            // 需要添加 ChangeDeleted 记录
+            if (!foundInPending && pipeline.id() > 0) {
+                // 检查是否已经有 ChangeDeleted 记录
+                bool hasDeleteRecord = false;
+                for (const PendingChange &change : m_pendingChanges) {
+                    if (change.type == ChangeDeleted && 
+                        change.entityType == "pipeline" &&
+                        change.originalId == pipeline.id()) {
+                        hasDeleteRecord = true;
+                        break;
+                    }
+                }
+                
+                if (!hasDeleteRecord) {
+                    PendingChange change;
+                    change.type = ChangeDeleted;
+                    change.entityType = "pipeline";
+                    change.data = QVariant::fromValue(pipeline);
+                    change.originalId = pipeline.id();
+                    change.graphicsItem = nullptr;  // 项已不在场景中
+                    m_pendingChanges.append(change);
+                    markAsModified();
+                    hasChanges = true;
+                    qDebug() << "[Undo] Added ChangeDeleted for pipeline:" 
+                             << pipeline.pipelineId() << "id:" << pipeline.id();
+                }
+            }
+        }
+    }
+    
+    // 检查设施：处理已保存设施的撤销删除操作
+    // 场景：用户删除了已保存的设施，保存后，然后撤销删除操作
+    // 需求：撤销删除后，再保存时应该恢复设施到数据库（添加 ChangeAdded 记录）
+    // 1. 如果设施在场景中，且有 ChangeDeleted 记录，说明撤销了删除操作
+    //    移除 ChangeDeleted 记录，然后添加 ChangeAdded 记录（这样保存时会恢复设施）
+    // 2. 如果设施在场景中，且没有 ChangeDeleted 记录，但已保存到数据库（或已从数据库删除）
+    //    应该添加 ChangeAdded 记录（用于恢复）
+    
+    // 首先，检查场景中的设施，如果有 ChangeDeleted 记录，移除它，然后添加 ChangeAdded 记录
+    for (QGraphicsItem *item : allSceneItems) {
+        if (item->data(0).toString() == "facility") {
+            QString facilityId = item->data(1).toString();
+            
+            // 检查是否有 ChangeDeleted 记录（通过 facilityId 或 graphicsItem 匹配）
+            bool hadDeleteRecord = false;
+            Facility deletedFacility;
+            for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+                PendingChange &change = m_pendingChanges[i];
+                if (change.type == ChangeDeleted && 
+                    change.entityType == "facility" &&
+                    (change.graphicsItem == item || 
+                     change.data.value<Facility>().facilityId() == facilityId)) {
+                    // 设施在场景中，且有 ChangeDeleted 记录，说明撤销了删除操作
+                    // 保存设施信息，然后移除 ChangeDeleted 记录
+                    deletedFacility = change.data.value<Facility>();
+                    hadDeleteRecord = true;
+                    qDebug() << "[Undo] Removing ChangeDeleted for facility (undo delete):" 
+                             << deletedFacility.facilityId();
+                    m_pendingChanges.removeAt(i);
+                    markAsModified();
+                    hasChanges = true;
+                    break;
+                }
+            }
+            
+            // 如果设施在场景中，且设施ID不是临时ID，需要检查是否应该添加 ChangeAdded 记录
+            // 两种情况需要添加：
+            // 1. 撤销了删除操作（hadDeleteRecord = true）- 有 ChangeDeleted 记录
+            // 2. 设施不在数据库中（已删除），但之前保存过（有数据库ID）
+            if (!facilityId.isEmpty() && !facilityId.startsWith("TEMP_")) {
+                // 检查设施是否在数据库中
+                FacilityDAO dao;
+                Facility existingFacility = dao.findByFacilityId(facilityId);
+                bool facilityExistsInDb = existingFacility.isValid() && existingFacility.id() > 0;
+                
+                // 只有当撤销了删除操作，或者设施不在数据库中时，才考虑添加 ChangeAdded
+                bool shouldAdd = hadDeleteRecord || !facilityExistsInDb;
+                
+                if (shouldAdd && !facilityExistsInDb) {
+                // 检查是否已经有 ChangeAdded 记录（避免重复）
+                bool hasAddedRecord = false;
+                for (const PendingChange &change : m_pendingChanges) {
+                    if (change.type == ChangeAdded && 
+                        change.entityType == "facility" &&
+                        change.graphicsItem == item) {
+                        hasAddedRecord = true;
+                        break;
+                    }
+                }
+                
+                if (!hasAddedRecord) {
+                    Facility facility;
+                    
+                    // 如果有之前删除时保存的设施信息，优先使用它（包含数据库ID和完整信息）
+                    if (hadDeleteRecord && deletedFacility.isValid()) {
+                        facility = deletedFacility;
+                        qDebug() << "[Undo] Using facility data from ChangeDeleted record, id:" << facility.id();
+                        
+                        // 确保从图形项获取最新的名称（如果图形项中有）
+                        QString facilityName = item->data(3).toString();
+                        if (!facilityName.isEmpty() && facility.facilityName().isEmpty()) {
+                            facility.setFacilityName(facilityName);
+                            qDebug() << "[Undo] Updated facility name from graphics item:" << facilityName;
+                        }
+                    } else {
+                        // 否则尝试从数据库查询完整信息（如果设施还在数据库中）
+                        FacilityDAO dao;
+                        Facility dbFacility = dao.findByFacilityId(facilityId);
+                        if (dbFacility.isValid() && dbFacility.id() > 0) {
+                            facility = dbFacility;
+                            qDebug() << "[Undo] Got facility data from database, id:" << facility.id();
+                        } else {
+                            // 如果数据库中没有，说明已经删除了，需要从图形项重建完整信息
+                            QString facilityName = item->data(3).toString();
+                            QString facilityType = item->data(2).toString();
+                            
+                            facility.setFacilityId(facilityId);
+                            facility.setFacilityName(facilityName);
+                            facility.setFacilityType(facilityType);
+                            
+                            // 尝试从图形项获取数据库ID
+                            QVariant dbIdVariant = item->data(10);  // 优先从 data(10) 获取
+                            if (!dbIdVariant.isValid() || dbIdVariant.toInt() <= 0) {
+                                dbIdVariant = item->data(1);  // 如果 data(10) 没有，尝试 data(1)
+                            }
+                            
+                            if (dbIdVariant.isValid() && dbIdVariant.toInt() > 0) {
+                                facility.setId(dbIdVariant.toInt());
+                                qDebug() << "[Undo] Got facility database ID from item data:" << facility.id();
+                            }
+                            
+                            // 从图形项中获取几何信息
+                            QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(item);
+                            if (ellipseItem) {
+                                QRectF rect = ellipseItem->rect();
+                                QPointF centerScene = ellipseItem->pos() + rect.center();
+                                
+                                // 转换为地理坐标
+                                QPointF geoCoord;
+                                if (tileMapManager) {
+                                    geoCoord = tileMapManager->sceneToGeo(centerScene);
+                                } else {
+                                    geoCoord = centerScene;
+                                }
+                                
+                                // 生成 WKT 格式
+                                QString wkt = QString("POINT(%1 %2)")
+                                                .arg(geoCoord.x(), 0, 'f', 8)
+                                                .arg(geoCoord.y(), 0, 'f', 8);
+                                
+                                facility.setCoordinate(geoCoord);
+                                facility.setGeomWkt(wkt);
+                            }
+                            
+                            qDebug() << "[Undo] Facility not found in database, rebuilding from graphics item, name:" << facilityName;
+                        }
+                    }
+                    
+                    PendingChange change;
+                    change.type = ChangeAdded;
+                    change.entityType = "facility";
+                    change.data = QVariant::fromValue(facility);
+                    change.originalId = facility.id() > 0 ? facility.id() : -1;
+                    change.graphicsItem = item;  // 关联图形项
+                    m_pendingChanges.append(change);
+                    markAsModified();
+                    hasChanges = true;
+                    qDebug() << "[Undo] Added ChangeAdded for facility (will restore on save):" 
+                             << facility.facilityId() << "id:" << facility.id();
+                }
+                }  // 结束 if (shouldAdd && !facilityExistsInDb)
+            }  // 结束 if (!facilityId.isEmpty() && !facilityId.startsWith("TEMP_"))
+        }
+    }
+    
+    // 然后，检查待保存列表中的 ChangeDeleted 记录
+    // 如果对应的设施在场景中，说明撤销了删除操作，应该移除并添加 ChangeAdded 记录
+    for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+        PendingChange &change = m_pendingChanges[i];
+        if (change.type == ChangeDeleted && change.entityType == "facility") {
+            // 如果 ChangeDeleted 记录有 graphicsItem，检查它是否在场景中
+            if (change.graphicsItem && sceneItemSet.contains(change.graphicsItem)) {
+                // 设施在场景中，说明撤销了删除操作
+                // 移除 ChangeDeleted 记录，然后添加 ChangeAdded 记录（这样保存时会恢复设施）
+                Facility facility = change.data.value<Facility>();
+                QString facilityId = facility.facilityId();
+                
+                qDebug() << "[Undo] Removing ChangeDeleted for facility (item restored):" 
+                         << facilityId;
+                m_pendingChanges.removeAt(i);
+                markAsModified();
+                hasChanges = true;
+                
+                // 检查是否已经有 ChangeAdded 记录（避免重复）
+                bool hasAddedRecord = false;
+                for (const PendingChange &ch : m_pendingChanges) {
+                    if (ch.type == ChangeAdded && 
+                        ch.entityType == "facility" &&
+                        ch.graphicsItem == change.graphicsItem) {
+                        hasAddedRecord = true;
+                        break;
+                    }
+                }
+                
+                if (!hasAddedRecord) {
+                    // 确保设施信息完整：从图形项获取最新的名称（如果图形项中有）
+                    if (change.graphicsItem) {
+                        QString facilityName = change.graphicsItem->data(3).toString();
+                        if (!facilityName.isEmpty() && facility.facilityName().isEmpty()) {
+                            facility.setFacilityName(facilityName);
+                            qDebug() << "[Undo] Updated facility name from graphics item:" << facilityName;
+                        }
+                    }
+                    
+                    // 检查设施是否还在数据库中（如果还在，不应该添加 ChangeAdded，否则会重复）
+                    FacilityDAO dao;
+                    Facility existingFacility = dao.findByFacilityId(facilityId);
+                    if (existingFacility.isValid() && existingFacility.id() > 0) {
+                        // 设施还在数据库中，不应该添加 ChangeAdded 记录
+                        qDebug() << "[Undo] Facility still exists in database, skipping ChangeAdded:" << facilityId;
+                    } else {
+                        // 设施已从数据库删除，添加 ChangeAdded 记录以恢复
+                        PendingChange newChange;
+                        newChange.type = ChangeAdded;
+                        newChange.entityType = "facility";
+                        newChange.data = QVariant::fromValue(facility);
+                        newChange.originalId = facility.id() > 0 ? facility.id() : -1;
+                        newChange.graphicsItem = change.graphicsItem;  // 保持关联
+                        m_pendingChanges.append(newChange);
+                        markAsModified();
+                        hasChanges = true;
+                        qDebug() << "[Undo] Added ChangeAdded for facility (will restore on save):" 
+                                 << facilityId << "id:" << facility.id() << "name:" << facility.facilityName();
+                    }
+                }
+            }
+        }
+    }
+    
+    if (hasChanges) {
+        qDebug() << "[Undo] Updated pending changes list, count:" << m_pendingChanges.size();
+        updateStatus(QString("撤销完成（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
+    }
+}
+
+// 处理重做操作对待保存变更列表的影响
+void MyForm::handleRedoForPendingChanges()
+{
+    if (!mapScene) {
+        return;
+    }
+    
+    // 获取场景中所有图形项
+    QList<QGraphicsItem*> allSceneItems = mapScene->items();
+    QSet<QGraphicsItem*> sceneItemSet;
+    for (QGraphicsItem *item : allSceneItems) {
+        sceneItemSet.insert(item);
+    }
+    
+    bool hasChanges = false;
+    
+    // 检查 m_drawnPipelines 中的管线项
+    // 如果图形项在场景中，但不在待保存列表中，说明是重做的未保存实体，需要添加 ChangeAdded 记录
+    for (auto it = m_drawnPipelines.constBegin(); it != m_drawnPipelines.constEnd(); ++it) {
+        QGraphicsItem *item = it.key();
+        Pipeline pipeline = it.value();
+        
+        // 如果图形项在场景中
+        if (sceneItemSet.contains(item)) {
+            // 检查是否已经在待保存列表中
+            bool foundInPending = false;
+            int pendingIndex = -1;
+            for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                const PendingChange &change = m_pendingChanges[i];
+                if (change.graphicsItem == item) {
+                    foundInPending = true;
+                    pendingIndex = i;
+                    break;
+                }
+            }
+            
+            // 如果不在待保存列表中，且数据库ID不存在或为0，说明是未保存的实体被重做了
+            // 需要添加 ChangeAdded 记录
+            if (!foundInPending && pipeline.id() <= 0) {
+                PendingChange change;
+                change.type = ChangeAdded;
+                change.entityType = "pipeline";
+                change.data = QVariant::fromValue(pipeline);
+                change.originalId = -1;
+                change.graphicsItem = item;
+                m_pendingChanges.append(change);
+                markAsModified();
+                hasChanges = true;
+                qDebug() << "[Redo] Added ChangeAdded for pipeline:" << pipeline.pipelineId();
+            }
+            
+            // 如果图形项在场景中，且有 ChangeDeleted 记录，说明是已保存的实体被重做了
+            // 需要移除 ChangeDeleted 记录
+            if (foundInPending && pendingIndex >= 0) {
+                PendingChange &change = m_pendingChanges[pendingIndex];
+                if (change.type == ChangeDeleted && change.entityType == "pipeline") {
+                    qDebug() << "[Redo] Removing ChangeDeleted for pipeline:" << pipeline.pipelineId();
+                    m_pendingChanges.removeAt(pendingIndex);
+                    markAsModified();
+                    hasChanges = true;
+                }
+            } else if (!foundInPending && pipeline.id() > 0) {
+                // 检查是否有 ChangeDeleted 记录（通过 originalId 匹配）
+                for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+                    PendingChange &change = m_pendingChanges[i];
+                    if (change.type == ChangeDeleted && 
+                        change.entityType == "pipeline" &&
+                        change.originalId == pipeline.id()) {
+                        qDebug() << "[Redo] Removing ChangeDeleted for pipeline:" << pipeline.pipelineId();
+                        m_pendingChanges.removeAt(i);
+                        markAsModified();
+                        hasChanges = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 检查场景中的设施项
+    // 如果设施项在场景中，但不在待保存列表中，可能是重做的未保存实体
+    for (QGraphicsItem *item : allSceneItems) {
+        if (item->data(0).toString() == "facility") {
+            QString facilityId = item->data(1).toString();
+            
+            // 检查是否已经在待保存列表中
+            bool foundInPending = false;
+            int pendingIndex = -1;
+            for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                const PendingChange &change = m_pendingChanges[i];
+                if (change.graphicsItem == item) {
+                    foundInPending = true;
+                    pendingIndex = i;
+                    break;
+                }
+            }
+            
+            // 如果不在待保存列表中，检查是否为未保存的实体被重做了
+            // 判断条件：
+            // 1. 设施ID是临时ID（以TEMP_开头）
+            // 2. 或者图形项的实体状态为 Added
+            // 3. 或者设施ID不在数据库中（通过查询数据库确认）
+            if (!foundInPending && !facilityId.isEmpty()) {
+                // 检查实体状态
+                QVariant stateVariant = item->data(100);
+                EntityState entityState = EntityState::Detached;
+                if (stateVariant.isValid()) {
+                    entityState = static_cast<EntityState>(stateVariant.toInt());
+                }
+                
+                bool isUnsavedEntity = false;
+                
+                // 条件1：设施ID是临时ID
+                if (facilityId.startsWith("TEMP_")) {
+                    isUnsavedEntity = true;
+                }
+                // 条件2：实体状态为 Added
+                else if (entityState == EntityState::Added) {
+                    isUnsavedEntity = true;
+                }
+                // 条件3：查询数据库确认设施ID不存在
+                else {
+                    FacilityDAO dao;
+                    Facility facility = dao.findByFacilityId(facilityId);
+                    if (!facility.isValid() || facility.id() <= 0) {
+                        isUnsavedEntity = true;
+                    }
+                }
+                
+                if (isUnsavedEntity) {
+                    // 从图形项的data中获取设施信息
+                    QString facilityName = item->data(3).toString();
+                    QString facilityType = item->data(2).toString();
+                    
+                    Facility facility;
+                    facility.setFacilityId(facilityId);
+                    facility.setFacilityName(facilityName);
+                    facility.setFacilityType(facilityType);
+                    
+                    // 从图形项中获取几何信息
+                    QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(item);
+                    if (ellipseItem) {
+                        // 获取图形项的中心点（场景坐标）
+                        QRectF rect = ellipseItem->rect();
+                        QPointF centerScene = ellipseItem->pos() + rect.center();
+                        
+                        // 转换为地理坐标
+                        QPointF geoCoord;
+                        if (tileMapManager) {
+                            geoCoord = tileMapManager->sceneToGeo(centerScene);
+                        } else {
+                            // 如果没有瓦片管理器，使用原始坐标（降级方案）
+                            geoCoord = centerScene;
+                        }
+                        
+                        // 生成 WKT 格式
+                        QString wkt = QString("POINT(%1 %2)")
+                                        .arg(geoCoord.x(), 0, 'f', 8)
+                                        .arg(geoCoord.y(), 0, 'f', 8);
+                        
+                        // 设置几何信息
+                        facility.setCoordinate(geoCoord);
+                        facility.setGeomWkt(wkt);
+                        
+                        qDebug() << "[Redo] Facility geometry restored from graphics item:" << wkt;
+                    }
+                    
+                    PendingChange change;
+                    change.type = ChangeAdded;
+                    change.entityType = "facility";
+                    change.data = QVariant::fromValue(facility);
+                    change.originalId = -1;
+                    change.graphicsItem = item;
+                    m_pendingChanges.append(change);
+                    markAsModified();
+                    hasChanges = true;
+                    qDebug() << "[Redo] Added ChangeAdded for facility:" << facilityId 
+                             << "(state:" << static_cast<int>(entityState) << ")";
+                }
+            }
+            
+            // 如果设施项在场景中，且有 ChangeDeleted 记录，说明是已保存的实体被重做了
+            // 需要移除 ChangeDeleted 记录
+            if (foundInPending && pendingIndex >= 0) {
+                PendingChange &change = m_pendingChanges[pendingIndex];
+                if (change.type == ChangeDeleted && change.entityType == "facility") {
+                    Facility facility = change.data.value<Facility>();
+                    qDebug() << "[Redo] Removing ChangeDeleted for facility:" << facility.facilityId();
+                    m_pendingChanges.removeAt(pendingIndex);
+                    markAsModified();
+                    hasChanges = true;
+                }
+            } else if (!foundInPending && !facilityId.isEmpty() && !facilityId.startsWith("TEMP_")) {
+                // 检查是否有 ChangeDeleted 记录（通过 facilityId 匹配）
+                // 需要查询数据库获取ID
+                FacilityDAO dao;
+                Facility facility = dao.findByFacilityId(facilityId);
+                if (facility.isValid() && facility.id() > 0) {
+                    for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+                        PendingChange &change = m_pendingChanges[i];
+                        if (change.type == ChangeDeleted && 
+                            change.entityType == "facility" &&
+                            change.originalId == facility.id()) {
+                            qDebug() << "[Redo] Removing ChangeDeleted for facility:" << facilityId;
+                            m_pendingChanges.removeAt(i);
+                            markAsModified();
+                            hasChanges = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (hasChanges) {
+        qDebug() << "[Redo] Updated pending changes list, count:" << m_pendingChanges.size();
+        updateStatus(QString("重做完成（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
     }
 }
 
@@ -1713,8 +2650,53 @@ void MyForm::handleRedoButtonClicked()
         m_undoStack->redo();
         qDebug() << "↪️ Redo:" << text;
         updateStatus("重做: " + text);
+        
+        // 重做后处理待保存变更列表
+        handleRedoForPendingChanges();
+        
+        // 重做后刷新标注层，确保标注与图形项同步
+        QTimer::singleShot(50, this, [this]() {
+            if (m_layerManager) {
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
     } else {
-        updateStatus("无可重做的操作");
+        updateStatus("已重做到最新状态，无可重做的操作");
+    }
+}
+
+// 更新撤销/重做按钮状态
+void MyForm::updateUndoRedoButtonStates()
+{
+    if (!m_undoStack) {
+        return;
+    }
+    
+    // 更新按钮启用状态
+    if (ui->undoButton) {
+        bool canUndo = m_undoStack->canUndo();
+        ui->undoButton->setEnabled(canUndo);
+        
+        // 更新工具提示
+        if (canUndo) {
+            QString undoText = m_undoStack->undoText();
+            ui->undoButton->setToolTip(QString("撤销: %1 (Ctrl+Z)").arg(undoText));
+        } else {
+            ui->undoButton->setToolTip("撤销 (Ctrl+Z) - 已撤销到初始状态");
+        }
+    }
+    
+    if (ui->redoButton) {
+        bool canRedo = m_undoStack->canRedo();
+        ui->redoButton->setEnabled(canRedo);
+        
+        // 更新工具提示
+        if (canRedo) {
+            QString redoText = m_undoStack->redoText();
+            ui->redoButton->setToolTip(QString("重做: %1 (Ctrl+Y)").arg(redoText));
+        } else {
+            ui->redoButton->setToolTip("重做 (Ctrl+Y) - 已重做到最新状态");
+        }
     }
 }
 
@@ -2070,11 +3052,31 @@ void MyForm::renderBurstPoint(const QPointF &geoLonLat)
 
 void MyForm::clearBurstHighlights()
 {
+    // 清除高亮管线
     for (auto *item : m_burstHighlights) {
         if (mapScene) mapScene->removeItem(item);
         delete item;
     }
     m_burstHighlights.clear();
+    
+    // 清除红色虚线区域框
+    if (m_burstAreaItem) {
+        if (mapScene) mapScene->removeItem(m_burstAreaItem);
+        delete m_burstAreaItem;
+        m_burstAreaItem = nullptr;
+    }
+    
+    // 清除爆管点标记和标签
+    if (m_burstMarker) {
+        if (mapScene) mapScene->removeItem(m_burstMarker);
+        delete m_burstMarker;
+        m_burstMarker = nullptr;
+    }
+    if (m_burstLabel) {
+        if (mapScene) mapScene->removeItem(m_burstLabel);
+        delete m_burstLabel;
+        m_burstLabel = nullptr;
+    }
 }
 
 void MyForm::highlightPipelineById(const QString &pipelineId)
@@ -2180,6 +3182,10 @@ void MyForm::startBurstSelectionMode()
 {
     m_burstSelectionMode = true;
     m_hasBurstPoint = false;
+    
+    // 清除当前的选中状态，避免影响爆管分析
+    clearSelection();
+    
     updateStatus("爆管分析：请选择爆管点（左键确认，右键/ESC 取消）");
     ui->graphicsView->setCursor(Qt::CrossCursor);
     setUiEnabledDuringBurst(false);
@@ -2189,6 +3195,11 @@ void MyForm::cancelBurstSelectionMode()
 {
     m_burstSelectionMode = false;
     ui->graphicsView->unsetCursor();
+    
+    // 清除选中状态和爆管高亮
+    clearSelection();
+    clearBurstHighlights();
+    
     updateStatus("已取消爆管点选择");
     setUiEnabledDuringBurst(true);
 }
@@ -2431,7 +3442,7 @@ void MyForm::initializePipelineVisualization()
         // 6. 延迟加载初始数据（延迟2秒，确保地图视图已完全初始化）
         // 这样可以根据实际地图视图范围加载数据，而不是使用固定范围
         qDebug() << "[Pipeline] Scheduling data load in 2 seconds (waiting for map view to be ready)...";
-        QTimer::singleShot(100, this, &MyForm::loadPipelineData);
+        QTimer::singleShot(50, this, &MyForm::loadPipelineData);
         
         LOG_INFO("=== Pipeline visualization initialized successfully ===");
         qDebug() << "[Pipeline] ✅ Initialization complete";
@@ -2511,13 +3522,25 @@ void MyForm::loadPipelineData()
     
     LOG_INFO("Pipeline layers refreshed");
     updateStatus("管网数据加载完成");
+    
+    // 延迟刷新标注图层，确保场景中的图形项已经渲染完成
+    // 标注渲染器需要从场景中查找图形项，所以需要在其他图层渲染完成后再渲染标注
+    if (m_layerManager && m_layerManager->isLayerVisible(LayerManager::Labels)) {
+        QTimer::singleShot(50, this, [this]() {
+            if (m_layerManager) {
+                qDebug() << "[Pipeline] Refreshing annotation layer after data load";
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
+    }
+    
     checkPipelineRenderResult();
 }
 
 void MyForm::checkPipelineRenderResult()
 {
     // 延迟检查渲染结果，让渲染器有时间完成
-    QTimer::singleShot(500, this, [this]() {
+    QTimer::singleShot(100, this, [this]() {
         if (!mapScene || !ui->graphicsView) {
             updateStatus("场景未初始化");
             return;
@@ -2666,6 +3689,10 @@ void MyForm::performBurstAnalysis(const QPointF &geoLonLat)
 
     QMessageBox::information(this, "爆管分析结果", summary);
     renderBurstResult(result);
+    
+    // 清除选中状态，避免影响后续操作
+    clearSelection();
+    
     updateStatus("爆管分析完成，可继续点击地图选择爆管点，右键/ESC退出");
 }
 
@@ -3041,6 +4068,780 @@ void MyForm::performShortestPathAnalysis(const QPointF &startPoint, const QPoint
     updateStatus("最短路径分析完成，可继续选择新的起点和终点，右键/ESC退出");
 }
 
+// 距离量算相关函数
+void MyForm::startDistanceMeasureMode()
+{
+    // 如果已经在量算模式，不清除之前的测量结果，直接开始新的测量
+    if (m_distanceMeasureMode) {
+        // 重置当前正在绘制的点
+        m_currentDistancePoints.clear();
+        clearDistancePreview();
+        // 清除当前标记（如果有未完成的测量）
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentDistanceMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentDistanceMarkers.clear();
+        }
+        updateStatus("距离量算模式：左键点击添加测量点，右键完成测量");
+        return;
+    }
+    
+    // 取消其他模式
+    if (m_areaMeasureMode) {
+        cancelAreaMeasureMode();
+    }
+    if (m_shortestPathSelectionMode) {
+        cancelShortestPathSelectionMode();
+    }
+    if (m_burstSelectionMode) {
+        cancelBurstSelectionMode();
+    }
+    if (m_connectivitySelectionMode) {
+        cancelConnectivitySelectionMode();
+    }
+    
+    m_distanceMeasureMode = true;
+    m_currentDistancePoints.clear();
+    m_currentDistanceMarkers.clear();
+    clearDistancePreview();
+    
+    ui->graphicsView->setCursor(Qt::CrossCursor);
+    updateStatus("距离量算模式：左键点击添加测量点，右键完成测量");
+}
+
+void MyForm::cancelDistanceMeasureMode()
+{
+    if (!m_distanceMeasureMode) {
+        return;
+    }
+    
+    m_distanceMeasureMode = false;
+    // 完成当前测量（如果有足够的点）
+    if (m_currentDistancePoints.size() >= 2) {
+        finishCurrentDistanceMeasure();
+    } else {
+        // 清除未完成的测量
+        clearDistancePreview();
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentDistanceMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentDistanceMarkers.clear();
+        }
+        m_currentDistancePoints.clear();
+    }
+    ui->graphicsView->setCursor(Qt::ArrowCursor);
+    updateStatus("距离量算完成，结果已显示在地图上（点击清除测量可清除所有，右键线条可删除单条）");
+}
+
+void MyForm::handleDistanceMeasurePoint(const QPointF &geoLonLat)
+{
+    if (!m_distanceMeasureMode || !mapScene || !tileMapManager) {
+        return;
+    }
+    
+    m_currentDistancePoints.append(geoLonLat);
+    QPointF scenePos = tileMapManager->geoToScene(geoLonLat.x(), geoLonLat.y());
+    
+    // 添加标记点
+    QGraphicsEllipseItem *marker = mapScene->addEllipse(
+        scenePos.x() - 6, scenePos.y() - 6, 12, 12,
+        QPen(QColor(255, 0, 0), 2), QBrush(QColor(255, 0, 0, 100))
+    );
+    marker->setZValue(1e5);
+    // 设置数据标识，用于右键菜单识别
+    marker->setData(0, "distance_measure_marker");
+    m_currentDistanceMarkers.append(marker);
+    
+    // 更新当前距离线
+    updateCurrentDistanceLine();
+    
+    // 更新状态
+    if (m_currentDistancePoints.size() >= 2) {
+        double totalDistance = 0;
+        for (int i = 1; i < m_currentDistancePoints.size(); i++) {
+            totalDistance += calculateDistance(m_currentDistancePoints[i-1], m_currentDistancePoints[i]);
+        }
+        updateStatus(QString("距离量算：已添加 %1 个点，总距离：%2 米（右键完成）")
+                     .arg(m_currentDistancePoints.size())
+                     .arg(totalDistance, 0, 'f', 2));
+    } else {
+        updateStatus(QString("距离量算：已添加 %1 个点（至少需要2个点，右键完成）")
+                     .arg(m_currentDistancePoints.size()));
+    }
+}
+
+void MyForm::finishCurrentDistanceMeasure()
+{
+    if (m_currentDistancePoints.size() < 2 || !mapScene || !tileMapManager) {
+        return;
+    }
+    
+    // 创建测量结果
+    DistanceMeasureResult result;
+    result.points = m_currentDistancePoints;
+    result.markers = m_currentDistanceMarkers;
+    
+    // 计算总距离
+    double totalDistance = 0;
+    for (int i = 1; i < m_currentDistancePoints.size(); i++) {
+        totalDistance += calculateDistance(m_currentDistancePoints[i-1], m_currentDistancePoints[i]);
+    }
+    result.totalDistance = totalDistance;
+    
+    // 创建距离线
+    QPainterPath path;
+    for (int i = 0; i < m_currentDistancePoints.size(); i++) {
+        QPointF scenePos = tileMapManager->geoToScene(m_currentDistancePoints[i].x(), m_currentDistancePoints[i].y());
+        if (i == 0) {
+            path.moveTo(scenePos);
+        } else {
+            path.lineTo(scenePos);
+        }
+    }
+    
+    QGraphicsPathItem *lineItem = new QGraphicsPathItem(path);
+    lineItem->setPen(QPen(QColor(255, 0, 0), 2, Qt::DashLine));
+    lineItem->setZValue(1e4);
+    // 设置数据标识，用于右键菜单识别
+    lineItem->setData(0, "distance_measure_line");
+    mapScene->addItem(lineItem);
+    result.line = lineItem;
+    
+    // 创建距离标签
+    QPointF lastScenePos = tileMapManager->geoToScene(
+        m_currentDistancePoints.last().x(), m_currentDistancePoints.last().y()
+    );
+    QGraphicsTextItem *label = new QGraphicsTextItem(
+        QString("总距离: %1 米").arg(totalDistance, 0, 'f', 2)
+    );
+    label->setPos(lastScenePos.x() + 10, lastScenePos.y() - 20);
+    label->setDefaultTextColor(QColor(255, 0, 0));
+    label->setZValue(1e5);
+    QFont font = label->font();
+    font.setBold(true);
+    font.setPointSize(10);
+    label->setFont(font);
+    label->setData(0, "distance_measure_label");
+    mapScene->addItem(label);
+    result.label = label;
+    
+    // 保存到结果列表
+    m_distanceMeasureResults.append(result);
+    
+    // 清空当前绘制状态
+    // 清除临时线条（如果存在）
+    if (m_currentDistanceLine) {
+        mapScene->removeItem(m_currentDistanceLine);
+        delete m_currentDistanceLine;
+        m_currentDistanceLine = nullptr;
+    }
+    m_currentDistancePoints.clear();
+    m_currentDistanceMarkers.clear();
+    clearDistancePreview();
+}
+
+void MyForm::updateCurrentDistanceLine()
+{
+    if (!mapScene || !tileMapManager || m_currentDistancePoints.size() < 2) {
+        // 清除临时线条
+        if (m_currentDistanceLine) {
+            mapScene->removeItem(m_currentDistanceLine);
+            delete m_currentDistanceLine;
+            m_currentDistanceLine = nullptr;
+        }
+        return;
+    }
+    
+    // 清除旧的临时线条
+    if (m_currentDistanceLine) {
+        mapScene->removeItem(m_currentDistanceLine);
+        delete m_currentDistanceLine;
+        m_currentDistanceLine = nullptr;
+    }
+    
+    // 创建当前正在绘制的距离线（临时显示）
+    QPainterPath path;
+    for (int i = 0; i < m_currentDistancePoints.size(); i++) {
+        QPointF scenePos = tileMapManager->geoToScene(m_currentDistancePoints[i].x(), m_currentDistancePoints[i].y());
+        if (i == 0) {
+            path.moveTo(scenePos);
+        } else {
+            path.lineTo(scenePos);
+        }
+    }
+    
+    QGraphicsPathItem *lineItem = new QGraphicsPathItem(path);
+    lineItem->setPen(QPen(QColor(255, 0, 0), 2, Qt::DashLine));
+    lineItem->setZValue(1e4);
+    mapScene->addItem(lineItem);
+    m_currentDistanceLine = lineItem;
+}
+
+void MyForm::updateDistancePreview(const QPointF &mouseGeoPos)
+{
+    if (!m_distanceMeasureMode || !mapScene || !tileMapManager || m_currentDistancePoints.isEmpty()) {
+        return;
+    }
+    
+    // 清除旧的预览线
+    clearDistancePreview();
+    
+    // 创建预览线（从最后一个点到鼠标位置）
+    QPointF lastScenePos = tileMapManager->geoToScene(
+        m_currentDistancePoints.last().x(), m_currentDistancePoints.last().y()
+    );
+    QPointF mouseScenePos = tileMapManager->geoToScene(mouseGeoPos.x(), mouseGeoPos.y());
+    
+    QPainterPath previewPath;
+    previewPath.moveTo(lastScenePos);
+    previewPath.lineTo(mouseScenePos);
+    
+    QGraphicsPathItem *previewItem = new QGraphicsPathItem(previewPath);
+    previewItem->setPen(QPen(QColor(255, 0, 0, 150), 2, Qt::DashDotLine));
+    previewItem->setZValue(1e4 + 1); // 比正式线稍高，但低于标记
+    mapScene->addItem(previewItem);
+    m_distancePreviewLine = previewItem;
+}
+
+void MyForm::clearDistancePreview()
+{
+    if (mapScene && m_distancePreviewLine) {
+        mapScene->removeItem(m_distancePreviewLine);
+        delete m_distancePreviewLine;
+        m_distancePreviewLine = nullptr;
+    }
+}
+
+void MyForm::clearAllDistanceMeasures()
+{
+    if (mapScene) {
+        // 清除所有已完成的测量结果
+        for (DistanceMeasureResult &result : m_distanceMeasureResults) {
+            for (QGraphicsItem *item : result.markers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            if (result.line) {
+                mapScene->removeItem(result.line);
+                delete result.line;
+            }
+            if (result.label) {
+                mapScene->removeItem(result.label);
+                delete result.label;
+            }
+        }
+        m_distanceMeasureResults.clear();
+        
+        // 清除当前正在绘制的点
+        for (QGraphicsItem *item : m_currentDistanceMarkers) {
+            mapScene->removeItem(item);
+            delete item;
+        }
+        m_currentDistanceMarkers.clear();
+        if (m_currentDistanceLine) {
+            mapScene->removeItem(m_currentDistanceLine);
+            delete m_currentDistanceLine;
+            m_currentDistanceLine = nullptr;
+        }
+        m_currentDistancePoints.clear();
+        
+        clearDistancePreview();
+    }
+}
+
+void MyForm::deleteDistanceMeasure(QGraphicsItem *item)
+{
+    if (!mapScene || !item) {
+        return;
+    }
+    
+    // 查找包含该图形项的测量结果
+    for (int i = 0; i < m_distanceMeasureResults.size(); i++) {
+        DistanceMeasureResult &result = m_distanceMeasureResults[i];
+        
+        // 检查是否是这条线的标记、线或标签
+        bool isThisMeasure = false;
+        if (result.line == item || result.label == item) {
+            isThisMeasure = true;
+        } else {
+            for (QGraphicsItem *marker : result.markers) {
+                if (marker == item) {
+                    isThisMeasure = true;
+                    break;
+                }
+            }
+        }
+        
+        if (isThisMeasure) {
+            // 删除这条测量的所有图形项
+            // 先删除标记点
+            for (QGraphicsItem *marker : result.markers) {
+                if (marker) {
+                    // removeItem会检查项是否在scene中，如果不在则不做任何事
+                    mapScene->removeItem(marker);
+                    delete marker;
+                }
+            }
+            result.markers.clear();
+            
+            // 删除线条
+            if (result.line) {
+                mapScene->removeItem(result.line);
+                delete result.line;
+                result.line = nullptr;
+            }
+            
+            // 删除标签
+            if (result.label) {
+                mapScene->removeItem(result.label);
+                delete result.label;
+                result.label = nullptr;
+            }
+            
+            // 从列表中移除
+            m_distanceMeasureResults.removeAt(i);
+            updateStatus("已删除距离测量结果");
+            return;
+        }
+    }
+}
+
+double MyForm::calculateDistance(const QPointF &p1, const QPointF &p2)
+{
+    // 使用Haversine公式计算两点间的大圆距离（米）
+    const double R = 6371000.0; // 地球半径（米）
+    double lat1 = p1.y() * M_PI / 180.0;
+    double lat2 = p2.y() * M_PI / 180.0;
+    double dLat = (p2.y() - p1.y()) * M_PI / 180.0;
+    double dLon = (p2.x() - p1.x()) * M_PI / 180.0;
+    
+    double a = sin(dLat/2) * sin(dLat/2) +
+               cos(lat1) * cos(lat2) *
+               sin(dLon/2) * sin(dLon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    
+    return R * c;
+}
+
+// 面积量算相关函数
+void MyForm::startAreaMeasureMode()
+{
+    // 如果已经在量算模式，不清除之前的测量结果，直接开始新的测量
+    if (m_areaMeasureMode) {
+        // 重置当前正在绘制的点
+        m_currentAreaPoints.clear();
+        clearAreaPreview();
+        // 清除当前标记（如果有未完成的测量）
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentAreaMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentAreaMarkers.clear();
+        }
+        updateStatus("面积量算模式：左键点击添加测量点（至少3个点），右键完成测量");
+        return;
+    }
+    
+    // 取消其他模式
+    if (m_distanceMeasureMode) {
+        cancelDistanceMeasureMode();
+    }
+    if (m_shortestPathSelectionMode) {
+        cancelShortestPathSelectionMode();
+    }
+    if (m_burstSelectionMode) {
+        cancelBurstSelectionMode();
+    }
+    if (m_connectivitySelectionMode) {
+        cancelConnectivitySelectionMode();
+    }
+    
+    m_areaMeasureMode = true;
+    m_currentAreaPoints.clear();
+    m_currentAreaMarkers.clear();
+    clearAreaPreview();
+    
+    ui->graphicsView->setCursor(Qt::CrossCursor);
+    updateStatus("面积量算模式：左键点击添加测量点（至少3个点），右键完成测量");
+}
+
+void MyForm::cancelAreaMeasureMode()
+{
+    if (!m_areaMeasureMode) {
+        return;
+    }
+    
+    m_areaMeasureMode = false;
+    // 完成当前测量（如果有足够的点）
+    if (m_currentAreaPoints.size() >= 3) {
+        finishCurrentAreaMeasure();
+    } else {
+        // 清除未完成的测量
+        clearAreaPreview();
+        if (mapScene) {
+            for (QGraphicsItem *item : m_currentAreaMarkers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            m_currentAreaMarkers.clear();
+        }
+        m_currentAreaPoints.clear();
+    }
+    ui->graphicsView->setCursor(Qt::ArrowCursor);
+    updateStatus("面积量算完成，结果已显示在地图上（点击清除测量可清除所有，右键线条可删除单条）");
+}
+
+void MyForm::handleAreaMeasurePoint(const QPointF &geoLonLat)
+{
+    if (!m_areaMeasureMode || !mapScene || !tileMapManager) {
+        return;
+    }
+    
+    m_currentAreaPoints.append(geoLonLat);
+    QPointF scenePos = tileMapManager->geoToScene(geoLonLat.x(), geoLonLat.y());
+    
+    // 添加标记点
+    QGraphicsEllipseItem *marker = mapScene->addEllipse(
+        scenePos.x() - 6, scenePos.y() - 6, 12, 12,
+        QPen(QColor(0, 0, 255), 2), QBrush(QColor(0, 0, 255, 100))
+    );
+    marker->setZValue(1e5);
+    // 设置数据标识，用于右键菜单识别
+    marker->setData(0, "area_measure_marker");
+    m_currentAreaMarkers.append(marker);
+    
+    // 更新当前面积多边形
+    updateCurrentAreaPolygon();
+    
+    // 更新状态（现在支持2个点就显示预览）
+    if (m_currentAreaPoints.size() >= 3) {
+        double area = calculateArea(m_currentAreaPoints);
+        updateStatus(QString("面积量算：已添加 %1 个点，面积：%2 平方米（%3 亩）（右键完成）")
+                     .arg(m_currentAreaPoints.size())
+                     .arg(area, 0, 'f', 2)
+                     .arg(area / 666.67, 0, 'f', 2));
+    } else if (m_currentAreaPoints.size() >= 2) {
+        updateStatus(QString("面积量算：已添加 %1 个点（至少需要3个点计算面积，右键完成）")
+                     .arg(m_currentAreaPoints.size()));
+    } else {
+        updateStatus(QString("面积量算：已添加 %1 个点（至少需要3个点，右键完成）")
+                     .arg(m_currentAreaPoints.size()));
+    }
+}
+
+void MyForm::finishCurrentAreaMeasure()
+{
+    if (m_currentAreaPoints.size() < 3 || !mapScene || !tileMapManager) {
+        return;
+    }
+    
+    // 创建测量结果
+    AreaMeasureResult result;
+    result.points = m_currentAreaPoints;
+    result.markers = m_currentAreaMarkers;
+    
+    // 计算面积
+    double area = calculateArea(m_currentAreaPoints);
+    result.area = area;
+    
+    // 创建多边形
+    QPolygonF polygon;
+    for (const QPointF &geo : m_currentAreaPoints) {
+        QPointF scenePos = tileMapManager->geoToScene(geo.x(), geo.y());
+        polygon.append(scenePos);
+    }
+    // 闭合多边形
+    if (!polygon.isEmpty()) {
+        polygon.append(polygon.first());
+    }
+    
+    QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(polygon);
+    polyItem->setPen(QPen(QColor(0, 0, 255), 2, Qt::DashLine));
+    polyItem->setBrush(QBrush(QColor(0, 0, 255, 50)));
+    polyItem->setZValue(1e4);
+    // 设置数据标识，用于右键菜单识别
+    polyItem->setData(0, "area_measure_polygon");
+    mapScene->addItem(polyItem);
+    result.polygon = polyItem;
+    
+    // 创建面积标签
+    QPointF center(0, 0);
+    for (const QPointF &geo : m_currentAreaPoints) {
+        QPointF scenePos = tileMapManager->geoToScene(geo.x(), geo.y());
+        center += scenePos;
+    }
+    center /= m_currentAreaPoints.size();
+    
+    QGraphicsTextItem *label = new QGraphicsTextItem(
+        QString("面积: %1 平方米\n(%2 亩)")
+        .arg(area, 0, 'f', 2)
+        .arg(area / 666.67, 0, 'f', 2)
+    );
+    label->setPos(center);
+    label->setDefaultTextColor(QColor(0, 0, 255));
+    label->setZValue(1e5);
+    QFont font = label->font();
+    font.setBold(true);
+    font.setPointSize(10);
+    label->setFont(font);
+    label->setData(0, "area_measure_label");
+    mapScene->addItem(label);
+    result.label = label;
+    
+    // 保存到结果列表
+    m_areaMeasureResults.append(result);
+    
+    // 清空当前绘制状态
+    // 清除临时多边形（如果存在）
+    if (m_currentAreaPolygon) {
+        mapScene->removeItem(m_currentAreaPolygon);
+        delete m_currentAreaPolygon;
+        m_currentAreaPolygon = nullptr;
+    }
+    m_currentAreaPoints.clear();
+    m_currentAreaMarkers.clear();
+    clearAreaPreview();
+}
+
+void MyForm::updateCurrentAreaPolygon()
+{
+    if (!mapScene || !tileMapManager || m_currentAreaPoints.size() < 3) {
+        // 清除临时多边形
+        if (m_currentAreaPolygon) {
+            mapScene->removeItem(m_currentAreaPolygon);
+            delete m_currentAreaPolygon;
+            m_currentAreaPolygon = nullptr;
+        }
+        return;
+    }
+    
+    // 清除旧的临时多边形
+    if (m_currentAreaPolygon) {
+        mapScene->removeItem(m_currentAreaPolygon);
+        delete m_currentAreaPolygon;
+        m_currentAreaPolygon = nullptr;
+    }
+    
+    // 创建当前正在绘制的多边形（临时显示）
+    QPolygonF polygon;
+    for (const QPointF &geo : m_currentAreaPoints) {
+        QPointF scenePos = tileMapManager->geoToScene(geo.x(), geo.y());
+        polygon.append(scenePos);
+    }
+    // 闭合多边形
+    if (!polygon.isEmpty()) {
+        polygon.append(polygon.first());
+    }
+    
+    QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(polygon);
+    polyItem->setPen(QPen(QColor(0, 0, 255), 2, Qt::DashLine));
+    polyItem->setBrush(QBrush(QColor(0, 0, 255, 50)));
+    polyItem->setZValue(1e4);
+    mapScene->addItem(polyItem);
+    m_currentAreaPolygon = polyItem;
+}
+
+void MyForm::updateAreaPreview(const QPointF &mouseGeoPos)
+{
+    if (!m_areaMeasureMode || !mapScene || !tileMapManager || m_currentAreaPoints.isEmpty()) {
+        return;
+    }
+    
+    // 清除旧的预览线
+    clearAreaPreview();
+    
+    // 如果有至少1个点，显示预览
+    if (m_currentAreaPoints.size() >= 1) {
+        QPointF mouseScenePos = tileMapManager->geoToScene(mouseGeoPos.x(), mouseGeoPos.y());
+        
+        // 如果只有1个点，只显示从该点到鼠标位置的线
+        if (m_currentAreaPoints.size() == 1) {
+            QPointF firstScenePos = tileMapManager->geoToScene(
+                m_currentAreaPoints.first().x(), m_currentAreaPoints.first().y()
+            );
+            QPainterPath previewPath;
+            previewPath.moveTo(firstScenePos);
+            previewPath.lineTo(mouseScenePos);
+            
+            QGraphicsPathItem *previewItem = new QGraphicsPathItem(previewPath);
+            previewItem->setPen(QPen(QColor(0, 0, 255, 150), 2, Qt::DashDotLine));
+            previewItem->setZValue(1e4 + 1);
+            mapScene->addItem(previewItem);
+            m_areaPreviewLine = previewItem;
+        }
+        // 如果有2个或更多点，显示完整的多边形预览（包括所有已有点和鼠标位置）
+        else if (m_currentAreaPoints.size() >= 2) {
+            QPainterPath previewPath;
+            
+            // 先绘制所有已确定的点之间的连线
+            for (int i = 0; i < m_currentAreaPoints.size(); i++) {
+                QPointF scenePos = tileMapManager->geoToScene(
+                    m_currentAreaPoints[i].x(), m_currentAreaPoints[i].y()
+                );
+                if (i == 0) {
+                    previewPath.moveTo(scenePos);
+                } else {
+                    previewPath.lineTo(scenePos);
+                }
+            }
+            
+            // 从最后一个点到鼠标位置
+            previewPath.lineTo(mouseScenePos);
+            
+            // 从鼠标位置回到第一个点，形成闭合预览
+            QPointF firstScenePos = tileMapManager->geoToScene(
+                m_currentAreaPoints.first().x(), m_currentAreaPoints.first().y()
+            );
+            previewPath.lineTo(firstScenePos);
+            
+            // 创建预览多边形（使用PathItem，可以同时显示边线和填充）
+            QGraphicsPathItem *previewItem = new QGraphicsPathItem(previewPath);
+            previewItem->setPen(QPen(QColor(0, 0, 255, 150), 2, Qt::DashDotLine));
+            previewItem->setBrush(QBrush(QColor(0, 0, 255, 30))); // 半透明填充
+            previewItem->setZValue(1e4 + 1); // 比正式多边形稍高，但低于标记
+            mapScene->addItem(previewItem);
+            m_areaPreviewLine = previewItem;
+        }
+    }
+}
+
+void MyForm::clearAreaPreview()
+{
+    if (mapScene && m_areaPreviewLine) {
+        mapScene->removeItem(m_areaPreviewLine);
+        delete m_areaPreviewLine;
+        m_areaPreviewLine = nullptr;
+    }
+}
+
+void MyForm::clearAllAreaMeasures()
+{
+    if (mapScene) {
+        // 清除所有已完成的测量结果
+        for (AreaMeasureResult &result : m_areaMeasureResults) {
+            for (QGraphicsItem *item : result.markers) {
+                mapScene->removeItem(item);
+                delete item;
+            }
+            if (result.polygon) {
+                mapScene->removeItem(result.polygon);
+                delete result.polygon;
+            }
+            if (result.label) {
+                mapScene->removeItem(result.label);
+                delete result.label;
+            }
+        }
+        m_areaMeasureResults.clear();
+        
+        // 清除当前正在绘制的点
+        for (QGraphicsItem *item : m_currentAreaMarkers) {
+            mapScene->removeItem(item);
+            delete item;
+        }
+        m_currentAreaMarkers.clear();
+        if (m_currentAreaPolygon) {
+            mapScene->removeItem(m_currentAreaPolygon);
+            delete m_currentAreaPolygon;
+            m_currentAreaPolygon = nullptr;
+        }
+        m_currentAreaPoints.clear();
+        
+        clearAreaPreview();
+    }
+}
+
+void MyForm::deleteAreaMeasure(QGraphicsItem *item)
+{
+    if (!mapScene || !item) {
+        return;
+    }
+    
+    // 查找包含该图形项的测量结果
+    for (int i = 0; i < m_areaMeasureResults.size(); i++) {
+        AreaMeasureResult &result = m_areaMeasureResults[i];
+        
+        // 检查是否是这条测量的标记、多边形或标签
+        bool isThisMeasure = false;
+        if (result.polygon == item || result.label == item) {
+            isThisMeasure = true;
+        } else {
+            for (QGraphicsItem *marker : result.markers) {
+                if (marker == item) {
+                    isThisMeasure = true;
+                    break;
+                }
+            }
+        }
+        
+        if (isThisMeasure) {
+            // 删除这条测量的所有图形项
+            // 先删除标记点
+            for (QGraphicsItem *marker : result.markers) {
+                if (marker) {
+                    // removeItem会检查项是否在scene中，如果不在则不做任何事
+                    mapScene->removeItem(marker);
+                    delete marker;
+                }
+            }
+            result.markers.clear();
+            
+            // 删除多边形
+            if (result.polygon) {
+                mapScene->removeItem(result.polygon);
+                delete result.polygon;
+                result.polygon = nullptr;
+            }
+            
+            // 删除标签
+            if (result.label) {
+                mapScene->removeItem(result.label);
+                delete result.label;
+                result.label = nullptr;
+            }
+            
+            // 从列表中移除
+            m_areaMeasureResults.removeAt(i);
+            updateStatus("已删除面积测量结果");
+            return;
+        }
+    }
+}
+
+double MyForm::calculateArea(const QList<QPointF> &points)
+{
+    if (points.size() < 3) {
+        return 0.0;
+    }
+    
+    // 使用球面多边形面积公式（Shoelace公式的球面版本）
+    // 这里使用简化的方法：将经纬度坐标转换为平面坐标后计算
+    // 对于小范围区域，可以使用平面近似
+    
+    double area = 0.0;
+    const double R = 6371000.0; // 地球半径（米）
+    
+    // 使用球面多边形面积公式
+    for (int i = 0; i < points.size(); i++) {
+        int j = (i + 1) % points.size();
+        double lat1 = points[i].y() * M_PI / 180.0;
+        double lat2 = points[j].y() * M_PI / 180.0;
+        double lon1 = points[i].x() * M_PI / 180.0;
+        double lon2 = points[j].x() * M_PI / 180.0;
+        
+        area += (lon2 - lon1) * (2 + sin(lat1) + sin(lat2));
+    }
+    
+    area = qAbs(area) * R * R / 2.0;
+    
+    return area;
+}
+
 // 工单与资产模块
 void MyForm::onWorkOrderButtonClicked()
 {
@@ -3115,6 +4916,79 @@ void MyForm::onAssetManagementButtonClicked()
         qDebug() << "[Asset Edit] Facility marked as pending save:" << facility.facilityId();
     });
     
+    // 连接删除信号，删除后立即刷新地图
+    // 使用防抖机制，避免多次删除时重复刷新
+    QTimer *refreshTimer = new QTimer(this);
+    refreshTimer->setSingleShot(true);
+    refreshTimer->setInterval(200);  // 200ms 防抖延迟
+    
+    auto scheduleMapRefresh = [this, refreshTimer]() {
+        if (refreshTimer->isActive()) {
+            refreshTimer->stop();
+        }
+        refreshTimer->start();
+    };
+    
+    connect(refreshTimer, &QTimer::timeout, this, [this]() {
+        qDebug() << "[Asset Delete] Refreshing map after asset deletion";
+        // 刷新所有图层，确保地图显示最新数据
+        if (m_layerManager) {
+            m_layerManager->refreshAllLayers();
+            // 重新加载用户绘制的数据
+            if (mapScene) {
+                DrawingDatabaseManager::loadFromDatabase(
+                    mapScene,
+                    m_drawnPipelines,
+                    m_nextPipelineId
+                );
+            }
+            // 延迟刷新标注层
+            QTimer::singleShot(50, this, [this]() {
+                if (m_layerManager && m_layerManager->isLayerVisible(LayerManager::Labels)) {
+                    m_layerManager->refreshLayer(LayerManager::Labels);
+                }
+            });
+        }
+        // 刷新设备树
+        setupDeviceTree();
+    });
+    
+    connect(dialog, &AssetManagerDialog::pipelineDeleted, this, [this, scheduleMapRefresh](int id, const QString &pipelineId) {
+        qDebug() << "[Asset Delete] Pipeline deleted:" << pipelineId;
+        // 从场景中移除对应的管线图形项
+        if (mapScene) {
+            QList<QGraphicsItem*> allItems = mapScene->items();
+            for (QGraphicsItem *item : allItems) {
+                if (item->data(0).toString() == "pipeline" && 
+                    item->data(1).toString() == pipelineId) {
+                    qDebug() << "[Asset Delete] Removing pipeline graphics item from scene:" << pipelineId;
+                    mapScene->removeItem(item);
+                    delete item;
+                    break;
+                }
+            }
+        }
+        scheduleMapRefresh();
+    });
+    
+    connect(dialog, &AssetManagerDialog::facilityDeleted, this, [this, scheduleMapRefresh](int id, const QString &facilityId) {
+        qDebug() << "[Asset Delete] Facility deleted:" << facilityId;
+        // 从场景中移除对应的设施图形项
+        if (mapScene) {
+            QList<QGraphicsItem*> allItems = mapScene->items();
+            for (QGraphicsItem *item : allItems) {
+                if (item->data(0).toString() == "facility" && 
+                    item->data(1).toString() == facilityId) {
+                    qDebug() << "[Asset Delete] Removing facility graphics item from scene:" << facilityId;
+                    mapScene->removeItem(item);
+                    delete item;
+                    break;
+                }
+            }
+        }
+        scheduleMapRefresh();
+    });
+    
     dialog->exec();
     
     updateStatus("资产管理已关闭");
@@ -3144,6 +5018,28 @@ void MyForm::onHealthAssessmentButtonClicked()
 }
 
 // 工具模块
+// 工具模块
+void MyForm::onDistanceMeasureButtonClicked()
+{
+    qDebug() << "[UI] Distance Measure button clicked";
+    startDistanceMeasureMode();
+}
+
+void MyForm::onAreaMeasureButtonClicked()
+{
+    qDebug() << "[UI] Area Measure button clicked";
+    startAreaMeasureMode();
+}
+
+void MyForm::onClearMeasureButtonClicked()
+{
+    qDebug() << "[UI] Clear Measure button clicked";
+    clearAllDistanceMeasures();
+    clearAllAreaMeasures();
+    updateStatus("已清除所有测量结果");
+}
+
+// 信息模块
 void MyForm::onSettingsButtonClicked()
 {
     qDebug() << "[UI] Settings button clicked";
@@ -3169,18 +5065,18 @@ void MyForm::onHelpButtonClicked()
 {
     qDebug() << "[UI] Help button clicked";
     updateStatus("打开帮助文档...");
-    QMessageBox::information(this, "帮助", "欢迎使用城市地下管网智能管理系统(UGIMS)\n\n" 
-                            "主要功能模块：\n"
-                            "• 数据与地图：导入管网数据、下载离线地图\n"
-                            "• 空间分析：爆管影响分析、连通性分析\n"
-                            "• 工单与资产：工单管理、资产台账管理\n"
-                            "• 工具：系统设置、在线帮助");
+    
+    HelpDialog dialog(this);
+    dialog.exec();
+    
+    updateStatus("帮助文档已关闭");
 }
 
-// 设备树设置
+// 设备树设置 - 从数据库加载真实数据
+// 新结构：一级节点=管线和设施，二级节点=各种类型，三级节点=具体设备
 void MyForm::setupDeviceTree()
 {
-    qDebug() << "Setting up device tree...";
+    qDebug() << "Setting up device tree from database...";
     
     // 创建模型
     deviceTreeModel = new QStandardItemModel(this);
@@ -3192,215 +5088,275 @@ void MyForm::setupDeviceTree()
     connect(ui->deviceTreeView, &QTreeView::clicked, this, &MyForm::onDeviceTreeItemClicked);
     connect(ui->deviceTreeView, &QTreeView::doubleClicked, this, &MyForm::onDeviceTreeItemDoubleClicked);
     
-    // ============ 第1层：管网类型 ============
+    // 启用右键菜单
+    ui->deviceTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->deviceTreeView, &QTreeView::customContextMenuRequested, 
+            this, &MyForm::onDeviceTreeContextMenuRequested, Qt::UniqueConnection);
     
-    // 1. 给水管网
-    QStandardItem *waterNetwork = new QStandardItem("📘 给水管网");
-    waterNetwork->setEditable(false);
-    deviceTreeModel->appendRow(waterNetwork);
+    // 检查数据库连接
+    DatabaseManager &db = DatabaseManager::instance();
+    if (!db.isConnected()) {
+        qWarning() << "Database not connected, using empty device tree";
+        updateStatus("设备树初始化失败 - 数据库未连接");
+        return;
+    }
     
-    // 第2层：设施类别
-    QStandardItem *waterPipes = new QStandardItem("🔧 管线");
-    waterPipes->setEditable(false);
-    waterNetwork->appendRow(waterPipes);
+    // 从数据库加载管线和设施数据
+    PipelineDAO pipelineDao;
+    FacilityDAO facilityDao;
     
-    // 第3层：具体设备
-    QStandardItem *pipe1 = new QStandardItem("  DN300主干管-GS001 🟢运行中");
-    pipe1->setEditable(false);
-    waterPipes->appendRow(pipe1);
+    // 加载所有管线（限制1000条以避免性能问题）
+    QVector<Pipeline> allPipelines = pipelineDao.findAll(1000);
+    qDebug() << "[DeviceTree] Loaded" << allPipelines.size() << "pipelines from database";
     
-    QStandardItem *pipe2 = new QStandardItem("  DN200支管-GS002 🟢运行中");
-    pipe2->setEditable(false);
-    waterPipes->appendRow(pipe2);
+    // 加载所有设施（限制1000个）
+    QVector<Facility> allFacilities = facilityDao.findAll(1000);
+    qDebug() << "[DeviceTree] Loaded" << allFacilities.size() << "facilities from database";
     
-    QStandardItem *pipe3 = new QStandardItem("  DN150支管-GS003 🟡维护中");
-    pipe3->setEditable(false);
-    waterPipes->appendRow(pipe3);
+    // 定义管线类型映射（数据库类型 -> 显示名称）
+    QMap<QString, QString> pipelineTypeMap = {
+        {"water_supply", "📘 给水管"},
+        {"sewage", "📗 排水管"},
+        {"gas", "📙 燃气管"},
+        {"electric", "📕 电力电缆"},
+        {"telecom", "📒 通信光缆"},
+        {"heat", "📓 供热管"}
+    };
     
-    // 阀门井
-    QStandardItem *waterValves = new QStandardItem("🚰 阀门井");
-    waterValves->setEditable(false);
-    waterNetwork->appendRow(waterValves);
+    // 定义设施类型映射（数据库类型 -> 显示名称）
+    QMap<QString, QString> facilityTypeMap = {
+        {"valve", "🚰 阀门井"},
+        {"manhole", "🚪 检查井"},
+        {"pump_station", "⚙️ 泵站"},
+        {"transformer", "⚡ 变压器"},
+        {"regulator", "🔧 调压站"},
+        {"junction_box", "📦 接线盒"}
+    };
     
-    QStandardItem *valve1 = new QStandardItem("  阀门井-V001 🟢开启");
-    valve1->setEditable(false);
-    waterValves->appendRow(valve1);
+    // 按管线类型分组
+    QMap<QString, QVector<Pipeline>> pipelinesByType;
+    for (const Pipeline &pipeline : allPipelines) {
+        QString type = pipeline.pipelineType();
+        if (!type.isEmpty()) {
+            pipelinesByType[type].append(pipeline);
+        }
+    }
     
-    QStandardItem *valve2 = new QStandardItem("  阀门井-V002 🟢开启");
-    valve2->setEditable(false);
-    waterValves->appendRow(valve2);
+    // 按设施类型分组
+    QMap<QString, QVector<Facility>> facilitiesByType;
+    for (const Facility &facility : allFacilities) {
+        QString type = facility.facilityType();
+        if (!type.isEmpty()) {
+            facilitiesByType[type].append(facility);
+        }
+    }
     
-    QStandardItem *valve3 = new QStandardItem("  阀门井-V003 🔴关闭");
-    valve3->setEditable(false);
-    waterValves->appendRow(valve3);
+    // ========== 创建一级节点：管线和设施 ==========
     
-    // 泵站
-    QStandardItem *waterPumps = new QStandardItem("⚙️ 泵站");
-    waterPumps->setEditable(false);
-    waterNetwork->appendRow(waterPumps);
+    // 一级节点：管线
+    QStandardItem *pipelineRoot = new QStandardItem("🔧 管线");
+    pipelineRoot->setEditable(false);
+    pipelineRoot->setData("pipeline_root", Qt::UserRole);  // 标记为管线根节点
+    deviceTreeModel->appendRow(pipelineRoot);
     
-    QStandardItem *pump1 = new QStandardItem("  一泵站-P001 🟢运行中");
-    pump1->setEditable(false);
-    waterPumps->appendRow(pump1);
+    // 一级节点：设施
+    QStandardItem *facilityRoot = new QStandardItem("🏗️ 设施");
+    facilityRoot->setEditable(false);
+    facilityRoot->setData("facility_root", Qt::UserRole);  // 标记为设施根节点
+    deviceTreeModel->appendRow(facilityRoot);
     
-    QStandardItem *pump2 = new QStandardItem("  二泵站-P002 🟡待机");
-    pump2->setEditable(false);
-    waterPumps->appendRow(pump2);
+    // ========== 创建二级节点：各种管线类型 ==========
+    int totalPipelines = 0;
+    QStringList pipelineTypeOrder = {"water_supply", "sewage", "gas", "electric", "telecom", "heat"};
     
-    // 监测点
-    QStandardItem *waterMonitors = new QStandardItem("🔍 监测点");
-    waterMonitors->setEditable(false);
-    waterNetwork->appendRow(waterMonitors);
+    for (const QString &type : pipelineTypeOrder) {
+        if (!pipelinesByType.contains(type) || pipelinesByType[type].isEmpty()) {
+            continue;  // 跳过没有数据的类型
+        }
+        
+        QString typeDisplayName = pipelineTypeMap.value(type, "🔧 " + type);
+        QStandardItem *typeItem = new QStandardItem(typeDisplayName);
+        typeItem->setEditable(false);
+        typeItem->setData(type, Qt::UserRole);  // 存储管线类型
+        typeItem->setData("pipeline_type", Qt::UserRole + 1);  // 标记为管线类型节点
+        pipelineRoot->appendRow(typeItem);
+        
+        // ========== 创建三级节点：具体管线 ==========
+        for (const Pipeline &pipeline : pipelinesByType[type]) {
+            QString displayName = formatPipelineDisplayName(pipeline);
+            QStandardItem *pipelineItem = new QStandardItem(displayName);
+            pipelineItem->setEditable(false);
+            pipelineItem->setData(pipeline.pipelineId(), Qt::UserRole);  // 存储管线ID
+            pipelineItem->setData("pipeline", Qt::UserRole + 1);  // 标记为管线
+            typeItem->appendRow(pipelineItem);
+            totalPipelines++;
+        }
+    }
     
-    QStandardItem *monitor1 = new QStandardItem("  压力监测-M001 🟢在线");
-    monitor1->setEditable(false);
-    waterMonitors->appendRow(monitor1);
+    // ========== 创建二级节点：各种设施类型 ==========
+    int totalFacilities = 0;
+    QStringList facilityTypeOrder = {"valve", "manhole", "pump_station", "transformer", "regulator", "junction_box"};
     
-    QStandardItem *monitor2 = new QStandardItem("  流量监测-M002 🟢在线");
-    monitor2->setEditable(false);
-    waterMonitors->appendRow(monitor2);
+    for (const QString &type : facilityTypeOrder) {
+        if (!facilitiesByType.contains(type) || facilitiesByType[type].isEmpty()) {
+            continue;  // 跳过没有数据的类型
+        }
+        
+        QString typeDisplayName = facilityTypeMap.value(type, "🔧 " + type);
+        QStandardItem *typeItem = new QStandardItem(typeDisplayName);
+        typeItem->setEditable(false);
+        typeItem->setData(type, Qt::UserRole);  // 存储设施类型
+        typeItem->setData("facility_type", Qt::UserRole + 1);  // 标记为设施类型节点
+        facilityRoot->appendRow(typeItem);
+        
+        // ========== 创建三级节点：具体设施 ==========
+        for (const Facility &facility : facilitiesByType[type]) {
+            QString displayName = formatFacilityDisplayName(facility);
+            QStandardItem *facilityItem = new QStandardItem(displayName);
+            facilityItem->setEditable(false);
+            facilityItem->setData(facility.facilityId(), Qt::UserRole);  // 存储设施ID
+            facilityItem->setData("facility", Qt::UserRole + 1);  // 标记为设施
+            typeItem->appendRow(facilityItem);
+            totalFacilities++;
+        }
+    }
     
-    // 2. 排水管网
-    QStandardItem *drainNetwork = new QStandardItem("📗 排水管网");
-    drainNetwork->setEditable(false);
-    deviceTreeModel->appendRow(drainNetwork);
+    // 处理未映射的设施类型
+    for (auto it = facilitiesByType.begin(); it != facilitiesByType.end(); ++it) {
+        if (!facilityTypeOrder.contains(it.key())) {
+            QString typeDisplayName = "🔧 " + it.key();
+            QStandardItem *typeItem = new QStandardItem(typeDisplayName);
+            typeItem->setEditable(false);
+            typeItem->setData(it.key(), Qt::UserRole);
+            typeItem->setData("facility_type", Qt::UserRole + 1);
+            facilityRoot->appendRow(typeItem);
+            
+            for (const Facility &facility : it.value()) {
+                QString displayName = formatFacilityDisplayName(facility);
+                QStandardItem *facilityItem = new QStandardItem(displayName);
+                facilityItem->setEditable(false);
+                facilityItem->setData(facility.facilityId(), Qt::UserRole);
+                facilityItem->setData("facility", Qt::UserRole + 1);
+                typeItem->appendRow(facilityItem);
+                totalFacilities++;
+            }
+        }
+    }
     
-    QStandardItem *drainPipes = new QStandardItem("🔧 管线");
-    drainPipes->setEditable(false);
-    drainNetwork->appendRow(drainPipes);
+    // 默认展开第一层（管线和设施）
+    if (deviceTreeModel->rowCount() > 0) {
+        ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
+        if (deviceTreeModel->rowCount() > 1) {
+            ui->deviceTreeView->expand(deviceTreeModel->index(1, 0));
+        }
+    }
     
-    QStandardItem *drain1 = new QStandardItem("  DN400雨水管-PS001 🟢运行中");
-    drain1->setEditable(false);
-    drainPipes->appendRow(drain1);
+    qDebug() << "[DeviceTree] ========== Device Tree Summary ==========";
+    qDebug() << "[DeviceTree] Total pipelines loaded:" << allPipelines.size();
+    qDebug() << "[DeviceTree] Total facilities loaded:" << allFacilities.size();
+    qDebug() << "[DeviceTree] Pipelines in tree:" << totalPipelines;
+    qDebug() << "[DeviceTree] Facilities in tree:" << totalFacilities;
     
-    QStandardItem *drain2 = new QStandardItem("  DN300污水管-PS002 🟢运行中");
-    drain2->setEditable(false);
-    drainPipes->appendRow(drain2);
+    if (totalPipelines < allPipelines.size()) {
+        qWarning() << "[DeviceTree] ⚠️  Warning: Some pipelines not shown in tree!";
+        qWarning() << "[DeviceTree]   Loaded:" << allPipelines.size() << "Displayed:" << totalPipelines;
+    }
+    if (totalFacilities < allFacilities.size()) {
+        qWarning() << "[DeviceTree] ⚠️  Warning: Some facilities not shown in tree!";
+        qWarning() << "[DeviceTree]   Loaded:" << allFacilities.size() << "Displayed:" << totalFacilities;
+    }
     
-    QStandardItem *drainWells = new QStandardItem("🚪 检查井");
-    drainWells->setEditable(false);
-    drainNetwork->appendRow(drainWells);
-    
-    QStandardItem *well1 = new QStandardItem("  检查井-J001 🟢正常");
-    well1->setEditable(false);
-    drainWells->appendRow(well1);
-    
-    QStandardItem *well2 = new QStandardItem("  检查井-J002 🟡淤积");
-    well2->setEditable(false);
-    drainWells->appendRow(well2);
-    
-    QStandardItem *drainPumps = new QStandardItem("⚙️ 泵站");
-    drainPumps->setEditable(false);
-    drainNetwork->appendRow(drainPumps);
-    
-    QStandardItem *drainPump1 = new QStandardItem("  排水泵站-P003 🟢运行中");
-    drainPump1->setEditable(false);
-    drainPumps->appendRow(drainPump1);
-    
-    // 3. 燃气管网
-    QStandardItem *gasNetwork = new QStandardItem("📙 燃气管网");
-    gasNetwork->setEditable(false);
-    deviceTreeModel->appendRow(gasNetwork);
-    
-    QStandardItem *gasPipes = new QStandardItem("🔧 管线");
-    gasPipes->setEditable(false);
-    gasNetwork->appendRow(gasPipes);
-    
-    QStandardItem *gas1 = new QStandardItem("  DN200主管-RQ001 🟢运行中");
-    gas1->setEditable(false);
-    gasPipes->appendRow(gas1);
-    
-    QStandardItem *gas2 = new QStandardItem("  DN100支管-RQ002 🟢运行中");
-    gas2->setEditable(false);
-    gasPipes->appendRow(gas2);
-    
-    QStandardItem *gasValves = new QStandardItem("🚰 阀门井");
-    gasValves->setEditable(false);
-    gasNetwork->appendRow(gasValves);
-    
-    QStandardItem *gasValve1 = new QStandardItem("  调压柜-V004 🟢正常");
-    gasValve1->setEditable(false);
-    gasValves->appendRow(gasValve1);
-    
-    QStandardItem *gasMonitors = new QStandardItem("🔍 监测点");
-    gasMonitors->setEditable(false);
-    gasNetwork->appendRow(gasMonitors);
-    
-    QStandardItem *gasMonitor1 = new QStandardItem("  燃气监测-M003 🟢在线");
-    gasMonitor1->setEditable(false);
-    gasMonitors->appendRow(gasMonitor1);
-    
-    // 4. 电力管网
-    QStandardItem *powerNetwork = new QStandardItem("📕 电力管网");
-    powerNetwork->setEditable(false);
-    deviceTreeModel->appendRow(powerNetwork);
-    
-    QStandardItem *powerCables = new QStandardItem("🔧 电缆");
-    powerCables->setEditable(false);
-    powerNetwork->appendRow(powerCables);
-    
-    QStandardItem *cable1 = new QStandardItem("  10kV电缆-DL001 🟢运行中");
-    cable1->setEditable(false);
-    powerCables->appendRow(cable1);
-    
-    QStandardItem *powerFacilities = new QStandardItem("⚡ 配电设施");
-    powerFacilities->setEditable(false);
-    powerNetwork->appendRow(powerFacilities);
-    
-    QStandardItem *power1 = new QStandardItem("  配电箱-D001 🟢正常");
-    power1->setEditable(false);
-    powerFacilities->appendRow(power1);
-    
-    // 5. 通信管网
-    QStandardItem *commNetwork = new QStandardItem("📒 通信管网");
-    commNetwork->setEditable(false);
-    deviceTreeModel->appendRow(commNetwork);
-    
-    QStandardItem *commCables = new QStandardItem("🔧 光缆");
-    commCables->setEditable(false);
-    commNetwork->appendRow(commCables);
-    
-    QStandardItem *fiber1 = new QStandardItem("  主干光缆-TX001 🟢运行中");
-    fiber1->setEditable(false);
-    commCables->appendRow(fiber1);
-    
-    QStandardItem *commPoints = new QStandardItem("📡 接入点");
-    commPoints->setEditable(false);
-    commNetwork->appendRow(commPoints);
-    
-    QStandardItem *comm1 = new QStandardItem("  分线盒-F001 🟢正常");
-    comm1->setEditable(false);
-    commPoints->appendRow(comm1);
-    
-    // 6. 热力管网
-    QStandardItem *heatNetwork = new QStandardItem("📓 热力管网");
-    heatNetwork->setEditable(false);
-    deviceTreeModel->appendRow(heatNetwork);
-    
-    QStandardItem *heatPipes = new QStandardItem("🔧 管线");
-    heatPipes->setEditable(false);
-    heatNetwork->appendRow(heatPipes);
-    
-    QStandardItem *heat1 = new QStandardItem("  DN400供热管-RL001 🟢运行中");
-    heat1->setEditable(false);
-    heatPipes->appendRow(heat1);
-    
-    QStandardItem *heatStations = new QStandardItem("⚙️ 换热站");
-    heatStations->setEditable(false);
-    heatNetwork->appendRow(heatStations);
-    
-    QStandardItem *heatStation1 = new QStandardItem("  换热站-H001 🟢运行中");
-    heatStation1->setEditable(false);
-    heatStations->appendRow(heatStation1);
-    
-    // 默认展开第一层（给水管网）
-    ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
-    
-    qDebug() << "Device tree setup completed with hierarchical structure";
-    updateStatus("设备树初始化完成 - 6类管网");
+    QString statusMsg = QString("设备树加载完成 - %1条管线，%2个设施").arg(totalPipelines).arg(totalFacilities);
+    qDebug() << "[DeviceTree]" << statusMsg;
+    qDebug() << "[DeviceTree] ==========================================";
+    updateStatus(statusMsg);
 }
 
-// 设备树点击事件
+// 格式化管线显示名称
+QString MyForm::formatPipelineDisplayName(const Pipeline &pipeline)
+{
+    QString name = pipeline.pipelineName();
+    if (name.isEmpty()) {
+        name = pipeline.pipelineId();
+    }
+    
+    // 添加管径信息
+    QString diameterInfo;
+    if (pipeline.diameterMm() > 0) {
+        diameterInfo = QString("DN%1").arg(pipeline.diameterMm());
+    }
+    
+    // 添加状态图标
+    QString statusIcon = getStatusIcon(pipeline.status(), pipeline.healthScore());
+    
+    // 组合显示名称
+    QString displayName = "  ";
+    if (!diameterInfo.isEmpty()) {
+        displayName += diameterInfo + " ";
+    }
+    displayName += name;
+    if (!pipeline.pipelineId().isEmpty()) {
+        displayName += "-" + pipeline.pipelineId();
+    }
+    displayName += " " + statusIcon;
+    
+    return displayName;
+}
+
+// 格式化设施显示名称
+QString MyForm::formatFacilityDisplayName(const Facility &facility)
+{
+    QString name = facility.facilityName();
+    if (name.isEmpty()) {
+        name = facility.facilityId();
+    }
+    
+    // 添加状态图标
+    QString statusIcon = getStatusIcon(facility.status(), facility.healthScore());
+    
+    // 组合显示名称
+    QString displayName = "  " + name;
+    if (!facility.facilityId().isEmpty()) {
+        displayName += "-" + facility.facilityId();
+    }
+    displayName += " " + statusIcon;
+    
+    return displayName;
+}
+
+// 获取状态图标
+QString MyForm::getStatusIcon(const QString &status, int healthScore)
+{
+    // 根据状态和健康度返回图标
+    QString statusLower = status.toLower();
+    
+    if (statusLower.contains("active") || statusLower.contains("normal") || statusLower.contains("运行") || statusLower.contains("正常")) {
+        if (healthScore >= 80) {
+            return "🟢运行中";
+        } else if (healthScore >= 60) {
+            return "🟡正常";
+        } else {
+            return "🟠需关注";
+        }
+    } else if (statusLower.contains("maintenance") || statusLower.contains("维护")) {
+        return "🟡维护中";
+    } else if (statusLower.contains("closed") || statusLower.contains("关闭") || statusLower.contains("停用")) {
+        return "🔴关闭";
+    } else if (statusLower.contains("offline") || statusLower.contains("离线")) {
+        return "⚫离线";
+    } else {
+        // 默认根据健康度判断
+        if (healthScore >= 80) {
+            return "🟢正常";
+        } else if (healthScore >= 60) {
+            return "🟡一般";
+        } else {
+            return "🔴异常";
+        }
+    }
+}
+
+// 设备树点击事件（适配新结构）
 void MyForm::onDeviceTreeItemClicked(const QModelIndex &index)
 {
     if (!index.isValid()) return;
@@ -3419,29 +5375,50 @@ void MyForm::onDeviceTreeItemClicked(const QModelIndex &index)
     }
     
     QString levelName;
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    
     switch(level) {
-        case 0: levelName = "管网类型"; break;
-        case 1: levelName = "设施类别"; break;
-        case 2: levelName = "具体设备"; break;
-        default: levelName = "详细信息"; break;
+        case 0: 
+            levelName = "一级分类";
+            if (itemType == "pipeline_root") levelName = "管线分类";
+            else if (itemType == "facility_root") levelName = "设施分类";
+            break;
+        case 1: 
+            levelName = "类型";
+            if (itemType == "pipeline_type") levelName = "管线类型";
+            else if (itemType == "facility_type") levelName = "设施类型";
+            break;
+        case 2: 
+            levelName = "具体设备";
+            if (itemType == "pipeline") levelName = "管线";
+            else if (itemType == "facility") levelName = "设施";
+            break;
+        default: 
+            levelName = "其他"; 
+            break;
     }
     
-    qDebug() << "Device tree item clicked - Level:" << level << "(" << levelName << ")" << "Text:" << text;
+    qDebug() << "[DeviceTree] Item clicked - Level:" << level << "(" << levelName << ")" << "Text:" << text;
     updateStatus("选中[" + levelName + "]: " + text);
 }
 
-// 设备树双击事件
+// 设备树双击事件（适配新结构）
+// 一级和二级节点：展开/收起，三级节点：打开详情
 void MyForm::onDeviceTreeItemDoubleClicked(const QModelIndex &index)
 {
     if (!index.isValid()) return;
     
+    // 如果对话框正在显示，忽略双击事件（防止重复触发）
+    if (m_deviceTreeDialogActive) {
+        qDebug() << "[DeviceTree] Dialog is already open, ignoring double-click";
+        return;
+    }
+    
     QStandardItem *item = deviceTreeModel->itemFromIndex(index);
     if (!item) return;
     
-    QString name = deviceTreeModel->item(index.row(), 0)->text();
-    
-    qDebug() << "Device tree item double-clicked:" << name;
-    updateStatus("打开设备详情: " + name);
+    QString name = item->text();
+    QString itemType = item->data(Qt::UserRole + 1).toString();
     
     // 判断层级
     int level = 0;
@@ -3451,36 +5428,75 @@ void MyForm::onDeviceTreeItemDoubleClicked(const QModelIndex &index)
         parent = parent.parent();
     }
     
-    // 只有第3层（具体设备）才显示详情
-    if (level == 2) {
-        // 尝试从设备名称中提取ID（例如 "DN300主干管-GS001"）
-        QString deviceId;
-        QStringList parts = name.split("-");
-        if (parts.size() >= 2) {
-            deviceId = parts.last().split(" ").first(); // 提取 "GS001"
+    // 一级节点（管线和设施）和二级节点（类型）：展开/收起
+    if (level == 0 || level == 1) {
+        // 检查节点是否有子节点
+        if (item->rowCount() > 0) {
+            // 切换展开/收起状态
+            bool isExpanded = ui->deviceTreeView->isExpanded(index);
+            if (isExpanded) {
+                ui->deviceTreeView->collapse(index);
+                qDebug() << "[DeviceTree] Collapsed:" << name;
+                updateStatus("收起: " + name);
+            } else {
+                ui->deviceTreeView->expand(index);
+                qDebug() << "[DeviceTree] Expanded:" << name;
+                updateStatus("展开: " + name);
+            }
+        } else {
+            // 没有子节点，提示用户
+            QString levelName = (level == 0) ? "一级分类" : "类型";
+            updateStatus(levelName + " \"" + name + "\" 下暂无设备");
+        }
+        return;
+    }
+    
+    // 三级节点（具体设备）：打开详情对话框
+    if (level == 2 && (itemType == "pipeline" || itemType == "facility")) {
+        qDebug() << "[DeviceTree] Opening device details:" << name << "Type:" << itemType;
+        updateStatus("打开设备详情: " + name);
+        
+        // 标记对话框正在显示
+        m_deviceTreeDialogActive = true;
+        
+        // 直接从数据中获取设备ID（新结构）
+        QString deviceId = item->data(Qt::UserRole).toString();
+        
+        // 如果ID为空，尝试从设备名称中提取ID（兼容旧格式）
+        if (deviceId.isEmpty()) {
+            QStringList parts = name.split("-");
+            if (parts.size() >= 2) {
+                deviceId = parts.last().split(" ").first(); // 提取 "GS001"
+            }
         }
         
         // 尝试查找对应的管线或设施
         if (!deviceId.isEmpty()) {
-            PipelineDAO pipelineDao;
-            Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
-            
-            if (pipeline.isValid()) {
-                // 显示管线详情
-                PipelineEditDialog dialog(this);
-                dialog.loadPipeline(pipeline);
-                dialog.exec();
-                return;
-            }
-            
-            FacilityDAO facilityDao;
-            Facility facility = facilityDao.findByFacilityId(deviceId);
-            
-            if (facility.isValid()) {
-                // 显示设施详情
-                FacilityEditDialog dialog(this, facility);
-                dialog.exec();
-                return;
+            if (itemType == "pipeline") {
+                PipelineDAO pipelineDao;
+                Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+                
+                if (pipeline.isValid()) {
+                    // 显示管线详情
+                    PipelineEditDialog dialog(this);
+                    dialog.loadPipeline(pipeline);
+                    dialog.exec();
+                    // 对话框关闭后重置标志
+                    m_deviceTreeDialogActive = false;
+                    return;
+                }
+            } else if (itemType == "facility") {
+                FacilityDAO facilityDao;
+                Facility facility = facilityDao.findByFacilityId(deviceId);
+                
+                if (facility.isValid()) {
+                    // 显示设施详情
+                    FacilityEditDialog dialog(this, facility);
+                    dialog.exec();
+                    // 对话框关闭后重置标志
+                    m_deviceTreeDialogActive = false;
+                    return;
+                }
             }
         }
         
@@ -3492,19 +5508,9 @@ void MyForm::onDeviceTreeItemDoubleClicked(const QModelIndex &index)
                                         "请确保设备ID正确，或通过地图选择设备查看详情。")
                                  .arg(name)
                                  .arg(deviceId.isEmpty() ? "未知" : deviceId));
-    } else {
-        // 非设备层级，显示层级信息
-        QString levelName;
-        switch(level) {
-            case 0: levelName = "管网类型"; break;
-            case 1: levelName = "设施类别"; break;
-            default: levelName = "其他"; break;
-        }
         
-        QMessageBox::information(this, "信息", 
-                                 QString("选中项: %1\n层级: %2")
-                                 .arg(name)
-                                 .arg(levelName));
+        // 消息框关闭后重置标志
+        m_deviceTreeDialogActive = false;
     }
 }
 
@@ -3521,7 +5527,136 @@ void MyForm::onDeviceSearchTextChanged(const QString &text)
     }
 }
 
-// 过滤设备树
+// 设备树右键菜单
+void MyForm::onDeviceTreeContextMenuRequested(const QPoint &pos)
+{
+    // 如果菜单正在显示，忽略新的请求（防止重复触发）
+    if (m_deviceTreeMenuActive) {
+        return;
+    }
+    
+    QModelIndex index = ui->deviceTreeView->indexAt(pos);
+    if (!index.isValid()) {
+        return;  // 点击空白处，不显示菜单
+    }
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(index);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    
+    // 判断层级
+    int level = 0;
+    QModelIndex parent = index.parent();
+    while (parent.isValid()) {
+        level++;
+        parent = parent.parent();
+    }
+    
+    // 标记菜单正在显示
+    m_deviceTreeMenuActive = true;
+    
+    // 创建右键菜单（使用局部变量，确保菜单关闭后不会再次触发）
+    QMenu contextMenu(this);
+    contextMenu.setStyleSheet(
+        "QMenu {"
+        "  background-color: white;"
+        "  border: 1px solid #d0d0d0;"
+        "  border-radius: 4px;"
+        "  padding: 4px;"
+        "}"
+        "QMenu::item {"
+        "  padding: 6px 20px;"
+        "  border-radius: 2px;"
+        "}"
+        "QMenu::item:selected {"
+        "  background-color: #1890ff;"
+        "  color: white;"
+        "}"
+        "QMenu::item:disabled {"
+        "  color: #bfbfbf;"
+        "}"
+        "QMenu::separator {"
+        "  height: 1px;"
+        "  background-color: #e0e0e0;"
+        "  margin: 4px 0px;"
+        "}"
+    );
+    
+    // 存储当前选中的索引，供菜单操作使用
+    m_currentDeviceTreeIndex = index;
+    
+    // 所有层级都有的菜单项
+    QAction *refreshAction = contextMenu.addAction("🔄 刷新");
+    connect(refreshAction, &QAction::triggered, this, &MyForm::onDeviceTreeRefresh);
+    
+    contextMenu.addSeparator();
+    
+    if (level == 0 || level == 1) {
+        // 一级和二级节点（分类节点）的菜单
+        QAction *expandAllAction = contextMenu.addAction("📂 展开全部");
+        QAction *collapseAllAction = contextMenu.addAction("📁 折叠全部");
+        
+        contextMenu.addSeparator();
+        
+        QAction *exportAction = contextMenu.addAction("📤 导出数据");
+        QAction *statisticsAction = contextMenu.addAction("📊 统计信息");
+        
+        connect(expandAllAction, &QAction::triggered, this, &MyForm::onDeviceTreeExpandAll);
+        connect(collapseAllAction, &QAction::triggered, this, &MyForm::onDeviceTreeCollapseAll);
+        connect(exportAction, &QAction::triggered, this, &MyForm::onDeviceTreeExport);
+        connect(statisticsAction, &QAction::triggered, this, &MyForm::onDeviceTreeStatistics);
+        
+    } else if (level == 2 && (itemType == "pipeline" || itemType == "facility")) {
+        // 三级节点（具体设备）的菜单
+        QAction *viewInfoAction = contextMenu.addAction("📋 查看信息");
+        QAction *editAction = contextMenu.addAction("✏️ 编辑");
+        
+        contextMenu.addSeparator();
+        
+        QAction *copyAction = contextMenu.addAction("📋 复制");
+        QAction *locateAction = contextMenu.addAction("📍 在地图上定位");
+        QAction *viewRelatedAction = contextMenu.addAction("🔗 查看关联设备");
+        
+        contextMenu.addSeparator();
+        
+        QAction *reportAction = contextMenu.addAction("📄 生成报告");
+        QAction *historyAction = contextMenu.addAction("📜 查看历史记录");
+        QAction *printLabelAction = contextMenu.addAction("🏷️ 打印标签");
+        
+        contextMenu.addSeparator();
+        
+        QAction *deleteAction = contextMenu.addAction("🗑️ 删除设备");
+        QFont deleteFont = deleteAction->font();
+        deleteFont.setBold(true);
+        deleteAction->setFont(deleteFont);
+        
+        connect(viewInfoAction, &QAction::triggered, this, &MyForm::onDeviceTreeViewInfo);
+        connect(editAction, &QAction::triggered, this, &MyForm::onDeviceTreeEdit);
+        connect(copyAction, &QAction::triggered, this, &MyForm::onDeviceTreeCopy);
+        connect(locateAction, &QAction::triggered, this, &MyForm::onDeviceTreeLocateOnMap);
+        connect(viewRelatedAction, &QAction::triggered, this, &MyForm::onDeviceTreeViewRelated);
+        connect(reportAction, &QAction::triggered, this, &MyForm::onDeviceTreeGenerateReport);
+        connect(historyAction, &QAction::triggered, this, &MyForm::onDeviceTreeViewHistory);
+        connect(printLabelAction, &QAction::triggered, this, &MyForm::onDeviceTreePrintLabel);
+        connect(deleteAction, &QAction::triggered, this, &MyForm::onDeviceTreeDelete);
+    }
+    
+    // 显示菜单并获取选中的操作
+    // 使用exec()显示菜单，菜单会在用户选择或点击外部时自动关闭
+    QAction *selectedAction = contextMenu.exec(ui->deviceTreeView->mapToGlobal(pos));
+    
+    // 菜单已关闭，重置标志
+    // 使用单次定时器延迟重置，避免菜单关闭瞬间的事件传播导致再次触发
+    QTimer::singleShot(50, this, [this]() {
+        m_deviceTreeMenuActive = false;
+    });
+    
+    // 如果用户选择了菜单项，执行相应的操作（操作已在connect中处理）
+    // 菜单会自动关闭，不会再次弹出
+}
+
+// 过滤设备树（适配新结构：一级=管线和设施，二级=类型，三级=具体设备）
 void MyForm::filterDeviceTree(const QString &searchText)
 {
     if (searchText.isEmpty()) {
@@ -3530,14 +5665,20 @@ void MyForm::filterDeviceTree(const QString &searchText)
             QStandardItem *item = deviceTreeModel->item(i);
             setItemVisibility(item, true);
         }
-        // 折叠所有节点，只展开第一层
+        // 折叠所有节点，只展开第一层（管线和设施）
         ui->deviceTreeView->collapseAll();
-        ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
+        if (deviceTreeModel->rowCount() > 0) {
+            ui->deviceTreeView->expand(deviceTreeModel->index(0, 0));
+            if (deviceTreeModel->rowCount() > 1) {
+                ui->deviceTreeView->expand(deviceTreeModel->index(1, 0));
+            }
+        }
     } else {
         // 有搜索文本，过滤节点
+        QString lowerSearchText = searchText.toLower();
         for (int i = 0; i < deviceTreeModel->rowCount(); ++i) {
             QStandardItem *item = deviceTreeModel->item(i);
-            bool hasMatch = filterItem(item, searchText);
+            bool hasMatch = filterItem(item, lowerSearchText);
             setItemVisibility(item, hasMatch);
         }
         // 展开所有匹配的节点
@@ -3563,12 +5704,22 @@ void MyForm::setItemVisibility(QStandardItem *item, bool visible)
 }
 
 // 递归过滤节点（返回是否包含匹配的子节点）
+// 适配新结构：一级=管线和设施，二级=类型，三级=具体设备
 bool MyForm::filterItem(QStandardItem *item, const QString &searchText)
 {
     if (!item) return false;
     
-    QString itemText = item->text();
-    bool currentMatch = itemText.contains(searchText, Qt::CaseInsensitive);
+    QString itemText = item->text().toLower();
+    bool currentMatch = itemText.contains(searchText);
+    
+    // 对于三级节点（具体设备），还可以搜索设备ID
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    if (itemType == "pipeline" || itemType == "facility") {
+        QString deviceId = item->data(Qt::UserRole).toString().toLower();
+        if (deviceId.contains(searchText)) {
+            currentMatch = true;
+        }
+    }
     
     bool hasMatchingChild = false;
     
@@ -3589,7 +5740,1297 @@ bool MyForm::filterItem(QStandardItem *item, const QString &searchText)
     }
     
     // 如果当前节点匹配或者有匹配的子节点，则显示当前节点
-    return currentMatch || hasMatchingChild;
+    bool shouldShow = currentMatch || hasMatchingChild;
+    
+    // 设置当前节点可见性
+    QModelIndex index = item->index();
+    ui->deviceTreeView->setRowHidden(index.row(), index.parent(), !shouldShow);
+    
+    return shouldShow;
+}
+
+// ========== 设备树右键菜单功能实现 ==========
+
+// 刷新设备树
+void MyForm::onDeviceTreeRefresh()
+{
+    qDebug() << "[DeviceTree] Refreshing device tree...";
+    setupDeviceTree();
+    updateStatus("设备树已刷新");
+}
+
+// 展开全部
+void MyForm::onDeviceTreeExpandAll()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    // 递归展开所有子节点
+    QModelIndex index = m_currentDeviceTreeIndex;
+    while (index.isValid()) {
+        ui->deviceTreeView->expand(index);
+        index = deviceTreeModel->index(0, 0, index);  // 获取第一个子节点
+    }
+    
+    // 展开所有子节点
+    expandAllChildren(m_currentDeviceTreeIndex);
+    updateStatus("已展开全部子节点");
+}
+
+// 折叠全部
+void MyForm::onDeviceTreeCollapseAll()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    // 递归折叠所有子节点
+    collapseAllChildren(m_currentDeviceTreeIndex);
+    updateStatus("已折叠全部子节点");
+}
+
+// 导出设备数据
+void MyForm::onDeviceTreeExport()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString fileName = QFileDialog::getSaveFileName(this, "导出设备数据", 
+                                                    QDir::homePath() + "/设备数据.csv",
+                                                    "CSV文件 (*.csv);;所有文件 (*)");
+    if (fileName.isEmpty()) return;
+    
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "导出失败", "无法创建文件: " + fileName);
+        return;
+    }
+    
+    QTextStream out(&file);
+    out.setEncoding(QStringConverter::Utf8);
+    
+    // 收集该节点下的所有设备
+    QList<Pipeline> pipelines;
+    QList<Facility> facilities;
+    collectDevicesFromItem(item, pipelines, facilities);
+    
+    // 写入CSV头部
+    if (!pipelines.isEmpty() && !facilities.isEmpty()) {
+        // 混合导出：先管线后设施
+        out << "类型,设备编号,设备名称,类型,长度(m),管径(mm),材质,状态,健康度,建设日期,负责人\n";
+        
+        // 导出管线
+        PipelineDAO pipelineDao;
+        for (const Pipeline &p : pipelines) {
+            Pipeline fullPipeline = pipelineDao.findByPipelineId(p.pipelineId());
+            if (fullPipeline.isValid()) {
+                out << "管线," 
+                    << "\"" << fullPipeline.pipelineId() << "\","
+                    << "\"" << fullPipeline.pipelineName() << "\","
+                    << "\"" << fullPipeline.getTypeDisplayName() << "\","
+                    << fullPipeline.lengthM() << ","
+                    << fullPipeline.diameterMm() << ","
+                    << "\"" << fullPipeline.material() << "\","
+                    << "\"" << fullPipeline.status() << "\","
+                    << fullPipeline.healthScore() << ","
+                    << fullPipeline.buildDate().toString("yyyy-MM-dd") << ","
+                    << "\"" << fullPipeline.owner() << "\"\n";
+            }
+        }
+        
+        // 导出设施
+        FacilityDAO facilityDao;
+        for (const Facility &f : facilities) {
+            Facility fullFacility = facilityDao.findByFacilityId(f.facilityId());
+            if (fullFacility.isValid()) {
+                out << "设施,"
+                    << "\"" << fullFacility.facilityId() << "\","
+                    << "\"" << fullFacility.facilityName() << "\","
+                    << "\"" << fullFacility.getTypeDisplayName() << "\","
+                    << ",,"  // 长度和管径为空
+                    << "\"" << fullFacility.material() << "\","
+                    << "\"" << fullFacility.status() << "\","
+                    << fullFacility.healthScore() << ","
+                    << fullFacility.buildDate().toString("yyyy-MM-dd") << ","
+                    << "\"" << fullFacility.owner() << "\"\n";
+            }
+        }
+    } else if (!pipelines.isEmpty()) {
+        // 只导出管线
+        out << "设备编号,设备名称,类型,长度(m),管径(mm),材质,状态,健康度,建设日期,负责人\n";
+        PipelineDAO pipelineDao;
+        for (const Pipeline &p : pipelines) {
+            Pipeline fullPipeline = pipelineDao.findByPipelineId(p.pipelineId());
+            if (fullPipeline.isValid()) {
+                out << "\"" << fullPipeline.pipelineId() << "\","
+                    << "\"" << fullPipeline.pipelineName() << "\","
+                    << "\"" << fullPipeline.getTypeDisplayName() << "\","
+                    << fullPipeline.lengthM() << ","
+                    << fullPipeline.diameterMm() << ","
+                    << "\"" << fullPipeline.material() << "\","
+                    << "\"" << fullPipeline.status() << "\","
+                    << fullPipeline.healthScore() << ","
+                    << fullPipeline.buildDate().toString("yyyy-MM-dd") << ","
+                    << "\"" << fullPipeline.owner() << "\"\n";
+            }
+        }
+    } else if (!facilities.isEmpty()) {
+        // 只导出设施
+        out << "设备编号,设备名称,类型,规格,材质,状态,健康度,建设日期,负责人\n";
+        FacilityDAO facilityDao;
+        for (const Facility &f : facilities) {
+            Facility fullFacility = facilityDao.findByFacilityId(f.facilityId());
+            if (fullFacility.isValid()) {
+                out << "\"" << fullFacility.facilityId() << "\","
+                    << "\"" << fullFacility.facilityName() << "\","
+                    << "\"" << fullFacility.getTypeDisplayName() << "\","
+                    << "\"" << fullFacility.spec() << "\","
+                    << "\"" << fullFacility.material() << "\","
+                    << "\"" << fullFacility.status() << "\","
+                    << fullFacility.healthScore() << ","
+                    << fullFacility.buildDate().toString("yyyy-MM-dd") << ","
+                    << "\"" << fullFacility.owner() << "\"\n";
+            }
+        }
+    }
+    
+    file.close();
+    
+    QString msg = QString("已导出 %1 条管线，%2 个设施到: %3")
+                  .arg(pipelines.size())
+                  .arg(facilities.size())
+                  .arg(fileName);
+    QMessageBox::information(this, "导出成功", msg);
+    updateStatus(QString("导出完成: %1条管线, %2个设施").arg(pipelines.size()).arg(facilities.size()));
+}
+
+// 统计信息
+void MyForm::onDeviceTreeStatistics()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    // 获取节点类型（一级节点存储在Qt::UserRole，二级和三级节点存储在Qt::UserRole + 1）
+    QString rootType = item->data(Qt::UserRole).toString();
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    
+    // 判断是管线类型还是设施类型
+    bool isPipelineType = (rootType == "pipeline_root" || itemType == "pipeline_type" || itemType == "pipeline");
+    bool isFacilityType = (rootType == "facility_root" || itemType == "facility_type" || itemType == "facility");
+    
+    QString itemName = item->text();
+    QString stats;
+    
+    if (isPipelineType) {
+        // 管线类型节点：只统计管线数量
+        int pipelineCount = 0;
+        int facilityCount = 0;  // 不需要，但countDevices需要这个参数
+        countDevices(item, pipelineCount, facilityCount);
+        
+        stats = QString("统计信息 - %1\n\n管线数量: %2")
+                        .arg(itemName)
+                        .arg(pipelineCount);
+        
+        QMessageBox::information(this, "统计信息", stats);
+        updateStatus(QString("统计: %1条管线").arg(pipelineCount));
+    } else if (isFacilityType) {
+        // 设施类型节点：只统计设施数量
+        int pipelineCount = 0;  // 不需要，但countDevices需要这个参数
+        int facilityCount = 0;
+        countDevices(item, pipelineCount, facilityCount);
+        
+        stats = QString("统计信息 - %1\n\n设施数量: %2")
+                        .arg(itemName)
+                        .arg(facilityCount);
+        
+        QMessageBox::information(this, "统计信息", stats);
+        updateStatus(QString("统计: %1个设施").arg(facilityCount));
+    } else {
+        // 未知类型：显示两种统计（兼容处理）
+        int pipelineCount = 0;
+        int facilityCount = 0;
+        countDevices(item, pipelineCount, facilityCount);
+        
+        stats = QString("统计信息 - %1\n\n管线数量: %2\n设施数量: %3")
+                        .arg(itemName)
+                        .arg(pipelineCount)
+                        .arg(facilityCount);
+        
+        QMessageBox::information(this, "统计信息", stats);
+        updateStatus(QString("统计: %1条管线, %2个设施").arg(pipelineCount).arg(facilityCount));
+    }
+}
+
+// 查看设备信息（只读）
+void MyForm::onDeviceTreeViewInfo()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    // 如果对话框正在显示，忽略请求（防止重复触发）
+    if (m_deviceTreeDialogActive) {
+        return;
+    }
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType != "pipeline" && itemType != "facility") {
+        QMessageBox::information(this, "提示", "只有具体设备才能查看信息。");
+        return;
+    }
+    
+    // 标记对话框正在显示
+    m_deviceTreeDialogActive = true;
+    
+    if (itemType == "pipeline") {
+        PipelineDAO pipelineDao;
+        Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+        if (pipeline.isValid()) {
+            PipelineEditDialog dialog(this);
+            dialog.loadPipeline(pipeline);
+            // 设置为只读模式（如果对话框支持）
+            dialog.setWindowTitle("查看管线信息");
+            dialog.exec();
+        } else {
+            QMessageBox::warning(this, "错误", "未找到该管线");
+        }
+    } else if (itemType == "facility") {
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        if (facility.isValid()) {
+            FacilityEditDialog dialog(this, facility);
+            dialog.setWindowTitle("查看设施信息");
+            dialog.exec();
+        } else {
+            QMessageBox::warning(this, "错误", "未找到该设施");
+        }
+    }
+    
+    // 对话框关闭后重置标志
+    m_deviceTreeDialogActive = false;
+}
+
+// 编辑设备
+void MyForm::onDeviceTreeEdit()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    // 如果对话框正在显示，忽略请求（防止重复触发）
+    if (m_deviceTreeDialogActive) {
+        return;
+    }
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType != "pipeline" && itemType != "facility") {
+        QMessageBox::information(this, "提示", "只有具体设备才能编辑。");
+        return;
+    }
+    
+    // 标记对话框正在显示
+    m_deviceTreeDialogActive = true;
+    
+    // 查找地图上的图形项
+    QGraphicsItem *graphicsItem = nullptr;
+    if (mapScene) {
+        QList<QGraphicsItem*> allItems = mapScene->items();
+        for (QGraphicsItem *sceneItem : allItems) {
+            QString sceneItemType = sceneItem->data(0).toString();
+            QString sceneItemId = sceneItem->data(1).toString();
+            
+            if ((itemType == "pipeline" && sceneItemType == "pipeline" && sceneItemId == deviceId) ||
+                (itemType == "facility" && sceneItemType == "facility" && sceneItemId == deviceId)) {
+                graphicsItem = sceneItem;
+                break;
+            }
+        }
+    }
+    
+    if (itemType == "pipeline") {
+        PipelineDAO pipelineDao;
+        Pipeline originalPipeline = pipelineDao.findByPipelineId(deviceId);
+        if (originalPipeline.isValid()) {
+            PipelineEditDialog dialog(this);
+            dialog.loadPipeline(originalPipeline);
+            dialog.setWindowTitle("编辑管线信息");
+            
+            if (dialog.exec() == QDialog::Accepted) {
+                Pipeline updatedPipeline = dialog.getPipeline();
+                updatedPipeline.setId(originalPipeline.id()); // 确保ID用于更新
+                
+                // 检查是否有修改
+                bool hasChanges = false;
+                if (updatedPipeline.pipelineName() != originalPipeline.pipelineName() ||
+                    updatedPipeline.pipelineType() != originalPipeline.pipelineType() ||
+                    updatedPipeline.diameterMm() != originalPipeline.diameterMm() ||
+                    updatedPipeline.material() != originalPipeline.material() ||
+                    updatedPipeline.lengthM() != originalPipeline.lengthM() ||
+                    updatedPipeline.status() != originalPipeline.status() ||
+                    updatedPipeline.healthScore() != originalPipeline.healthScore()) {
+                    hasChanges = true;
+                }
+                
+                if (hasChanges) {
+                    // 获取数据库ID
+                    int databaseId = originalPipeline.id();
+                    
+                    // 检查是否已经在待保存列表中
+                    bool found = false;
+                    for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                        PendingChange &change = m_pendingChanges[i];
+                        if (change.entityType == "pipeline" && 
+                            change.originalId == databaseId &&
+                            change.type == ChangeModified) {
+                            // 更新现有的修改记录
+                            change.data = QVariant::fromValue(updatedPipeline);
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!found) {
+                        // 添加到待保存变更列表
+                        PendingChange change;
+                        change.type = ChangeModified;
+                        change.entityType = "pipeline";
+                        change.data = QVariant::fromValue(updatedPipeline);
+                        change.originalId = databaseId;
+                        change.graphicsItem = graphicsItem;
+                        m_pendingChanges.append(change);
+                    }
+                    
+                    // 更新图形项的状态
+                    if (graphicsItem) {
+                        QVariant stateVariant = graphicsItem->data(100);
+                        EntityState currentState = EntityState::Detached;
+                        if (stateVariant.isValid()) {
+                            currentState = static_cast<EntityState>(stateVariant.toInt());
+                        }
+                        // 只有未变更状态才标记为修改
+                        if (currentState == EntityState::Unchanged) {
+                            graphicsItem->setData(100, static_cast<int>(EntityState::Modified));
+                        }
+                    }
+                    
+                    markAsModified();
+                    
+                    QMessageBox::information(this, "提示", 
+                        QString("管线 %1 已标记为待保存\n\n请点击主窗口的保存按钮或按 Ctrl+S 保存到数据库")
+                        .arg(updatedPipeline.pipelineId()));
+                    updateStatus(QString("管线已修改（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
+                }
+            }
+        } else {
+            QMessageBox::warning(this, "错误", "未找到该管线");
+        }
+    } else if (itemType == "facility") {
+        FacilityDAO facilityDao;
+        Facility originalFacility = facilityDao.findByFacilityId(deviceId);
+        if (originalFacility.isValid()) {
+            FacilityEditDialog dialog(this, originalFacility);
+            dialog.setWindowTitle("编辑设施信息");
+            
+            if (dialog.exec() == QDialog::Accepted) {
+                Facility updatedFacility = dialog.resultFacility();
+                updatedFacility.setId(originalFacility.id()); // 确保ID用于更新
+                
+                // 检查是否有修改
+                bool hasChanges = false;
+                if (updatedFacility.facilityName() != originalFacility.facilityName() ||
+                    updatedFacility.facilityType() != originalFacility.facilityType() ||
+                    updatedFacility.spec() != originalFacility.spec() ||
+                    updatedFacility.material() != originalFacility.material() ||
+                    updatedFacility.status() != originalFacility.status() ||
+                    updatedFacility.healthScore() != originalFacility.healthScore()) {
+                    hasChanges = true;
+                }
+                
+                if (hasChanges) {
+                    // 获取数据库ID
+                    int databaseId = originalFacility.id();
+                    
+                    // 检查是否已经在待保存列表中
+                    bool found = false;
+                    for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                        PendingChange &change = m_pendingChanges[i];
+                        if (change.entityType == "facility" && 
+                            change.originalId == databaseId &&
+                            change.type == ChangeModified) {
+                            // 更新现有的修改记录
+                            change.data = QVariant::fromValue(updatedFacility);
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!found) {
+                        // 添加到待保存变更列表
+                        PendingChange change;
+                        change.type = ChangeModified;
+                        change.entityType = "facility";
+                        change.data = QVariant::fromValue(updatedFacility);
+                        change.originalId = databaseId;
+                        change.graphicsItem = graphicsItem;
+                        m_pendingChanges.append(change);
+                    }
+                    
+                    // 更新图形项的状态
+                    if (graphicsItem) {
+                        QVariant stateVariant = graphicsItem->data(100);
+                        EntityState currentState = EntityState::Detached;
+                        if (stateVariant.isValid()) {
+                            currentState = static_cast<EntityState>(stateVariant.toInt());
+                        }
+                        // 只有未变更状态才标记为修改
+                        if (currentState == EntityState::Unchanged) {
+                            graphicsItem->setData(100, static_cast<int>(EntityState::Modified));
+                        }
+                    }
+                    
+                    markAsModified();
+                    
+                    QMessageBox::information(this, "提示", 
+                        QString("设施 %1 已标记为待保存\n\n请点击主窗口的保存按钮或按 Ctrl+S 保存到数据库")
+                        .arg(updatedFacility.facilityId()));
+                    updateStatus(QString("设施已修改（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
+                }
+            }
+        } else {
+            QMessageBox::warning(this, "错误", "未找到该设施");
+        }
+    }
+    
+    // 对话框关闭后重置标志
+    m_deviceTreeDialogActive = false;
+}
+
+// 删除设备
+void MyForm::onDeviceTreeDelete()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemName = item->text();
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType != "pipeline" && itemType != "facility") {
+        QMessageBox::information(this, "提示", "只有具体设备才能删除。");
+        return;
+    }
+    
+    int ret = QMessageBox::warning(this, "确认删除", 
+                                   QString("确定要删除设备 \"%1\" 吗？\n\n删除后需要点击保存按钮才会真正从数据库删除。")
+                                   .arg(itemName),
+                                   QMessageBox::Yes | QMessageBox::No,
+                                   QMessageBox::No);
+    
+    if (ret != QMessageBox::Yes) return;
+    
+    // 查找地图上的图形项
+    QGraphicsItem *graphicsItem = nullptr;
+    int databaseId = -1;
+    EntityState entityState = EntityState::Detached;
+    
+    if (mapScene) {
+        QList<QGraphicsItem*> allItems = mapScene->items();
+        for (QGraphicsItem *sceneItem : allItems) {
+            QString sceneItemType = sceneItem->data(0).toString();
+            QString sceneItemId = sceneItem->data(1).toString();
+            
+            if ((itemType == "pipeline" && sceneItemType == "pipeline" && sceneItemId == deviceId) ||
+                (itemType == "facility" && sceneItemType == "facility" && sceneItemId == deviceId)) {
+                graphicsItem = sceneItem;
+                
+                // 获取实体状态
+                QVariant stateVariant = sceneItem->data(100);
+                if (stateVariant.isValid()) {
+                    entityState = static_cast<EntityState>(stateVariant.toInt());
+                }
+                
+                // 获取数据库ID
+                QVariant dbIdVariant = sceneItem->data(10);
+                if (!dbIdVariant.isValid() || dbIdVariant.toInt() <= 0) {
+                    dbIdVariant = sceneItem->data(1);
+                }
+                
+                if (dbIdVariant.isValid() && dbIdVariant.toInt() > 0) {
+                    databaseId = dbIdVariant.toInt();
+                } else {
+                    // 通过设备ID查询数据库
+                    if (itemType == "pipeline") {
+                        PipelineDAO dao;
+                        Pipeline pipeline = dao.findByPipelineId(deviceId);
+                        if (pipeline.isValid()) {
+                            databaseId = pipeline.id();
+                        }
+                    } else if (itemType == "facility") {
+                        FacilityDAO dao;
+                        Facility facility = dao.findByFacilityId(deviceId);
+                        if (facility.isValid()) {
+                            databaseId = facility.id();
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
+    // 如果没有找到图形项，尝试通过设备ID查询数据库获取ID
+    if (databaseId <= 0) {
+        if (itemType == "pipeline") {
+            PipelineDAO dao;
+            Pipeline pipeline = dao.findByPipelineId(deviceId);
+            if (pipeline.isValid()) {
+                databaseId = pipeline.id();
+            }
+        } else if (itemType == "facility") {
+            FacilityDAO dao;
+            Facility facility = dao.findByFacilityId(deviceId);
+            if (facility.isValid()) {
+                databaseId = facility.id();
+            }
+        }
+    }
+    
+    // 处理待保存变更列表
+    if (entityState == EntityState::Added) {
+        // 如果是新添加的实体，从待保存列表中移除对应的 ChangeAdded 记录
+        for (int i = m_pendingChanges.size() - 1; i >= 0; i--) {
+            const PendingChange &change = m_pendingChanges[i];
+            if (change.entityType == itemType && 
+                change.graphicsItem == graphicsItem &&
+                change.type == ChangeAdded) {
+                m_pendingChanges.removeAt(i);
+                qDebug() << "[DeviceTree] Removed ChangeAdded from pending changes";
+                break;
+            }
+        }
+    } else if (entityState == EntityState::Unchanged && databaseId > 0) {
+        // 如果是已存在的实体，添加到待保存列表作为 ChangeDeleted
+        PendingChange change;
+        change.type = ChangeDeleted;
+        change.entityType = itemType;
+        if (itemType == "pipeline") {
+            Pipeline pipeline;
+            pipeline.setId(databaseId);
+            pipeline.setPipelineId(deviceId);
+            change.data = QVariant::fromValue(pipeline);
+        } else if (itemType == "facility") {
+            Facility facility;
+            facility.setId(databaseId);
+            facility.setFacilityId(deviceId);
+            change.data = QVariant::fromValue(facility);
+        }
+        change.originalId = databaseId;
+        change.graphicsItem = graphicsItem;
+        m_pendingChanges.append(change);
+        markAsModified();
+        qDebug() << "[DeviceTree] Added ChangeDeleted to pending changes, databaseId:" << databaseId;
+    }
+    
+    // 如果找到了图形项，更新实体状态为已删除
+    if (graphicsItem) {
+        graphicsItem->setData(100, static_cast<int>(EntityState::Deleted));
+        
+        // 使用命令模式删除（支持撤销）- 立即从界面移除
+        DeleteEntityCommand *cmd = new DeleteEntityCommand(
+            mapScene,
+            graphicsItem,
+            &m_drawnPipelines
+        );
+        
+        if (m_undoStack) {
+            m_undoStack->push(cmd);
+        }
+        
+        // 删除后立即刷新标注层，确保标注与图形项同步
+        QTimer::singleShot(100, this, [this]() {
+            if (m_layerManager) {
+                qDebug() << "[DeviceTree Delete] Refreshing annotation layer after entity deletion";
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
+    }
+    
+    // 从设备树中移除
+    QStandardItem *parent = item->parent();
+    if (parent) {
+        parent->removeRow(item->row());
+    } else {
+        deviceTreeModel->removeRow(item->row());
+    }
+    
+    updateStatus(QString("已删除%1（待保存，共 %2 项待保存）")
+                 .arg(itemType == "pipeline" ? "管线" : "设施")
+                 .arg(m_pendingChanges.size()));
+    qDebug() << "[DeviceTree] Device deleted (pending save):" << itemName;
+}
+
+// 复制设备
+void MyForm::onDeviceTreeCopy()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString deviceId = item->data(Qt::UserRole).toString();
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    
+    // 复制设备ID到剪贴板
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(deviceId);
+    
+    updateStatus("已复制设备ID: " + deviceId);
+}
+
+// 在地图上定位
+void MyForm::onDeviceTreeLocateOnMap()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    if (!tileMapManager || !mapScene) {
+        QMessageBox::warning(this, "定位失败", "地图未初始化，请先加载地图");
+        return;
+    }
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType == "pipeline") {
+        PipelineDAO pipelineDao;
+        Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+        if (pipeline.isValid() && !pipeline.coordinates().isEmpty()) {
+            // 定位到管线中心点
+            QPointF center = calculateCenter(pipeline.coordinates());
+            
+            // 设置地图中心点
+            tileMapManager->setCenter(center.y(), center.x());
+            
+            // 确保合适的缩放级别
+            if (currentZoomLevel < 8) {
+                currentZoomLevel = 8;  // 设置为较高级别以便查看细节
+                tileMapManager->setZoom(currentZoomLevel);
+            }
+            
+            // 高亮显示管线
+            clearBurstHighlights();  // 清除之前的高亮
+            highlightPipelineById(deviceId);
+            
+            // 更新视图
+            QPointF centerScene = tileMapManager->geoToScene(center.x(), center.y());
+            ui->graphicsView->centerOn(centerScene);
+            tileMapManager->updateTilesForViewImmediate(centerScene.x(), centerScene.y());
+            
+            updateStatus("已定位到管线: " + pipeline.pipelineName());
+            qDebug() << "[DeviceTree] Located pipeline:" << deviceId << "at" << center;
+        } else {
+            QMessageBox::warning(this, "定位失败", "管线数据无效或缺少坐标信息");
+        }
+    } else if (itemType == "facility") {
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        if (facility.isValid() && !facility.coordinate().isNull()) {
+            QPointF coord = facility.coordinate();
+            
+            // 设置地图中心点
+            tileMapManager->setCenter(coord.y(), coord.x());
+            
+            // 确保合适的缩放级别
+            if (currentZoomLevel < 9) {
+                currentZoomLevel = 9;  // 设置为更高级别以便查看设施
+                tileMapManager->setZoom(currentZoomLevel);
+            }
+            
+            // 高亮显示设施
+            clearBurstHighlights();  // 清除之前的高亮
+            highlightFacilityById(deviceId);
+            
+            // 更新视图
+            QPointF centerScene = tileMapManager->geoToScene(coord.x(), coord.y());
+            ui->graphicsView->centerOn(centerScene);
+            tileMapManager->updateTilesForViewImmediate(centerScene.x(), centerScene.y());
+            
+            updateStatus("已定位到设施: " + facility.facilityName());
+            qDebug() << "[DeviceTree] Located facility:" << deviceId << "at" << coord;
+        } else {
+            QMessageBox::warning(this, "定位失败", "设施数据无效或缺少坐标信息");
+        }
+    }
+}
+
+// 查看关联设备
+void MyForm::onDeviceTreeViewRelated()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    QStringList relatedInfo;
+    
+    if (itemType == "pipeline") {
+        // 查找关联的设施
+        FacilityDAO facilityDao;
+        QVector<Facility> facilities = facilityDao.findByPipelineId(deviceId, 100);
+        
+        if (facilities.isEmpty()) {
+            QMessageBox::information(this, "关联设备", 
+                                     QString("管线 \"%1\" 没有关联的设施。")
+                                     .arg(item->text()));
+            return;
+        }
+        
+        relatedInfo.append(QString("管线 \"%1\" 关联的设施 (%2 个):\n")
+                          .arg(item->text())
+                          .arg(facilities.size()));
+        
+        for (const Facility &facility : facilities) {
+            relatedInfo.append(QString("  • %1 (%2) - %3")
+                              .arg(facility.facilityName())
+                              .arg(facility.facilityId())
+                              .arg(facility.getTypeDisplayName()));
+        }
+        
+    } else if (itemType == "facility") {
+        // 查找关联的管线
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        
+        if (facility.isValid() && !facility.pipelineId().isEmpty()) {
+            PipelineDAO pipelineDao;
+            Pipeline pipeline = pipelineDao.findByPipelineId(facility.pipelineId());
+            
+            if (pipeline.isValid()) {
+                relatedInfo.append(QString("设施 \"%1\" 关联的管线:\n")
+                                  .arg(item->text()));
+                relatedInfo.append(QString("  • %1 (%2) - %3")
+                                  .arg(pipeline.pipelineName())
+                                  .arg(pipeline.pipelineId())
+                                  .arg(pipeline.getTypeDisplayName()));
+            } else {
+                relatedInfo.append(QString("设施 \"%1\" 关联的管线ID \"%2\" 不存在。")
+                                  .arg(item->text())
+                                  .arg(facility.pipelineId()));
+            }
+        } else {
+            QMessageBox::information(this, "关联设备", 
+                                     QString("设施 \"%1\" 没有关联的管线。")
+                                     .arg(item->text()));
+            return;
+        }
+    } else {
+        QMessageBox::information(this, "关联设备", "该节点类型不支持查看关联设备。");
+        return;
+    }
+    
+    QMessageBox::information(this, "关联设备", relatedInfo.join("\n"));
+    updateStatus("已显示关联设备信息");
+}
+
+// 生成报告
+void MyForm::onDeviceTreeGenerateReport()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString fileName = QFileDialog::getSaveFileName(this, "生成设备报告", 
+                                                    QDir::homePath() + "/设备报告.txt",
+                                                    "文本文件 (*.txt);;所有文件 (*)");
+    if (fileName.isEmpty()) return;
+    
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "生成失败", "无法创建文件: " + fileName);
+        return;
+    }
+    
+    QTextStream out(&file);
+    out.setEncoding(QStringConverter::Utf8);
+    
+    QString itemName = item->text();
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    
+    // 写入报告头部
+    out << "========================================\n";
+    out << "设备报告\n";
+    out << "生成时间: " << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "\n";
+    out << "========================================\n\n";
+    
+    if (itemType == "pipeline_root" || itemType == "facility_root") {
+        // 一级节点：生成分类统计报告
+        int pipelineCount = 0;
+        int facilityCount = 0;
+        countDevices(item, pipelineCount, facilityCount);
+        
+        out << "分类: " << itemName << "\n";
+        out << "管线数量: " << pipelineCount << "\n";
+        out << "设施数量: " << facilityCount << "\n";
+        out << "总计: " << (pipelineCount + facilityCount) << "\n\n";
+        
+        // 收集详细信息
+        QList<Pipeline> pipelines;
+        QList<Facility> facilities;
+        collectDevicesFromItem(item, pipelines, facilities);
+        
+        if (!pipelines.isEmpty()) {
+            out << "管线明细:\n";
+            out << "----------------------------------------\n";
+            PipelineDAO pipelineDao;
+            for (const Pipeline &p : pipelines) {
+                Pipeline fullPipeline = pipelineDao.findByPipelineId(p.pipelineId());
+                if (fullPipeline.isValid()) {
+                    out << "编号: " << fullPipeline.pipelineId() << "\n";
+                    out << "名称: " << fullPipeline.pipelineName() << "\n";
+                    out << "类型: " << fullPipeline.getTypeDisplayName() << "\n";
+                    out << "长度: " << fullPipeline.lengthM() << " 米\n";
+                    out << "管径: " << fullPipeline.diameterMm() << " 毫米\n";
+                    out << "状态: " << fullPipeline.status() << "\n";
+                    out << "健康度: " << fullPipeline.healthScore() << " 分\n";
+                    out << "----------------------------------------\n";
+                }
+            }
+        }
+        
+        if (!facilities.isEmpty()) {
+            out << "\n设施明细:\n";
+            out << "----------------------------------------\n";
+            FacilityDAO facilityDao;
+            for (const Facility &f : facilities) {
+                Facility fullFacility = facilityDao.findByFacilityId(f.facilityId());
+                if (fullFacility.isValid()) {
+                    out << "编号: " << fullFacility.facilityId() << "\n";
+                    out << "名称: " << fullFacility.facilityName() << "\n";
+                    out << "类型: " << fullFacility.getTypeDisplayName() << "\n";
+                    out << "规格: " << fullFacility.spec() << "\n";
+                    out << "状态: " << fullFacility.status() << "\n";
+                    out << "健康度: " << fullFacility.healthScore() << " 分\n";
+                    out << "----------------------------------------\n";
+                }
+            }
+        }
+        
+    } else if (itemType == "pipeline_type" || itemType == "facility_type") {
+        // 二级节点：生成类型统计报告
+        int pipelineCount = 0;
+        int facilityCount = 0;
+        countDevices(item, pipelineCount, facilityCount);
+        
+        out << "类型: " << itemName << "\n";
+        out << "设备数量: " << (pipelineCount + facilityCount) << "\n\n";
+        
+        QList<Pipeline> pipelines;
+        QList<Facility> facilities;
+        collectDevicesFromItem(item, pipelines, facilities);
+        
+        if (!pipelines.isEmpty()) {
+            out << "管线列表:\n";
+            PipelineDAO pipelineDao;
+            for (const Pipeline &p : pipelines) {
+                Pipeline fullPipeline = pipelineDao.findByPipelineId(p.pipelineId());
+                if (fullPipeline.isValid()) {
+                    out << "  • " << fullPipeline.pipelineId() << " - " 
+                        << fullPipeline.pipelineName() << " (" 
+                        << fullPipeline.healthScore() << "分)\n";
+                }
+            }
+        }
+        
+        if (!facilities.isEmpty()) {
+            out << "\n设施列表:\n";
+            FacilityDAO facilityDao;
+            for (const Facility &f : facilities) {
+                Facility fullFacility = facilityDao.findByFacilityId(f.facilityId());
+                if (fullFacility.isValid()) {
+                    out << "  • " << fullFacility.facilityId() << " - " 
+                        << fullFacility.facilityName() << " (" 
+                        << fullFacility.healthScore() << "分)\n";
+                }
+            }
+        }
+        
+    } else if (itemType == "pipeline" || itemType == "facility") {
+        // 三级节点：生成单个设备详细报告
+        QString deviceId = item->data(Qt::UserRole).toString();
+        
+        if (itemType == "pipeline") {
+            PipelineDAO pipelineDao;
+            Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+            if (pipeline.isValid()) {
+                out << "设备类型: 管线\n";
+                out << "设备编号: " << pipeline.pipelineId() << "\n";
+                out << "设备名称: " << pipeline.pipelineName() << "\n";
+                out << "管线类型: " << pipeline.getTypeDisplayName() << "\n";
+                out << "长度: " << pipeline.lengthM() << " 米\n";
+                out << "管径: " << pipeline.diameterMm() << " 毫米\n";
+                out << "材质: " << pipeline.material() << "\n";
+                out << "压力等级: " << pipeline.pressureClass() << "\n";
+                out << "埋深: " << pipeline.depthM() << " 米\n";
+                out << "状态: " << pipeline.status() << "\n";
+                out << "健康度: " << pipeline.healthScore() << " 分\n";
+                out << "建设日期: " << pipeline.buildDate().toString("yyyy-MM-dd") << "\n";
+                out << "建设单位: " << pipeline.builder() << "\n";
+                out << "管理单位: " << pipeline.owner() << "\n";
+                out << "维护单位: " << pipeline.maintenanceUnit() << "\n";
+                out << "最后检查: " << pipeline.lastInspection().toString("yyyy-MM-dd") << "\n";
+                out << "备注: " << pipeline.remarks() << "\n";
+            }
+        } else if (itemType == "facility") {
+            FacilityDAO facilityDao;
+            Facility facility = facilityDao.findByFacilityId(deviceId);
+            if (facility.isValid()) {
+                out << "设备类型: 设施\n";
+                out << "设备编号: " << facility.facilityId() << "\n";
+                out << "设备名称: " << facility.facilityName() << "\n";
+                out << "设施类型: " << facility.getTypeDisplayName() << "\n";
+                out << "规格: " << facility.spec() << "\n";
+                out << "尺寸: " << facility.size() << "\n";
+                out << "材质: " << facility.material() << "\n";
+                out << "状态: " << facility.status() << "\n";
+                out << "健康度: " << facility.healthScore() << " 分\n";
+                out << "关联管线: " << facility.pipelineId() << "\n";
+                out << "建设日期: " << (facility.buildDate().isValid() ? facility.buildDate().toString("yyyy-MM-dd") : "未知") << "\n";
+                out << "建设单位: " << facility.builder() << "\n";
+                out << "管理单位: " << facility.owner() << "\n";
+                out << "维护单位: " << facility.maintenanceUnit() << "\n";
+                out << "最后维护: " << (facility.lastMaintenance().isValid() ? facility.lastMaintenance().toString("yyyy-MM-dd") : "未维护") << "\n";
+                out << "下次维护: " << (facility.nextMaintenance().isValid() ? facility.nextMaintenance().toString("yyyy-MM-dd") : "未计划") << "\n";
+                out << "资产价值: " << facility.assetValue() << " 元\n";
+                out << "备注: " << facility.remarks() << "\n";
+            }
+        }
+    }
+    
+    file.close();
+    
+    QMessageBox::information(this, "报告生成成功", 
+                            QString("设备报告已保存到:\n%1").arg(fileName));
+    updateStatus("报告已生成: " + fileName);
+}
+
+// 查看历史记录
+void MyForm::onDeviceTreeViewHistory()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType != "pipeline" && itemType != "facility") {
+        QMessageBox::information(this, "历史记录", "只有具体设备才有历史记录。");
+        return;
+    }
+    
+    QStringList history;
+    history.append("设备历史记录\n");
+    history.append("========================================\n\n");
+    
+    if (itemType == "pipeline") {
+        PipelineDAO pipelineDao;
+        Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+        if (pipeline.isValid()) {
+            history.append(QString("设备编号: %1\n").arg(pipeline.pipelineId()));
+            history.append(QString("设备名称: %1\n\n").arg(pipeline.pipelineName()));
+            
+            history.append("基本信息:\n");
+            history.append(QString("  创建时间: %1\n")
+                          .arg(pipeline.createdAt().isValid() ? 
+                               pipeline.createdAt().toString("yyyy-MM-dd hh:mm:ss") : "未知"));
+            history.append(QString("  更新时间: %1\n")
+                          .arg(pipeline.updatedAt().isValid() ? 
+                               pipeline.updatedAt().toString("yyyy-MM-dd hh:mm:ss") : "未知"));
+            QString createdBy = pipeline.createdBy();
+            QString updatedBy = pipeline.updatedBy();
+            if (!createdBy.isEmpty()) {
+                history.append(QString("  创建人: %1\n").arg(createdBy));
+            }
+            if (!updatedBy.isEmpty()) {
+                history.append(QString("  更新人: %1\n").arg(updatedBy));
+            }
+            history.append("\n");
+            
+            history.append("维护记录:\n");
+            history.append(QString("  建设日期: %1\n")
+                          .arg(pipeline.buildDate().toString("yyyy-MM-dd")));
+            history.append(QString("  最后检查: %1\n")
+                          .arg(pipeline.lastInspection().isValid() ? 
+                               pipeline.lastInspection().toString("yyyy-MM-dd") : "未检查"));
+            history.append(QString("  检查周期: %1 天\n")
+                          .arg(pipeline.inspectionCycle()));
+            history.append(QString("  当前状态: %1\n")
+                          .arg(pipeline.status()));
+            history.append(QString("  健康度: %1 分\n")
+                          .arg(pipeline.healthScore()));
+            
+            if (!pipeline.remarks().isEmpty()) {
+                history.append(QString("\n备注:\n  %1\n").arg(pipeline.remarks()));
+            }
+        } else {
+            history.append("未找到设备数据。");
+        }
+    } else if (itemType == "facility") {
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        if (facility.isValid()) {
+            history.append(QString("设备编号: %1\n").arg(facility.facilityId()));
+            history.append(QString("设备名称: %1\n\n").arg(facility.facilityName()));
+            
+            history.append("基本信息:\n");
+            history.append(QString("  创建时间: %1\n")
+                          .arg(facility.createdAt().isValid() ? 
+                               facility.createdAt().toString("yyyy-MM-dd hh:mm:ss") : "未知"));
+            history.append(QString("  更新时间: %1\n")
+                          .arg(facility.updatedAt().isValid() ? 
+                               facility.updatedAt().toString("yyyy-MM-dd hh:mm:ss") : "未知"));
+            QString createdBy = facility.createdBy();
+            QString updatedBy = facility.updatedBy();
+            if (!createdBy.isEmpty()) {
+                history.append(QString("  创建人: %1\n").arg(createdBy));
+            }
+            if (!updatedBy.isEmpty()) {
+                history.append(QString("  更新人: %1\n").arg(updatedBy));
+            }
+            history.append("\n");
+            
+            history.append("维护记录:\n");
+            history.append(QString("  建设日期: %1\n")
+                          .arg(facility.buildDate().toString("yyyy-MM-dd")));
+            history.append(QString("  最后维护: %1\n")
+                          .arg(facility.lastMaintenance().isValid() ? 
+                               facility.lastMaintenance().toString("yyyy-MM-dd") : "未维护"));
+            history.append(QString("  下次维护: %1\n")
+                          .arg(facility.nextMaintenance().isValid() ? 
+                               facility.nextMaintenance().toString("yyyy-MM-dd") : "未计划"));
+            history.append(QString("  维护单位: %1\n")
+                          .arg(facility.maintenanceUnit()));
+            history.append(QString("  当前状态: %1\n")
+                          .arg(facility.status()));
+            history.append(QString("  健康度: %1 分\n")
+                          .arg(facility.healthScore()));
+            
+            if (!facility.remarks().isEmpty()) {
+                history.append(QString("\n备注:\n  %1\n").arg(facility.remarks()));
+            }
+        } else {
+            history.append("未找到设备数据。");
+        }
+    }
+    
+    QMessageBox::information(this, "历史记录", history.join(""));
+    updateStatus("已显示设备历史记录");
+}
+
+// 打印标签
+void MyForm::onDeviceTreePrintLabel()
+{
+    if (!m_currentDeviceTreeIndex.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(m_currentDeviceTreeIndex);
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    if (itemType != "pipeline" && itemType != "facility") {
+        QMessageBox::information(this, "打印标签", "只有具体设备才能打印标签。");
+        return;
+    }
+    
+    // 生成标签内容
+    QString deviceName = item->text();
+    QString qrCodeUrl;
+    QString deviceType;
+    
+    if (itemType == "pipeline") {
+        PipelineDAO pipelineDao;
+        Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+        if (pipeline.isValid()) {
+            deviceName = pipeline.pipelineName();
+            deviceType = pipeline.getTypeDisplayName();
+            qrCodeUrl = QString("https://ugims.com/pipeline/%1").arg(deviceId);
+        }
+    } else if (itemType == "facility") {
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        if (facility.isValid()) {
+            deviceName = facility.facilityName();
+            deviceType = facility.getTypeDisplayName();
+            qrCodeUrl = facility.qrcodeUrl();
+            if (qrCodeUrl.isEmpty()) {
+                qrCodeUrl = QString("https://ugims.com/facility/%1").arg(deviceId);
+            }
+        }
+    }
+    
+    // 生成标签文本内容（可以用于打印）
+    QString labelContent = QString(
+        "========================================\n"
+        "设备标签\n"
+        "========================================\n"
+        "设备编号: %1\n"
+        "设备名称: %2\n"
+        "设备类型: %3\n"
+        "二维码: %4\n"
+        "生成时间: %5\n"
+        "========================================\n"
+    ).arg(deviceId)
+     .arg(deviceName)
+     .arg(deviceType)
+     .arg(qrCodeUrl)
+     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+    
+    // 询问用户是否保存标签文件
+    int ret = QMessageBox::question(this, "打印标签", 
+                                   "标签内容已生成。\n\n" + labelContent + "\n\n是否保存到文件？",
+                                   QMessageBox::Yes | QMessageBox::No);
+    
+    if (ret == QMessageBox::Yes) {
+        QString fileName = QFileDialog::getSaveFileName(this, "保存标签", 
+                                                        QDir::homePath() + "/" + deviceId + "_标签.txt",
+                                                        "文本文件 (*.txt);;所有文件 (*)");
+        if (!fileName.isEmpty()) {
+            QFile file(fileName);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&file);
+                out.setEncoding(QStringConverter::Utf8);
+                out << labelContent;
+                file.close();
+                QMessageBox::information(this, "保存成功", "标签已保存到: " + fileName);
+                updateStatus("标签已保存: " + fileName);
+            } else {
+                QMessageBox::warning(this, "保存失败", "无法创建文件: " + fileName);
+            }
+        }
+    } else {
+        // 复制到剪贴板
+        QClipboard *clipboard = QApplication::clipboard();
+        clipboard->setText(labelContent);
+        updateStatus("标签内容已复制到剪贴板");
+    }
+}
+
+// 辅助函数：递归展开所有子节点
+void MyForm::expandAllChildren(const QModelIndex &index)
+{
+    if (!index.isValid()) return;
+    
+    ui->deviceTreeView->expand(index);
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(index);
+    if (item) {
+        for (int i = 0; i < item->rowCount(); ++i) {
+            QModelIndex childIndex = deviceTreeModel->index(i, 0, index);
+            expandAllChildren(childIndex);
+        }
+    }
+}
+
+// 辅助函数：递归折叠所有子节点
+void MyForm::collapseAllChildren(const QModelIndex &index)
+{
+    if (!index.isValid()) return;
+    
+    QStandardItem *item = deviceTreeModel->itemFromIndex(index);
+    if (item) {
+        for (int i = 0; i < item->rowCount(); ++i) {
+            QModelIndex childIndex = deviceTreeModel->index(i, 0, index);
+            collapseAllChildren(childIndex);
+        }
+    }
+    
+    ui->deviceTreeView->collapse(index);
+}
+
+// 辅助函数：统计设备数量
+void MyForm::countDevices(QStandardItem *item, int &pipelineCount, int &facilityCount)
+{
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    if (itemType == "pipeline") {
+        pipelineCount++;
+    } else if (itemType == "facility") {
+        facilityCount++;
+    }
+    
+    for (int i = 0; i < item->rowCount(); ++i) {
+        QStandardItem *child = item->child(i);
+        if (child) {
+            countDevices(child, pipelineCount, facilityCount);
+        }
+    }
+}
+
+// 辅助函数：收集设备数据
+void MyForm::collectDevicesFromItem(QStandardItem *item, QList<Pipeline> &pipelines, QList<Facility> &facilities)
+{
+    if (!item) return;
+    
+    QString itemType = item->data(Qt::UserRole + 1).toString();
+    QString deviceId = item->data(Qt::UserRole).toString();
+    
+    // 如果是具体设备，添加到列表
+    if (itemType == "pipeline" && !deviceId.isEmpty()) {
+        PipelineDAO pipelineDao;
+        Pipeline pipeline = pipelineDao.findByPipelineId(deviceId);
+        if (pipeline.isValid()) {
+            pipelines.append(pipeline);
+        }
+    } else if (itemType == "facility" && !deviceId.isEmpty()) {
+        FacilityDAO facilityDao;
+        Facility facility = facilityDao.findByFacilityId(deviceId);
+        if (facility.isValid()) {
+            facilities.append(facility);
+        }
+    }
+    
+    // 递归处理子节点
+    for (int i = 0; i < item->rowCount(); ++i) {
+        QStandardItem *child = item->child(i);
+        if (child) {
+            collectDevicesFromItem(child, pipelines, facilities);
+        }
+    }
+}
+
+// 辅助函数：计算管线中心点
+QPointF MyForm::calculateCenter(const QVector<QPointF> &coordinates)
+{
+    if (coordinates.isEmpty()) return QPointF();
+    
+    double sumX = 0, sumY = 0;
+    for (const QPointF &point : coordinates) {
+        sumX += point.x();
+        sumY += point.y();
+    }
+    
+    return QPointF(sumX / coordinates.size(), sumY / coordinates.size());
 }
 
 // 关于按钮点击事件
@@ -3974,7 +7415,7 @@ void MyForm::onStartDrawingFacility(const QString &facilityType)
     }
 }
 
-void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &scenePoints)
+void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QString &wkt, const QVector<QPointF> &scenePoints, const QVector<QString> &connectedFacilityIds)
 {
     qDebug() << "Pipeline drawing finished, type:" << pipelineType << "WKT:" << wkt;
     updateStatus("管线绘制完成，请输入属性...");
@@ -4108,10 +7549,33 @@ void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QStrin
             item->setData(0, "pipeline");
             item->setData(1, pipeline.pipelineId());
             item->setData(2, pipelineType);
+            item->setData(3, pipeline.pipelineName());  // 管线名称（用于标注显示）
             item->setData(100, static_cast<int>(EntityState::Added));  // 新增：设置实体状态为Added
             
             // 关键：保存管线对象到hash表，用于后续编辑
             m_drawnPipelines[item] = pipeline;
+            
+            // 更新连接的设施的 pipeline_id 字段
+            if (!connectedFacilityIds.isEmpty()) {
+                FacilityDAO facilityDao;
+                for (const QString &facilityId : connectedFacilityIds) {
+                    if (!facilityId.isEmpty()) {
+                        Facility facility = facilityDao.findByFacilityId(facilityId);
+                        if (facility.isValid()) {
+                            facility.setPipelineId(pipeline.pipelineId());
+                            // 添加到待保存变更列表
+                            PendingChange facilityChange;
+                            facilityChange.type = ChangeModified;
+                            facilityChange.entityType = "facility";
+                            facilityChange.data = QVariant::fromValue(facility);
+                            facilityChange.originalId = facility.id();
+                            facilityChange.graphicsItem = nullptr;  // 设施图形项需要单独查找
+                            m_pendingChanges.append(facilityChange);
+                            qDebug() << "Connected facility" << facilityId << "to pipeline" << pipeline.pipelineId();
+                        }
+                    }
+                }
+            }
             
             // 添加到待保存变更列表
             PendingChange change;
@@ -4139,23 +7603,21 @@ void MyForm::onPipelineDrawingFinished(const QString &pipelineType, const QStrin
             qDebug() << "   First point:" << scenePoints.first();
             qDebug() << "   Last point:" << scenePoints.last();
             qDebug() << "   Pending changes count:" << m_pendingChanges.size();
+            
+            // 延迟刷新标注图层，让新绘制的设备也显示标注
+            // 注意：即使标注层当前不可见，也要刷新，这样当用户显示标注层时就能看到标注
+            QTimer::singleShot(100, this, [this]() {
+                if (m_layerManager) {
+                    qDebug() << "[Pipeline Drawing] Refreshing annotation layer after new pipeline";
+                    m_layerManager->refreshLayer(LayerManager::Labels);
+                }
+            });
         } else {
             qDebug() << "❌ Cannot draw pipeline: mapScene=" << mapScene 
                      << "scenePoints.size()=" << scenePoints.size();
+            // 只有失败时才弹窗
+            QMessageBox::warning(this, "错误", "管线创建失败，请检查场景是否已初始化");
         }
-        
-        // 显示成功信息
-        QMessageBox::information(this, "成功", 
-            QString("管线创建成功！\n\n"
-                    "ID: %1\n"
-                    "名称: %2\n"
-                    "类型: %3\n"
-                    "几何数据: %4\n\n"
-                    "提示：请点击保存按钮或按 Ctrl+S 保存到数据库")
-            .arg(pipeline.id())
-            .arg(pipeline.pipelineName())
-            .arg(pipeline.pipelineType())
-            .arg(wkt.left(50) + "..."));
         
         updateStatus(QString("管线创建成功（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
     } else {
@@ -4205,6 +7667,18 @@ void MyForm::onSaveAll()
         QMessageBox::information(this, "成功", 
             QString("成功保存 %1 项变更到数据库").arg(m_pendingChanges.size()));
         clearPendingChanges();
+        
+        // 刷新设备树以显示最新数据
+        setupDeviceTree();
+        updateStatus("设备树已刷新");
+        qDebug() << "[Save] Device tree refreshed after save";
+        
+        // 保存后刷新标注层，确保标注与数据库数据同步
+        QTimer::singleShot(50, this, [this]() {
+            if (m_layerManager) {
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
     }
 }
 
@@ -4281,14 +7755,45 @@ bool MyForm::savePendingChanges()
             FacilityDAO dao;
             
             if (change.type == ChangeAdded) {
+                // 如果 Facility 对象没有几何信息，从图形项中获取
+                if (facility.geomWkt().isEmpty() && change.graphicsItem) {
+                    QGraphicsEllipseItem *ellipseItem = qgraphicsitem_cast<QGraphicsEllipseItem*>(change.graphicsItem);
+                    if (ellipseItem) {
+                        // 获取图形项的中心点（场景坐标）
+                        QRectF rect = ellipseItem->rect();
+                        QPointF centerScene = ellipseItem->pos() + rect.center();
+                        
+                        // 转换为地理坐标
+                        QPointF geoCoord;
+                        if (tileMapManager) {
+                            geoCoord = tileMapManager->sceneToGeo(centerScene);
+                        } else {
+                            // 如果没有瓦片管理器，使用原始坐标（降级方案）
+                            geoCoord = centerScene;
+                        }
+                        
+                        // 生成 WKT 格式
+                        QString wkt = QString("POINT(%1 %2)")
+                                        .arg(geoCoord.x(), 0, 'f', 8)
+                                        .arg(geoCoord.y(), 0, 'f', 8);
+                        
+                        // 设置几何信息
+                        facility.setCoordinate(geoCoord);
+                        facility.setGeomWkt(wkt);
+                        
+                        qDebug() << QString("[Save] Facility geometry restored from graphics item: %1").arg(wkt);
+                    }
+                }
+                
                 // 检查编号是否存在，如果存在则自动生成新编号
                 QString originalId = facility.facilityId();
                 QString finalId = originalId;
                 
-                // 如果编号为空，自动生成
-                if (originalId.isEmpty()) {
+                // 如果编号为空或者是临时ID（以TEMP_开头），自动生成
+                if (originalId.isEmpty() || originalId.startsWith("TEMP_")) {
                     finalId = IdGenerator::generateFacilityId(facility.facilityType());
-                    qDebug() << QString("[Save] Facility ID is empty, auto-generated: %1").arg(finalId);
+                    qDebug() << QString("[Save] Facility ID is empty or temporary (%1), auto-generated: %2")
+                                .arg(originalId).arg(finalId);
                 }
                 
                 // 检查编号是否存在，如果存在则生成下一个可用编号
@@ -4390,6 +7895,15 @@ void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QStrin
         facility.setCoordinate(geoCoord);
         facility.setGeomWkt(wkt);
         
+        // 如果设施ID为空，自动生成一个临时ID（用于标注显示，保存时会重新生成）
+        if (facility.facilityId().isEmpty() && !facility.facilityType().isEmpty()) {
+            QString tempId = IdGenerator::generateFacilityId(facility.facilityType());
+            // 添加临时标记，保存时会重新生成
+            tempId = "TEMP_" + tempId;
+            facility.setFacilityId(tempId);
+            qDebug() << "[Facility Drawing] Auto-generated temporary ID:" << tempId;
+        }
+        
         // 手动删除对话框
         delete dialog;
         dialog = nullptr;
@@ -4441,9 +7955,19 @@ void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QStrin
             
             // 设置数据
             ellipseItem->setData(0, "facility");  // 实体类型
-            ellipseItem->setData(1, facility.facilityId());  // 设施ID
+            ellipseItem->setData(1, facility.facilityId());  // 设施ID（现在保证不为空）
             ellipseItem->setData(2, facilityTypeStr);  // 设施类型
+            ellipseItem->setData(3, facility.facilityName());  // 设施名称（用于标注显示）
             ellipseItem->setData(100, static_cast<int>(EntityState::Added));  // 新增：设置实体状态为Added
+            
+            // 设置可选中和可交互标志（重要：使设施可以被点击选中）
+            ellipseItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            ellipseItem->setFlag(QGraphicsItem::ItemIsFocusable, true);
+            ellipseItem->setAcceptHoverEvents(true);
+            
+            // 禁用Qt默认的选中样式（虚线框），使用自定义高亮
+            // 确保不显示默认的虚线框，只使用自定义高亮
+            ellipseItem->setSelected(false);
             
             // 设置工具提示
             ellipseItem->setToolTip(QString("%1\n类型: %2")
@@ -4479,20 +8003,20 @@ void MyForm::onFacilityDrawingFinished(const QString &facilityType, const QStrin
             qDebug() << "✅ Facility created on scene (pending save):" << typeName;
             qDebug() << "   Pending changes count:" << m_pendingChanges.size();
             
-            // 显示成功信息
-            QMessageBox::information(this, "成功",
-                QString("设施创建成功！\n\n"
-                        "名称: %1\n"
-                        "类型: %2\n"
-                        "几何数据: %3\n\n"
-                        "提示：请点击保存按钮或按 Ctrl+S 保存到数据库")
-                .arg(facility.facilityName().isEmpty() ? facility.facilityId() : facility.facilityName())
-                .arg(typeName)
-                .arg(wkt));
+            // 延迟刷新标注图层，让新绘制的设备也显示标注
+            // 注意：即使标注层当前不可见，也要刷新，这样当用户显示标注层时就能看到标注
+            QTimer::singleShot(100, this, [this]() {
+                if (m_layerManager) {
+                    qDebug() << "[Facility Drawing] Refreshing annotation layer after new facility";
+                    m_layerManager->refreshLayer(LayerManager::Labels);
+                }
+            });
             
             updateStatus(QString("设施创建成功（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
         } else {
             qDebug() << "❌ Cannot create facility: mapScene is null";
+            // 只有失败时才弹窗
+            QMessageBox::warning(this, "错误", "设施创建失败，请检查场景是否已初始化");
             updateStatus("设施创建失败");
         }
     } else {
@@ -4597,6 +8121,15 @@ void MyForm::onShowContextMenu(const QPoint &pos)
         return;
     }
     
+    // 检查是否是测量线条
+    QString itemType = m_selectedItem->data(0).toString();
+    bool isMeasureItem = (itemType == "distance_measure_line" || 
+                          itemType == "distance_measure_label" ||
+                          itemType == "distance_measure_marker" ||
+                          itemType == "area_measure_polygon" ||
+                          itemType == "area_measure_label" ||
+                          itemType == "area_measure_marker");
+    
     // 创建右键菜单
     QMenu contextMenu(this);
     contextMenu.setStyleSheet(
@@ -4624,51 +8157,69 @@ void MyForm::onShowContextMenu(const QPoint &pos)
         "}"
     );
     
-    // 基本操作
-    QAction *viewAction = contextMenu.addAction("📋 查看属性");
-    QAction *editAction = contextMenu.addAction("✏️ 编辑属性");
-    
-    contextMenu.addSeparator();
-    
-    // 复制/粘贴操作
-    QAction *copyAction = contextMenu.addAction("📋 复制");
-    QAction *pasteAction = contextMenu.addAction("📄 粘贴");
-    pasteAction->setEnabled(m_copiedItem != nullptr);
-    
-    QAction *duplicateAction = contextMenu.addAction("📌 原位复制");
-    
-    contextMenu.addSeparator();
-    
-    // 样式操作
-    QAction *copyStyleAction = contextMenu.addAction("🎨 复制样式");
-    QAction *pasteStyleAction = contextMenu.addAction("🖌️ 粘贴样式");
-    pasteStyleAction->setEnabled(m_hasStyleCopied);
-    
-    contextMenu.addSeparator();
-    
-    // 图层操作
-    QAction *bringToFrontAction = contextMenu.addAction("⬆️ 置于顶层");
-    QAction *sendToBackAction = contextMenu.addAction("⬇️ 置于底层");
-    
-    contextMenu.addSeparator();
-    
-    // 删除操作
-    QAction *deleteAction = contextMenu.addAction("🗑️ 删除");
-    QFont deleteFont = deleteAction->font();
-    deleteFont.setBold(true);
-    deleteAction->setFont(deleteFont);
-    
-    // 连接信号
-    connect(viewAction, &QAction::triggered, this, &MyForm::onViewEntityProperties);
-    connect(editAction, &QAction::triggered, this, &MyForm::onEditSelectedEntity);
-    connect(copyAction, &QAction::triggered, this, &MyForm::onCopyEntity);
-    connect(pasteAction, &QAction::triggered, this, &MyForm::onPasteEntity);
-    connect(duplicateAction, &QAction::triggered, this, &MyForm::onDuplicateEntity);
-    connect(copyStyleAction, &QAction::triggered, this, &MyForm::onCopyStyle);
-    connect(pasteStyleAction, &QAction::triggered, this, &MyForm::onPasteStyle);
-    connect(bringToFrontAction, &QAction::triggered, this, &MyForm::onBringToFront);
-    connect(sendToBackAction, &QAction::triggered, this, &MyForm::onSendToBack);
-    connect(deleteAction, &QAction::triggered, this, &MyForm::onDeleteSelectedEntity);
+    if (isMeasureItem) {
+        // 测量线条的右键菜单：只显示删除选项
+        QAction *deleteAction = contextMenu.addAction("🗑️ 删除测量");
+        QFont deleteFont = deleteAction->font();
+        deleteFont.setBold(true);
+        deleteAction->setFont(deleteFont);
+        
+        connect(deleteAction, &QAction::triggered, this, [this, itemType]() {
+            if (itemType.startsWith("distance_")) {
+                deleteDistanceMeasure(m_selectedItem);
+            } else if (itemType.startsWith("area_")) {
+                deleteAreaMeasure(m_selectedItem);
+            }
+            clearSelection();
+        });
+    } else {
+        // 实体（管线/设施）的右键菜单：显示完整操作
+        // 基本操作
+        QAction *viewAction = contextMenu.addAction("📋 查看属性");
+        QAction *editAction = contextMenu.addAction("✏️ 编辑属性");
+        
+        contextMenu.addSeparator();
+        
+        // 复制/粘贴操作
+        QAction *copyAction = contextMenu.addAction("📋 复制");
+        QAction *pasteAction = contextMenu.addAction("📄 粘贴");
+        pasteAction->setEnabled(m_copiedItem != nullptr);
+        
+        QAction *duplicateAction = contextMenu.addAction("📌 原位复制");
+        
+        contextMenu.addSeparator();
+        
+        // 样式操作
+        QAction *copyStyleAction = contextMenu.addAction("🎨 复制样式");
+        QAction *pasteStyleAction = contextMenu.addAction("🖌️ 粘贴样式");
+        pasteStyleAction->setEnabled(m_hasStyleCopied);
+        
+        contextMenu.addSeparator();
+        
+        // 图层操作
+        QAction *bringToFrontAction = contextMenu.addAction("⬆️ 置于顶层");
+        QAction *sendToBackAction = contextMenu.addAction("⬇️ 置于底层");
+        
+        contextMenu.addSeparator();
+        
+        // 删除操作
+        QAction *deleteAction = contextMenu.addAction("🗑️ 删除");
+        QFont deleteFont = deleteAction->font();
+        deleteFont.setBold(true);
+        deleteAction->setFont(deleteFont);
+        
+        // 连接信号
+        connect(viewAction, &QAction::triggered, this, &MyForm::onViewEntityProperties);
+        connect(editAction, &QAction::triggered, this, &MyForm::onEditSelectedEntity);
+        connect(copyAction, &QAction::triggered, this, &MyForm::onCopyEntity);
+        connect(pasteAction, &QAction::triggered, this, &MyForm::onPasteEntity);
+        connect(duplicateAction, &QAction::triggered, this, &MyForm::onDuplicateEntity);
+        connect(copyStyleAction, &QAction::triggered, this, &MyForm::onCopyStyle);
+        connect(pasteStyleAction, &QAction::triggered, this, &MyForm::onPasteStyle);
+        connect(bringToFrontAction, &QAction::triggered, this, &MyForm::onBringToFront);
+        connect(sendToBackAction, &QAction::triggered, this, &MyForm::onSendToBack);
+        connect(deleteAction, &QAction::triggered, this, &MyForm::onDeleteSelectedEntity);
+    }
     
     // 显示菜单
     contextMenu.exec(ui->graphicsView->mapToGlobal(pos));
@@ -4808,9 +8359,30 @@ void MyForm::onDeleteSelectedEntity()
                     pipeline.setPipelineId(entityId);
                     change.data = QVariant::fromValue(pipeline);
                 } else if (entityType == "facility") {
+                    // 保存完整的设施信息，而不仅仅是ID和编号
                     Facility facility;
-                    facility.setId(databaseId);
-                    facility.setFacilityId(entityId);
+                    // 尝试从数据库查询完整信息
+                    FacilityDAO dao;
+                    Facility dbFacility = dao.findByFacilityId(entityId);
+                    if (dbFacility.isValid() && dbFacility.id() == databaseId) {
+                        // 使用数据库中的完整信息
+                        facility = dbFacility;
+                        qDebug() << "[Delete] Using complete facility data from database for ChangeDeleted";
+                    } else {
+                        // 如果数据库查询失败，至少保存ID和编号
+                        facility.setId(databaseId);
+                        facility.setFacilityId(entityId);
+                        // 尝试从图形项获取名称（如果存在）
+                        QString facilityName = m_selectedItem->data(3).toString();
+                        if (!facilityName.isEmpty()) {
+                            facility.setFacilityName(facilityName);
+                        }
+                        QString facilityType = m_selectedItem->data(2).toString();
+                        if (!facilityType.isEmpty()) {
+                            facility.setFacilityType(facilityType);
+                        }
+                        qDebug() << "[Delete] Using partial facility data from graphics item for ChangeDeleted";
+                    }
                     change.data = QVariant::fromValue(facility);
                 }
                 change.originalId = databaseId;
@@ -4837,6 +8409,14 @@ void MyForm::onDeleteSelectedEntity()
             m_undoStack->push(cmd);
         }
         
+        // 删除后立即刷新标注层，确保标注与图形项同步
+        QTimer::singleShot(100, this, [this]() {
+            if (m_layerManager) {
+                qDebug() << "[Delete] Refreshing annotation layer after entity deletion";
+                m_layerManager->refreshLayer(LayerManager::Labels);
+            }
+        });
+        
         // 清除选中
         m_selectedItem = nullptr;
         
@@ -4855,93 +8435,319 @@ void MyForm::onEditSelectedEntity()
     
     QString entityType = m_selectedItem->data(0).toString();
     
-    // 判断实体类型，使用通用属性对话框
-    EntityPropertiesDialog::EntityType dialogType = 
-        (entityType == "pipeline") ? EntityPropertiesDialog::Pipeline : EntityPropertiesDialog::Facility;
-    
-    EntityPropertiesDialog *dialog = new EntityPropertiesDialog(
-        m_selectedItem, 
-        dialogType,
-        this
-    );
-    
-    // 连接删除信号
-    connect(dialog, &EntityPropertiesDialog::deleteRequested, this, [this]() {
-        onDeleteSelectedEntity();
-    });
-    
-    // 保存旧属性值（用于撤销）
-    QString oldName;
-    QString oldType;
-    if (entityType == "pipeline" && m_drawnPipelines.contains(m_selectedItem)) {
-        Pipeline oldPipeline = m_drawnPipelines[m_selectedItem];
-        oldName = oldPipeline.pipelineName();
-        oldType = oldPipeline.pipelineType();
-    } else {
-        oldName = m_selectedItem->data(0).toString();  // 从 data(0) 获取名称
-        oldType = m_selectedItem->data(2).toString();  // 从 data(2) 获取类型
-    }
-    
-    // 连接属性变化信号
-    connect(dialog, &EntityPropertiesDialog::propertiesChanged, this, [this, oldName, oldType, entityType, dialog]() {
-        // 获取新属性值
-        QString newName = dialog->getName();
-        QString newType = dialog->getType();
+    if (entityType == "pipeline") {
+        // 编辑管线
+        Pipeline pipeline;
+        bool found = false;
         
-        // 使用命令模式修改属性（支持撤销/重做）
-        if (entityType == "pipeline" && m_drawnPipelines.contains(m_selectedItem)) {
-            // 修改管线名称
-            if (oldName != newName) {
-                ChangePropertyCommand *cmd = new ChangePropertyCommand(
-                    m_selectedItem,
-                    "名称",
-                    oldName,
-                    newName,
-                    &m_drawnPipelines
-                );
-                if (m_undoStack) {
-                    m_undoStack->push(cmd);
-                }
-            }
-            
-            // 修改管线类型
-            if (oldType != newType) {
-                ChangePropertyCommand *cmd = new ChangePropertyCommand(
-                    m_selectedItem,
-                    "类型",
-                    oldType,
-                    newType,
-                    &m_drawnPipelines
-                );
-                if (m_undoStack) {
-                    m_undoStack->push(cmd);
-                }
-            }
+        // 优先检查是否是绘制的管线
+        if (m_drawnPipelines.contains(m_selectedItem)) {
+            pipeline = m_drawnPipelines[m_selectedItem];
+            found = true;
         } else {
-            // 修改设施名称
-            if (oldName != newName) {
-                ChangePropertyCommand *cmd = new ChangePropertyCommand(
-                    m_selectedItem,
-                    "名称",
-                    oldName,
-                    newName,
-                    nullptr
-                );
-                if (m_undoStack) {
-                    m_undoStack->push(cmd);
+            // 尝试从数据库查询（使用管线编号）
+            QString pipelineId = m_selectedItem->data(1).toString();
+            if (!pipelineId.isEmpty() && DatabaseManager::instance().isConnected()) {
+                PipelineDAO dao;
+                pipeline = dao.findByPipelineId(pipelineId);
+                if (pipeline.isValid()) {
+                    found = true;
                 }
             }
         }
         
-        updateStatus("实体属性已更新");
-        qDebug() << "✅ Entity properties updated";
-    });
-    
-    int result = dialog->exec();
-    
-    // 如果对话框被接受，属性已经在 propertiesChanged 信号中处理
-    // 这里只需要清理对话框
-    delete dialog;
+        if (!found) {
+            QMessageBox::warning(this, "错误", "未找到管线数据！");
+            return;
+        }
+        
+        PipelineEditDialog *dialog = new PipelineEditDialog(this);
+        dialog->loadPipeline(pipeline);
+        dialog->setWindowTitle("编辑管线信息");
+        
+        if (dialog->exec() == QDialog::Accepted) {
+            Pipeline updatedPipeline = dialog->getPipeline();
+            updatedPipeline.setId(pipeline.id()); // 确保ID用于更新
+            
+            // 检查是否有修改
+            bool hasChanges = false;
+            if (updatedPipeline.pipelineName() != pipeline.pipelineName() ||
+                updatedPipeline.pipelineType() != pipeline.pipelineType() ||
+                updatedPipeline.diameterMm() != pipeline.diameterMm() ||
+                updatedPipeline.material() != pipeline.material() ||
+                updatedPipeline.lengthM() != pipeline.lengthM() ||
+                updatedPipeline.status() != pipeline.status() ||
+                updatedPipeline.healthScore() != pipeline.healthScore()) {
+                hasChanges = true;
+            }
+            
+            if (hasChanges) {
+                // 获取数据库ID
+                int databaseId = pipeline.id();
+                
+                // 检查是否已经在待保存列表中
+                bool found = false;
+                for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                    PendingChange &change = m_pendingChanges[i];
+                    if (change.entityType == "pipeline" && 
+                        change.graphicsItem == m_selectedItem) {
+                        // 如果是新绘制的管线（ChangeAdded），直接更新原记录
+                        if (change.type == ChangeAdded) {
+                            change.data = QVariant::fromValue(updatedPipeline);
+                            // 更新图形项上的管线名称
+                            QString newPipelineName = updatedPipeline.pipelineName();
+                            m_selectedItem->setData(3, newPipelineName);
+                            // 更新 m_drawnPipelines
+                            m_drawnPipelines[m_selectedItem] = updatedPipeline;
+                            found = true;
+                            qDebug() << "[Edit Pipeline] Updated ChangeAdded record for new pipeline";
+                            break;
+                        } else if (change.type == ChangeModified && change.originalId == databaseId) {
+                            // 如果是已存在的管线（ChangeModified），更新修改记录
+                            change.data = QVariant::fromValue(updatedPipeline);
+                            // 更新图形项上的管线名称
+                            QString newPipelineName = updatedPipeline.pipelineName();
+                            m_selectedItem->setData(3, newPipelineName);
+                            // 更新 m_drawnPipelines（如果存在）
+                            if (m_drawnPipelines.contains(m_selectedItem)) {
+                                m_drawnPipelines[m_selectedItem] = updatedPipeline;
+                            }
+                            found = true;
+                            qDebug() << "[Edit Pipeline] Updated ChangeModified record for existing pipeline";
+                            break;
+                        }
+                    }
+                }
+                
+                if (!found) {
+                    // 添加到待保存变更列表（这种情况应该是编辑已保存的管线）
+                    PendingChange change;
+                    change.type = ChangeModified;
+                    change.entityType = "pipeline";
+                    change.data = QVariant::fromValue(updatedPipeline);
+                    change.originalId = databaseId;
+                    change.graphicsItem = m_selectedItem;
+                    m_pendingChanges.append(change);
+                    qDebug() << "[Edit Pipeline] Added new ChangeModified record";
+                }
+                
+                // 更新图形项上的管线名称（无论是否找到现有记录都要更新）
+                QString newPipelineName = updatedPipeline.pipelineName();
+                m_selectedItem->setData(3, newPipelineName);
+                // 更新 m_drawnPipelines（如果存在）
+                if (m_drawnPipelines.contains(m_selectedItem)) {
+                    m_drawnPipelines[m_selectedItem] = updatedPipeline;
+                }
+                
+                // 更新图形项的状态
+                QVariant stateVariant = m_selectedItem->data(100);
+                EntityState currentState = EntityState::Detached;
+                if (stateVariant.isValid()) {
+                    currentState = static_cast<EntityState>(stateVariant.toInt());
+                }
+                // 只有未变更状态才标记为修改
+                if (currentState == EntityState::Unchanged) {
+                    m_selectedItem->setData(100, static_cast<int>(EntityState::Modified));
+                }
+                
+                markAsModified();
+                
+                // 刷新标注层，使名称变化立即显示
+                QTimer::singleShot(50, this, [this]() {
+                    if (m_layerManager) {
+                        m_layerManager->refreshLayer(LayerManager::Labels);
+                    }
+                });
+                
+                QMessageBox::information(this, "提示", 
+                    QString("管线 %1 已标记为待保存\n\n请点击主窗口的保存按钮或按 Ctrl+S 保存到数据库")
+                    .arg(updatedPipeline.pipelineId()));
+                updateStatus(QString("管线已修改（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
+            }
+        }
+        
+        delete dialog;
+        
+    } else if (entityType == "facility") {
+        // 编辑设施
+        Facility facility;
+        bool found = false;
+        
+        // 获取设施ID（用于数据库查询和调试）
+        QString facilityId = m_selectedItem->data(1).toString();
+        if (facilityId.isEmpty()) {
+            facilityId = m_selectedItem->data(2).toString();
+        }
+        
+        qDebug() << "[Edit Facility] Searching for facility, graphicsItem:" << m_selectedItem 
+                 << "facilityId:" << facilityId 
+                 << "pendingChanges count:" << m_pendingChanges.size();
+        
+        // 优先检查待保存的变更列表（新绘制的设施可能还没有保存到数据库）
+        // 先通过图形项匹配（最可靠），如果失败则通过 facilityId 匹配
+        for (const PendingChange &change : m_pendingChanges) {
+            if (change.entityType == "facility") {
+                bool itemMatches = (change.graphicsItem == m_selectedItem);
+                bool idMatches = false;
+                if (!itemMatches && !facilityId.isEmpty()) {
+                    Facility changeFacility = change.data.value<Facility>();
+                    // 检查 facilityId 是否匹配（即使 isValid() 返回 false）
+                    idMatches = (!changeFacility.facilityId().isEmpty() && 
+                                changeFacility.facilityId() == facilityId);
+                }
+                
+                if (itemMatches || idMatches) {
+                    if (change.type == ChangeAdded || change.type == ChangeModified) {
+                        // 从待保存的变更中获取设施数据
+                        facility = change.data.value<Facility>();
+                        // 对于新绘制的设施，m_id 为 0，所以不能用 isValid() 判断
+                        // 只要 facilityId 和 facilityType 不为空就认为有效
+                        if (!facility.facilityId().isEmpty() && !facility.facilityType().isEmpty()) {
+                            found = true;
+                            qDebug() << "[Edit Facility] Found in pending changes (type=" << change.type 
+                                     << ", match=" << (itemMatches ? "graphicsItem" : "facilityId")
+                                     << "), facilityId:" << facility.facilityId()
+                                     << "facilityName:" << facility.facilityName();
+                            break;
+                        } else {
+                            qDebug() << "[Edit Facility] Found change but facility data incomplete:"
+                                     << "facilityId=" << facility.facilityId()
+                                     << "facilityType=" << facility.facilityType();
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 如果待保存列表中没有，尝试从数据库查询
+        if (!found && !facilityId.isEmpty() && DatabaseManager::instance().isConnected()) {
+            FacilityDAO dao;
+            facility = dao.findByFacilityId(facilityId);
+            if (facility.isValid()) {
+                found = true;
+                qDebug() << "[Edit Facility] Found in database, facilityId:" << facilityId;
+            }
+        }
+        
+        if (!found) {
+            qDebug() << "[Edit Facility] NOT FOUND - graphicsItem:" << m_selectedItem 
+                     << "facilityId:" << facilityId 
+                     << "pendingChanges:" << m_pendingChanges.size();
+            QMessageBox::warning(this, "错误", 
+                QString("未找到设施数据！\n\n设施ID: %1\n\n提示：如果这是新绘制的设施，请先保存到数据库后再编辑。")
+                .arg(facilityId.isEmpty() ? "未知" : facilityId));
+            return;
+        }
+        
+        FacilityEditDialog *dialog = new FacilityEditDialog(this, facility);
+        dialog->setWindowTitle("编辑设施信息");
+        
+        if (dialog->exec() == QDialog::Accepted) {
+            Facility updatedFacility = dialog->resultFacility();
+            updatedFacility.setId(facility.id()); // 确保ID用于更新
+            
+            // 检查是否有修改
+            bool hasChanges = false;
+            if (updatedFacility.facilityName() != facility.facilityName() ||
+                updatedFacility.facilityType() != facility.facilityType() ||
+                updatedFacility.spec() != facility.spec() ||
+                updatedFacility.material() != facility.material() ||
+                updatedFacility.status() != facility.status() ||
+                updatedFacility.healthScore() != facility.healthScore()) {
+                hasChanges = true;
+            }
+            
+            if (hasChanges) {
+                // 获取数据库ID
+                int databaseId = facility.id();
+                
+                // 检查是否已经在待保存列表中
+                bool found = false;
+                for (int i = 0; i < m_pendingChanges.size(); ++i) {
+                    PendingChange &change = m_pendingChanges[i];
+                    if (change.entityType == "facility" && 
+                        change.graphicsItem == m_selectedItem) {
+                        // 如果是新绘制的设施（ChangeAdded），直接更新原记录
+                        if (change.type == ChangeAdded) {
+                            change.data = QVariant::fromValue(updatedFacility);
+                            // 更新图形项上的设施ID和名称（如果改变了）
+                            QString newFacilityId = updatedFacility.facilityId();
+                            if (!newFacilityId.isEmpty()) {
+                                m_selectedItem->setData(1, newFacilityId);
+                            }
+                            QString newFacilityName = updatedFacility.facilityName();
+                            m_selectedItem->setData(3, newFacilityName);  // 更新设施名称
+                            // 更新tooltip
+                            QString typeName = m_selectedItem->data(2).toString();
+                            m_selectedItem->setToolTip(QString("%1\n类型: %2")
+                                                       .arg(newFacilityName.isEmpty() ? newFacilityId : newFacilityName)
+                                                       .arg(typeName));
+                            found = true;
+                            qDebug() << "[Edit Facility] Updated ChangeAdded record for new facility";
+                            break;
+                        } else if (change.type == ChangeModified && change.originalId == databaseId) {
+                            // 如果是已存在的设施（ChangeModified），更新修改记录
+                            change.data = QVariant::fromValue(updatedFacility);
+                            // 更新图形项上的设施名称
+                            QString newFacilityName = updatedFacility.facilityName();
+                            m_selectedItem->setData(3, newFacilityName);
+                            // 更新tooltip
+                            QString typeName = m_selectedItem->data(2).toString();
+                            QString facilityId = m_selectedItem->data(1).toString();
+                            m_selectedItem->setToolTip(QString("%1\n类型: %2")
+                                                       .arg(newFacilityName.isEmpty() ? facilityId : newFacilityName)
+                                                       .arg(typeName));
+                            found = true;
+                            qDebug() << "[Edit Facility] Updated ChangeModified record for existing facility";
+                            break;
+                        }
+                    }
+                }
+                
+                if (!found) {
+                    // 添加到待保存变更列表（这种情况应该是编辑已保存的设施）
+                    PendingChange change;
+                    change.type = ChangeModified;
+                    change.entityType = "facility";
+                    change.data = QVariant::fromValue(updatedFacility);
+                    change.originalId = databaseId;
+                    change.graphicsItem = m_selectedItem;
+                    m_pendingChanges.append(change);
+                    qDebug() << "[Edit Facility] Added new ChangeModified record";
+                }
+                
+                // 更新图形项上的设施名称（无论是否找到现有记录都要更新）
+                QString newFacilityName = updatedFacility.facilityName();
+                m_selectedItem->setData(3, newFacilityName);
+                // 更新tooltip
+                QString typeName = m_selectedItem->data(2).toString();
+                QString facilityId = m_selectedItem->data(1).toString();
+                m_selectedItem->setToolTip(QString("%1\n类型: %2")
+                                           .arg(newFacilityName.isEmpty() ? facilityId : newFacilityName)
+                                           .arg(typeName));
+                
+                // 更新图形项的状态
+                QVariant stateVariant = m_selectedItem->data(100);
+                EntityState currentState = EntityState::Detached;
+                if (stateVariant.isValid()) {
+                    currentState = static_cast<EntityState>(stateVariant.toInt());
+                }
+                // 只有未变更状态才标记为修改
+                if (currentState == EntityState::Unchanged) {
+                    m_selectedItem->setData(100, static_cast<int>(EntityState::Modified));
+                }
+                
+                markAsModified();
+                
+                QMessageBox::information(this, "提示", 
+                    QString("设施 %1 已标记为待保存\n\n请点击主窗口的保存按钮或按 Ctrl+S 保存到数据库")
+                    .arg(updatedFacility.facilityId()));
+                updateStatus(QString("设施已修改（待保存，共 %1 项待保存）").arg(m_pendingChanges.size()));
+            }
+        }
+        
+        delete dialog;
+    }
 }
 
 void MyForm::onViewEntityProperties()
@@ -4962,130 +8768,136 @@ void MyForm::onViewEntityProperties()
             found = true;
         } else {
             // 尝试从数据库查询（使用管线编号）
-            QString pipelineId = m_selectedItem->data(2).toString(); // pipelineId存储在data(2)
+            // 管线ID存储在data(1)，data(2)存储的是管线类型
+            QString pipelineId = m_selectedItem->data(1).toString();
             if (!pipelineId.isEmpty() && DatabaseManager::instance().isConnected()) {
                 PipelineDAO dao;
                 pipeline = dao.findByPipelineId(pipelineId);
                 if (pipeline.isValid()) {
                     found = true;
+                } else {
+                    qDebug() << "[ViewProperties] Pipeline not found in database, pipelineId:" << pipelineId;
+                    qDebug() << "[ViewProperties] Item data(0):" << m_selectedItem->data(0);
+                    qDebug() << "[ViewProperties] Item data(1):" << m_selectedItem->data(1);
+                    qDebug() << "[ViewProperties] Item data(2):" << m_selectedItem->data(2);
+                    qDebug() << "[ViewProperties] Item data(10):" << m_selectedItem->data(10);
                 }
+            } else {
+                qDebug() << "[ViewProperties] PipelineId is empty or database not connected";
+                qDebug() << "[ViewProperties] Item data(0):" << m_selectedItem->data(0);
+                qDebug() << "[ViewProperties] Item data(1):" << m_selectedItem->data(1);
+                qDebug() << "[ViewProperties] Item data(2):" << m_selectedItem->data(2);
             }
         }
         
         if (!found) {
-            QMessageBox::warning(this, "错误", "未找到管线数据！");
-            return;
+            // 如果管线不在数据库中，尝试从图形项中获取基本信息
+            QString pipelineId = m_selectedItem->data(1).toString();
+            QString pipelineName = m_selectedItem->data(3).toString();
+            QString pipelineType = m_selectedItem->data(2).toString();
+            
+            // 检查实体状态
+            QVariant stateVariant = m_selectedItem->data(100);
+            EntityState entityState = EntityState::Detached;
+            if (stateVariant.isValid()) {
+                entityState = static_cast<EntityState>(stateVariant.toInt());
+            }
+            
+            // 如果是新添加的管线（还没保存），显示基本信息
+            if (entityState == EntityState::Added && !pipelineId.isEmpty()) {
+                // 从图形项构建基本的管线对象
+                pipeline.setPipelineId(pipelineId);
+                pipeline.setPipelineName(pipelineName);
+                pipeline.setPipelineType(pipelineType);
+                found = true;
+            } else {
+                QMessageBox::warning(this, "错误", 
+                    QString("未找到管线数据！\n\n管线编号: %1\n\n提示：如果这是新绘制的管线，请先保存到数据库后再查看。")
+                    .arg(pipelineId.isEmpty() ? "未知" : pipelineId));
+                return;
+            }
         }
         
-        // 显示属性信息
-        QString info = QString(
-            "管线属性\n\n"
-            "🆔 数据库ID: %1\n"
-            "编号: %2\n"
-            "名称: %3\n"
-            "类型: %4\n"
-            "管径: DN%5 mm\n"
-            "材质: %6\n"
-            "长度: %7 m\n"
-            "埋深: %8 m\n"
-            "压力等级: %9\n"
-            "建设日期: %10\n"
-            "施工单位: %11\n"
-            "产权单位: %12\n"
-            "建设造价: %13 元\n"
-            "运行状态: %14\n"
-            "健康度: %15分\n"
-            "上次巡检: %16\n"
-            "养护单位: %17\n"
-            "巡检周期: %18天\n"
-            "备注: %19"
-        )
-        .arg(pipeline.id())
-        .arg(pipeline.pipelineId())
-        .arg(pipeline.pipelineName())
-        .arg(pipeline.pipelineType())
-        .arg(pipeline.diameterMm())
-        .arg(pipeline.material())
-        .arg(pipeline.lengthM(), 0, 'f', 2)
-        .arg(pipeline.depthM(), 0, 'f', 2)
-        .arg(pipeline.pressureClass())
-        .arg(pipeline.buildDate().isValid() ? pipeline.buildDate().toString("yyyy-MM-dd") : "未设置")
-        .arg(pipeline.builder())
-        .arg(pipeline.owner())
-        .arg(pipeline.constructionCost(), 0, 'f', 2)
-        .arg(pipeline.status())
-        .arg(pipeline.healthScore())
-        .arg(pipeline.lastInspection().isValid() ? pipeline.lastInspection().toString("yyyy-MM-dd") : "未设置")
-        .arg(pipeline.maintenanceUnit())
-        .arg(pipeline.inspectionCycle())
-        .arg(pipeline.remarks());
-        
-        QMessageBox::information(this, "管线属性", info);
+        // 显示属性信息（使用新的查看对话框）
+        EntityViewDialog *viewDialog = new EntityViewDialog(this);
+        viewDialog->setPipeline(pipeline);
+        connect(viewDialog, &EntityViewDialog::editRequested, this, &MyForm::onEditSelectedEntity);
+        viewDialog->exec();
     } else if (entityType == "facility") {
         Facility facility;
         bool found = false;
         
-        // 尝试从数据库查询（使用设施编号）
-        QString facilityId = m_selectedItem->data(2).toString(); // facilityId可能存储在data(2)
-        if (!facilityId.isEmpty() && DatabaseManager::instance().isConnected()) {
+        // 获取设施ID（用于数据库查询和调试）
+        QString facilityId = m_selectedItem->data(1).toString();
+        if (facilityId.isEmpty()) {
+            facilityId = m_selectedItem->data(2).toString();
+        }
+        
+        qDebug() << "[View Facility] Searching for facility, graphicsItem:" << m_selectedItem 
+                 << "facilityId:" << facilityId 
+                 << "pendingChanges count:" << m_pendingChanges.size();
+        
+        // 优先检查待保存的变更列表（新绘制的设施可能还没有保存到数据库）
+        // 先通过图形项匹配（最可靠），如果失败则通过 facilityId 匹配
+        for (const PendingChange &change : m_pendingChanges) {
+            if (change.entityType == "facility") {
+                bool itemMatches = (change.graphicsItem == m_selectedItem);
+                bool idMatches = false;
+                if (!itemMatches && !facilityId.isEmpty()) {
+                    Facility changeFacility = change.data.value<Facility>();
+                    // 检查 facilityId 是否匹配（即使 isValid() 返回 false）
+                    idMatches = (!changeFacility.facilityId().isEmpty() && 
+                                changeFacility.facilityId() == facilityId);
+                }
+                
+                if (itemMatches || idMatches) {
+                    if (change.type == ChangeAdded || change.type == ChangeModified) {
+                        // 从待保存的变更中获取设施数据
+                        facility = change.data.value<Facility>();
+                        // 对于新绘制的设施，m_id 为 0，所以不能用 isValid() 判断
+                        // 只要 facilityId 和 facilityType 不为空就认为有效
+                        if (!facility.facilityId().isEmpty() && !facility.facilityType().isEmpty()) {
+                            found = true;
+                            qDebug() << "[View Facility] Found in pending changes (type=" << change.type 
+                                     << ", match=" << (itemMatches ? "graphicsItem" : "facilityId")
+                                     << "), facilityId:" << facility.facilityId()
+                                     << "facilityName:" << facility.facilityName();
+                            break;
+                        } else {
+                            qDebug() << "[View Facility] Found change but facility data incomplete:"
+                                     << "facilityId=" << facility.facilityId()
+                                     << "facilityType=" << facility.facilityType();
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 如果待保存列表中没有，尝试从数据库查询
+        if (!found && !facilityId.isEmpty() && DatabaseManager::instance().isConnected()) {
             FacilityDAO dao;
             facility = dao.findByFacilityId(facilityId);
             if (facility.isValid()) {
                 found = true;
+                qDebug() << "[View Facility] Found in database, facilityId:" << facilityId;
             }
         }
         
         if (!found) {
-            QMessageBox::warning(this, "错误", "未找到设施数据！");
+            qDebug() << "[View Facility] NOT FOUND - graphicsItem:" << m_selectedItem 
+                     << "facilityId:" << facilityId 
+                     << "pendingChanges:" << m_pendingChanges.size();
+            QMessageBox::warning(this, "错误", 
+                QString("未找到设施数据！\n\n设施ID: %1\n\n提示：如果这是新绘制的设施，请先保存到数据库后再查看。")
+                .arg(facilityId.isEmpty() ? "未知" : facilityId));
             return;
         }
         
-        // 显示设施属性信息
-        QString info = QString(
-            "设施属性\n\n"
-            "🆔 数据库ID: %1\n"
-            "编号: %2\n"
-            "名称: %3\n"
-            "类型: %4\n"
-            "规格型号: %5\n"
-            "材质: %6\n"
-            "尺寸: %7\n"
-            "关联管线: %8\n"
-            "高程: %9 m\n"
-            "建设日期: %10\n"
-            "施工单位: %11\n"
-            "产权单位: %12\n"
-            "资产价值: %13 元\n"
-            "运行状态: %14\n"
-            "健康度: %15分\n"
-            "上次维护: %16\n"
-            "下次维护: %17\n"
-            "养护单位: %18\n"
-            "二维码: %19\n"
-            "备注: %20"
-        )
-        .arg(facility.id())
-        .arg(facility.facilityId())
-        .arg(facility.facilityName())
-        .arg(facility.facilityType())
-        .arg(facility.spec())
-        .arg(facility.material())
-        .arg(facility.size())
-        .arg(facility.pipelineId())
-        .arg(facility.elevationM(), 0, 'f', 2)
-        .arg(facility.buildDate().isValid() ? facility.buildDate().toString("yyyy-MM-dd") : "未设置")
-        .arg(facility.builder())
-        .arg(facility.owner())
-        .arg(facility.assetValue(), 0, 'f', 2)
-        .arg(facility.status())
-        .arg(facility.healthScore())
-        .arg(facility.lastMaintenance().isValid() ? facility.lastMaintenance().toString("yyyy-MM-dd") : "未设置")
-        .arg(facility.nextMaintenance().isValid() ? facility.nextMaintenance().toString("yyyy-MM-dd") : "未设置")
-        .arg(facility.maintenanceUnit())
-        .arg(facility.qrcodeUrl())
-        .arg(facility.remarks());
-        
-        QMessageBox::information(this, "设施属性", info);
+        // 显示设施属性信息（使用新的查看对话框）
+        EntityViewDialog *viewDialog = new EntityViewDialog(this);
+        viewDialog->setFacility(facility);
+        connect(viewDialog, &EntityViewDialog::editRequested, this, &MyForm::onEditSelectedEntity);
+        viewDialog->exec();
     }
 }
 
@@ -5109,6 +8921,9 @@ void MyForm::clearSelection()
         // 恢复不可移动状态
         m_selectedItem->setFlag(QGraphicsItem::ItemIsMovable, false);
         
+        // 确保不显示Qt默认的选中虚线框
+        m_selectedItem->setSelected(false);
+        
         unhighlightItem(m_selectedItem);
         m_selectedItem = nullptr;
         updateStatus("Ready");
@@ -5123,6 +8938,10 @@ void MyForm::selectItem(QGraphicsItem *item)
     
     m_selectedItem = item;
     m_selectedItemStartPos = item->pos();  // 记录开始位置（用于移动撤销）
+    
+    // 禁用Qt默认的选中样式（虚线框），使用自定义高亮
+    // 不调用setSelected(true)，避免显示默认的虚线框
+    item->setSelected(false);
     
     // 设置图形项为可移动（仅对设施有效，管线移动需要特殊处理）
     QString entityType = item->data(0).toString();
@@ -5165,18 +8984,37 @@ void MyForm::highlightItem(QGraphicsItem *item)
         m_originalPen = ellipseItem->pen();
         m_originalBrush = ellipseItem->brush();
         
-        // 创建高亮样式（加粗边框 + 黄色填充）
+        // 创建高亮样式（加粗边框 + 高亮填充）
         QPen highlightPen = m_originalPen;
-        highlightPen.setWidth(m_originalPen.width() + 2);
+        highlightPen.setWidth(m_originalPen.width() + 3);  // 增加边框宽度，更明显
         highlightPen.setColor(QColor(255, 215, 0));  // 金色边框
         
-        QBrush highlightBrush = QBrush(QColor(255, 255, 0, 150));  // 半透明黄色填充
+        // 保持原始颜色但增加亮度，或使用半透明黄色叠加
+        QColor originalColor = m_originalBrush.color();
+        QColor highlightColor;
+        if (originalColor.alpha() > 0 && originalColor != Qt::transparent) {
+            // 如果原色有透明度，创建更亮的版本
+            highlightColor = QColor(
+                qMin(255, originalColor.red() + 60),
+                qMin(255, originalColor.green() + 60),
+                qMin(255, originalColor.blue() + 60),
+                qMin(255, originalColor.alpha() + 50)
+            );
+        } else {
+            // 如果原色不透明，使用半透明黄色叠加，更明显
+            highlightColor = QColor(255, 255, 0, 200);  // 更明显的黄色高亮
+        }
+        
+        QBrush highlightBrush = QBrush(highlightColor);
         
         ellipseItem->setPen(highlightPen);
         ellipseItem->setBrush(highlightBrush);
         ellipseItem->setZValue(200);  // 提升层级
         
-        qDebug() << "✨ Facility highlighted";
+        // 确保不显示Qt默认的选中虚线框
+        ellipseItem->setSelected(false);
+        
+        qDebug() << "✨ Facility highlighted (no dashed border)";
         return;
     }
 }
@@ -5207,6 +9045,9 @@ void MyForm::unhighlightItem(QGraphicsItem *item)
         ellipseItem->setPen(m_originalPen);
         ellipseItem->setBrush(m_originalBrush);
         ellipseItem->setZValue(20);  // 恢复层级（设施原始Z值是20）
+        
+        // 确保不显示Qt默认的选中虚线框
+        ellipseItem->setSelected(false);
         
         qDebug() << "➖ Facility unhighlighted";
         return;
