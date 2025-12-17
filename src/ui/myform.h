@@ -85,7 +85,7 @@ private slots:
     void onRegionDownloadProgress(int current, int total, int zoom); // 区域下载进度槽函数
 
     // Overlay 相关槽
-    void onOverlayPanToggled(bool checked);
+    void onGeoDisplayToggled(bool checked);
     
     // 管网数据加载槽函数
     void loadPipelineData();
@@ -266,7 +266,9 @@ private:
     QWidget *overlayPanel = nullptr;            // 场景代理承载的面板
     QToolButton *btnZoomIn = nullptr;
     QToolButton *btnZoomOut = nullptr;
-    QToolButton *btnPanToggle = nullptr;
+    QToolButton *btnGeoToggle = nullptr;
+    QLabel *geoCoordinateLabel = nullptr;        // 右下角经纬度显示
+    bool m_geoDisplayEnabled = true;             // 经纬度显示开关
     
     // 浮动状态栏相关
     QWidget *floatingStatusBar = nullptr;             // 浮动状态栏widget
@@ -387,6 +389,9 @@ private:
     void positionGraphicsOverlay();
     void createGraphicsOverlayScene();          // scene+proxy 方案（兜底）
     void positionGraphicsOverlayScene();
+    void createGeoCoordinateDisplay();          // 创建右下角经纬度显示
+    void positionGeoCoordinateDisplay();        // 定位右下角经纬度显示
+    void updateGeoCoordinateDisplay(const QPointF &geo); // 更新经纬度文本
     
     // 管网可视化初始化
     void initializePipelineVisualization();

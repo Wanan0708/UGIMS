@@ -236,6 +236,39 @@ static QIcon makePlusMinusIcon(bool isPlus, const QColor &color = QColor(255,255
     return QIcon(pm);
 }
 
+// 工具：绘制“定位/经纬度”图标（圆形+十字准星）
+static QIcon makeGeoIcon(const QColor &color = QColor(255,255,255))
+{
+    const int sz = 18;
+    QPixmap pm(sz, sz);
+    pm.fill(Qt::transparent);
+
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing, true);
+
+    QPen pen(color, 2.0, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    p.setPen(pen);
+
+    // 外圆
+    QRectF circleRect(3, 3, sz - 6, sz - 6);
+    p.drawEllipse(circleRect);
+
+    // 十字准星（水平和垂直线）
+    const qreal cx = sz / 2.0;
+    const qreal cy = sz / 2.0;
+    const qreal len = sz / 2.8;
+    p.drawLine(QPointF(cx - len, cy), QPointF(cx + len, cy));
+    p.drawLine(QPointF(cx, cy - len), QPointF(cx, cy + len));
+
+    // 中心小点
+    QBrush brush(color);
+    p.setBrush(brush);
+    p.drawEllipse(QPointF(cx, cy), 1.5, 1.5);
+
+    p.end();
+    return QIcon(pm);
+}
+
 MyForm::~MyForm()
 {
     delete ui;
@@ -402,6 +435,8 @@ void MyForm::resizeEvent(QResizeEvent *event)
     positionGraphicsOverlay();
     // 重新定位浮动状态条
     positionFloatingStatusBar();
+    // 重新定位经纬度显示
+    positionGeoCoordinateDisplay();
     // 重新定位右侧工具栏和面板（注意：不再定位drawingToolPanel和layerControlPanel）
     positionPanelSwitcher();
 }
@@ -749,6 +784,8 @@ void MyForm::setupMapArea() {
     
     // 创建浮动状态栏（位于地图左下角）
     createFloatingStatusBar();
+    // 创建右下角经纬度显示
+    createGeoCoordinateDisplay();
     
     // 创建绘制管理器（必须在 mapScene 和 tileMapManager 创建之后）
     qDebug() << "Creating MapDrawingManager...";
@@ -800,12 +837,14 @@ void MyForm::createGraphicsOverlay()
     btnZoomOut->setIconSize(QSize(18,18));
     connect(btnZoomOut, &QToolButton::clicked, this, &MyForm::handleZoomOutButtonClicked);
 
-    btnPanToggle = new QToolButton(gvOverlay);
-    btnPanToggle->setToolTip(tr("拖拽(开/关)"));
-    btnPanToggle->setCheckable(true);
-    btnPanToggle->setChecked(ui->graphicsView->dragMode() == QGraphicsView::ScrollHandDrag);
-    btnPanToggle->setIcon(QApplication::style()->standardIcon(QStyle::SP_DesktopIcon));
-    connect(btnPanToggle, &QToolButton::toggled, this, &MyForm::onOverlayPanToggled);
+    btnGeoToggle = new QToolButton(gvOverlay);
+    btnGeoToggle->setToolTip(tr("显示/隐藏经纬度"));
+    btnGeoToggle->setCheckable(true);
+    btnGeoToggle->setChecked(m_geoDisplayEnabled);
+    // 使用自绘的“定位/坐标”图标，更符合经纬度显示功能
+    btnGeoToggle->setIcon(makeGeoIcon());
+    btnGeoToggle->setIconSize(QSize(18,18));
+    connect(btnGeoToggle, &QToolButton::toggled, this, &MyForm::onGeoDisplayToggled);
     
     // 第4个按钮：图层管理
     QToolButton *btnLayerControl = new QToolButton(gvOverlay);
@@ -839,7 +878,7 @@ void MyForm::createGraphicsOverlay()
 
     vl->addWidget(btnZoomIn);
     vl->addWidget(btnZoomOut);
-    vl->addWidget(btnPanToggle);
+    vl->addWidget(btnGeoToggle);
     vl->addWidget(btnLayerControl);
     vl->addWidget(btnDrawingTool);
 
@@ -875,9 +914,15 @@ void MyForm::positionGraphicsOverlay()
              << "panel visible:" << (m_panelContainer && m_panelContainer->isVisible());
 }
 
-void MyForm::onOverlayPanToggled(bool checked)
+void MyForm::onGeoDisplayToggled(bool checked)
 {
-    ui->graphicsView->setDragMode(checked ? QGraphicsView::ScrollHandDrag : QGraphicsView::NoDrag);
+    m_geoDisplayEnabled = checked;
+    if (geoCoordinateLabel) {
+        geoCoordinateLabel->setVisible(checked);
+        if (checked) {
+            geoCoordinateLabel->raise();
+        }
+    }
 }
 
 void MyForm::createGraphicsOverlayScene()
@@ -910,11 +955,12 @@ void MyForm::createGraphicsOverlayScene()
     connect(zOut, &QToolButton::clicked, this, &MyForm::handleZoomOutButtonClicked);
 
     QToolButton *pan = new QToolButton(overlayPanel);
-    pan->setToolTip(tr("拖拽(开/关)"));
+    pan->setToolTip(tr("显示/隐藏经纬度"));
     pan->setCheckable(true);
-    pan->setChecked(ui->graphicsView->dragMode() == QGraphicsView::ScrollHandDrag);
-    pan->setIcon(QApplication::style()->standardIcon(QStyle::SP_DesktopIcon));
-    connect(pan, &QToolButton::toggled, this, &MyForm::onOverlayPanToggled);
+    pan->setChecked(m_geoDisplayEnabled);
+    pan->setIcon(makeGeoIcon());
+    pan->setIconSize(QSize(18,18));
+    connect(pan, &QToolButton::toggled, this, &MyForm::onGeoDisplayToggled);
 
     vl->addWidget(zIn);
     vl->addWidget(zOut);
@@ -1655,24 +1701,29 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             }
         } else if (event->type() == QEvent::MouseMove) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+            QPointF geo;
+            bool hasGeo = false;
+            if (tileMapManager) {
+                geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+                hasGeo = true;
+                if (m_geoDisplayEnabled && geoCoordinateLabel) {
+                    updateGeoCoordinateDisplay(geo);
+                }
+            }
             
             // 距离量算预览线更新
-            if (m_distanceMeasureMode && tileMapManager) {
-                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
-                QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+            if (m_distanceMeasureMode && hasGeo) {
                 updateDistancePreview(QPointF(geo.x(), geo.y()));
             }
             
             // 面积量算预览线更新
-            if (m_areaMeasureMode && tileMapManager) {
-                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
-                QPointF geo = tileMapManager->sceneToGeo(scenePos, currentZoomLevel);
+            if (m_areaMeasureMode && hasGeo) {
                 updateAreaPreview(QPointF(geo.x(), geo.y()));
             }
             
             // 处理绘制模式下的鼠标移动（显示预览）
             if (m_drawingManager && m_drawingManager->isDrawing()) {
-                QPointF scenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
                 m_drawingManager->handleMouseMove(scenePos);
                 // 不阻止事件，允许同时拖动
             }
@@ -1680,14 +1731,14 @@ bool MyForm::eventFilter(QObject *obj, QEvent *event)
             // 只有当鼠标在QGraphicsView区域时，右键拖拽才生效
             if (isRightClickDragging && (mouseEvent->buttons() & Qt::RightButton)) {
                 // 使用滚动条实现 1:1 平移，避免映射误差与轴向耦合
-                    QPointF delta = mouseEvent->pos() - lastRightClickPos;
+                QPointF delta = mouseEvent->pos() - lastRightClickPos;
                 QScrollBar *h = ui->graphicsView->horizontalScrollBar();
                 QScrollBar *v = ui->graphicsView->verticalScrollBar();
                 // 方向修正：拖拽左（delta<0）应显示右侧 → 滚动值增加
                 h->setValue(h->value() - (int)delta.x());
                 v->setValue(v->value() - (int)delta.y());
-                    lastRightClickPos = mouseEvent->pos();
-                lastRightClickScenePos = ui->graphicsView->mapToScene(mouseEvent->pos());
+                lastRightClickPos = mouseEvent->pos();
+                lastRightClickScenePos = scenePos;
 
                 if (tileMapManager && !isDownloading) {
                     QPointF centeredScene = ui->graphicsView->mapToScene(ui->graphicsView->viewport()->rect().center());
@@ -1871,12 +1922,12 @@ void MyForm::createFloatingStatusBar()
         "  background: transparent;"
         "  padding: 8px 12px;"
         "}"
+        // 状态栏文本样式：黑色、透明背景、14px，不加粗
         "QLabel{"
-        "  color: #ffffff;"
+        "  color: #000000;"
         "  font-size: 14px;"
-        "  font-weight: bold;"
+        "  font-weight: normal;"
         "  background: transparent;"
-        "  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);"
         "}"
         "QProgressBar{"
         "  background: rgba(0, 0, 0, 0.5);"
@@ -1884,7 +1935,7 @@ void MyForm::createFloatingStatusBar()
         "  border-radius: 3px;"
         "  text-align: center;"
         "  color: #ffffff;"
-        "  font-weight: bold;"
+        "  font-weight: normal;"
         "}"
         "QProgressBar::chunk{"
         "  background: #ff7a18;"
@@ -1954,6 +2005,50 @@ void MyForm::positionFloatingStatusBar()
     int x = margin;
     int y = vp.height() - sz.height() - margin;
     floatingStatusBar->setGeometry(x, y, sz.width(), sz.height());
+}
+
+void MyForm::createGeoCoordinateDisplay()
+{
+    if (!ui->graphicsView || geoCoordinateLabel) return;
+
+    // 将经纬度标签添加到 graphicsView 上，使其位置只随窗口变化，不随地图平移
+    geoCoordinateLabel = new QLabel(ui->graphicsView);
+    geoCoordinateLabel->setObjectName("geoCoordinateLabel");
+    geoCoordinateLabel->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    // 放大字号，采用与状态栏一致的黑色文字、透明背景（不加粗）
+    geoCoordinateLabel->setStyleSheet("QLabel{color:#000000; background: transparent; font-size: 14px; font-weight: normal;}");
+    geoCoordinateLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    geoCoordinateLabel->setText(tr("经度: -- , 纬度: --"));
+    geoCoordinateLabel->adjustSize();
+    positionGeoCoordinateDisplay();
+    geoCoordinateLabel->setVisible(m_geoDisplayEnabled);
+}
+
+void MyForm::positionGeoCoordinateDisplay()
+{
+    if (!geoCoordinateLabel || !ui->graphicsView) return;
+
+    const int margin = 10;
+    // 使用 graphicsView 的整体大小（包含滚动条区域），避免随内容滚动产生位移
+    QSize vp = ui->graphicsView->size();
+    QSize sz = geoCoordinateLabel->sizeHint();
+    if (sz.isEmpty()) sz = geoCoordinateLabel->size();
+
+    int x = vp.width() - sz.width() - margin;
+    int y = vp.height() - sz.height() - margin;
+    geoCoordinateLabel->setGeometry(x, y, sz.width(), sz.height());
+}
+
+void MyForm::updateGeoCoordinateDisplay(const QPointF &geo)
+{
+    if (!geoCoordinateLabel) return;
+
+    geoCoordinateLabel->setText(
+        tr("经度: %1, 纬度: %2")
+            .arg(geo.x(), 0, 'f', 6)
+            .arg(geo.y(), 0, 'f', 6));
+    geoCoordinateLabel->adjustSize();
+    positionGeoCoordinateDisplay();
 }
 
 void MyForm::updateFloatingProgressBar(int current, int total)

@@ -63,7 +63,7 @@ static constexpr auto qt_meta_stringdata_ZN6MyFormE = QtMocHelpers::stringData(
     "total",
     "onRegionDownloadProgress",
     "zoom",
-    "onOverlayPanToggled",
+    "onGeoDisplayToggled",
     "checked",
     "loadPipelineData",
     "onViewTransformChanged",
@@ -356,7 +356,7 @@ Q_CONSTINIT const QMetaObject MyForm::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
-        // method 'onOverlayPanToggled'
+        // method 'onGeoDisplayToggled'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<bool, std::false_type>,
         // method 'loadPipelineData'
@@ -516,7 +516,7 @@ void MyForm::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 15: _t->handleZoomOutTileMapButtonClicked(); break;
         case 16: _t->onTileDownloadProgress((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
         case 17: _t->onRegionDownloadProgress((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3]))); break;
-        case 18: _t->onOverlayPanToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+        case 18: _t->onGeoDisplayToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 19: _t->loadPipelineData(); break;
         case 20: _t->onViewTransformChanged(); break;
         case 21: _t->onLoadDataButtonClicked(); break;

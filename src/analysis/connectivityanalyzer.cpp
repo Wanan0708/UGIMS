@@ -14,7 +14,7 @@
 ConnectivityAnalyzer::ConnectivityAnalyzer(QObject *parent)
     : SpatialAnalyzer(parent)
     , m_maxSearchDepth(100)
-    , m_connectionTolerance(5.0)  // 默认5米容差
+    , m_connectionTolerance(20.0)  // 默认容差调大到20米，避免轻微偏移导致找不到
 {
 }
 
@@ -780,14 +780,20 @@ double ConnectivityAnalyzer::getDistance(const QString &fromNodeId, const QStrin
 QString ConnectivityAnalyzer::findPipelineAtPoint(const QPointF &point, double toleranceMeters)
 {
     PipelineDAO dao;
-    QVector<Pipeline> nearbyPipelines = dao.findNearPoint(point.x(), point.y(), toleranceMeters, 10);
-    
-    if (nearbyPipelines.isEmpty()) {
-        return QString();
-    }
-    
-    // 返回最近的管线
-    return nearbyPipelines.first().pipelineId();
+
+    auto findWithTolerance = [&](double tol) -> QString {
+        QVector<Pipeline> nearby = dao.findNearPoint(point.x(), point.y(), tol, 10);
+        if (nearby.isEmpty()) return QString();
+        return nearby.first().pipelineId();
+    };
+
+    // 1st attempt: 使用给定容差
+    QString id = findWithTolerance(toleranceMeters);
+    if (!id.isEmpty()) return id;
+
+    // 2nd attempt: 放宽容差到 50 米，兼容底图/数据轻微偏移
+    id = findWithTolerance(qMax(toleranceMeters, 50.0));
+    return id;
 }
 
 QPair<QPointF, QPointF> ConnectivityAnalyzer::getPipelineEndpoints(const QString &pipelineId)
